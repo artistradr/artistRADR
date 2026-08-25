@@ -1,0 +1,464 @@
+/* ═══════════════════════════════════════════════════════════
+   Artist RADR — Universal Brand Stylesheet
+   Import once in main.jsx: import "./styles/brand.css"
+   ═══════════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,500;0,600;0,700;0,800;1,700;1,800&family=Urbanist:wght@300;400;500;600;700;800&display=swap');
+
+/* ── Reset ─────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── Root tokens ────────────────────────────────────────── */
+:root {
+  --font-display: 'Barlow Condensed', sans-serif;
+  --font-body:    'Urbanist', sans-serif;
+
+  /* ── Brand colours (from logo) ── */
+  --color-red:        #D94F2B;   /* logo orange-red */
+  --color-red-dark:   #B83E1F;   /* hover / pressed  */
+  --color-cyan:       #4DD9D0;   /* logo cyan accent */
+  --color-cyan-dark:  #35B8B0;   /* hover / pressed  */
+
+  /* ── Neutrals ── */
+  --color-black:      #0E0E0E;
+  --color-black-soft: #1C1C1C;
+  --color-black-card: #161616;
+  --color-white:      #FFFFFF;
+
+  /* ── Light surface ── */
+  --color-bg:         #F5F4F1;
+  --color-bg-card:    #FFFFFF;
+  --color-bg-muted:   #ECEAE6;
+  --color-border:     rgba(0, 0, 0, 0.08);
+  --color-border-mid: rgba(0, 0, 0, 0.14);
+
+  /* ── Light text ── */
+  --color-text:       #0E0E0E;
+  --color-text-muted: #555555;
+  --color-text-faint: #999999;
+
+  /* ── Dark surface (footer, info cards) ── */
+  --color-dark-bg:       #0E0E0E;
+  --color-dark-card:     #161616;
+  --color-dark-surface:  rgba(255, 255, 255, 0.06);
+  --color-dark-border:   rgba(255, 255, 255, 0.08);
+  --color-dark-text:     rgba(255, 255, 255, 0.88);
+  --color-dark-muted:    rgba(255, 255, 255, 0.48);
+  --color-dark-faint:    rgba(255, 255, 255, 0.28);
+
+  /* ── Accents on dark ── */
+  --color-accent-red-glow:  rgba(217, 79, 43,  0.18);
+  --color-accent-cyan-glow: rgba(77,  217, 208, 0.14);
+
+  /* ── Radii ── */
+  --radius-xs:   6px;
+  --radius-sm:   8px;
+  --radius-md:   12px;
+  --radius-lg:   16px;
+  --radius-xl:   20px;
+  --radius-2xl:  28px;
+  --radius-pill: 100px;
+
+  /* ── Shadows ── */
+  --shadow-card:    0 2px 12px rgba(0, 0, 0, 0.07);
+  --shadow-hover:   0 12px 36px rgba(0, 0, 0, 0.12);
+  --shadow-nav:     0 4px 24px rgba(0, 0, 0, 0.12);
+  --shadow-red:     0 8px 28px rgba(217, 79,  43,  0.35);
+  --shadow-cyan:    0 8px 28px rgba(77,  217, 208, 0.30);
+
+  /* ── Motion ── */
+  --transition-fast: 150ms ease;
+  --transition-base: 220ms ease;
+  --transition-slow: 340ms ease;
+
+  /* ── Layout ── */
+  --max-width:  1100px;
+  --nav-height: 80px;
+}
+
+/* ── Base ───────────────────────────────────────────────── */
+body {
+  font-family: var(--font-body);
+  background: var(--color-bg);
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Typography ─────────────────────────────────────────── */
+.radr-display {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-style: normal;
+  letter-spacing: 1.5px;
+  line-height: 1;
+  color: var(--color-text);
+  text-transform: uppercase;
+}
+.radr-display-xl  { font-size: clamp(3rem,   8vw, 6rem); }
+.radr-display-lg  { font-size: clamp(2.5rem, 6vw, 4.5rem); }
+.radr-display-md  { font-size: clamp(1.8rem, 4vw, 2.8rem); }
+.radr-display-sm  { font-size: clamp(1.4rem, 3vw, 2rem); }
+
+.radr-heading {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 1px;
+  line-height: 1.15;
+  text-transform: uppercase;
+  color: var(--color-text);
+}
+.radr-heading-lg { font-size: 1.5rem; }
+.radr-heading-md { font-size: 1.2rem; }
+.radr-heading-sm { font-size: 1rem; }
+
+/* Italic accent — use only on the word "Artist" */
+.radr-brand-italic { font-style: italic; }
+
+/* Coloured accent text */
+.radr-text-red  { color: var(--color-red); }
+.radr-text-cyan { color: var(--color-cyan); }
+
+.radr-body    { font-size: 1rem;     font-weight: 400; line-height: 1.75; color: var(--color-text-muted); }
+.radr-body-sm { font-size: 0.875rem; font-weight: 300; line-height: 1.7;  color: var(--color-text-muted); }
+.radr-caption { font-size: 0.75rem;  font-weight: 500; line-height: 1.5;  color: var(--color-text-faint); }
+.radr-label {
+  font-size: 0.6875rem; font-weight: 600;
+  letter-spacing: 2px; text-transform: uppercase;
+  color: var(--color-text-faint);
+}
+
+/* ── Eyebrow pill ───────────────────────────────────────── */
+.radr-eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 0.6875rem; font-weight: 600;
+  letter-spacing: 2.5px; text-transform: uppercase;
+  color: var(--color-text-faint);
+  background: var(--color-bg-muted);
+  border: 0.5px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  padding: 5px 14px;
+}
+.radr-eyebrow--dark {
+  background: rgba(255,255,255,0.07);
+  border-color: rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.5);
+}
+.radr-eyebrow--red {
+  background: rgba(217,79,43,0.12);
+  border-color: rgba(217,79,43,0.3);
+  color: var(--color-red);
+}
+.radr-eyebrow--cyan {
+  background: rgba(77,217,208,0.1);
+  border-color: rgba(77,217,208,0.3);
+  color: var(--color-cyan);
+}
+.radr-eyebrow-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%; background: currentColor; display: block;
+}
+
+/* ── Layout ─────────────────────────────────────────────── */
+.radr-container {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 2rem;
+  width: 100%;
+}
+.radr-page { background: var(--color-bg); min-height: 100vh; }
+.radr-section    { padding: 80px 0; }
+.radr-section-sm { padding: 48px 0; }
+
+/* ── Cards ──────────────────────────────────────────────── */
+.radr-card {
+  background: var(--color-bg-card);
+  border-radius: var(--radius-lg);
+  border: 0.5px solid var(--color-border);
+  box-shadow: var(--shadow-card);
+}
+.radr-card-pad   { padding: 24px; }
+.radr-card-padlg { padding: 40px; }
+
+/* Dark card */
+.radr-card-dark {
+  background: var(--color-dark-card);
+  border-radius: var(--radius-xl);
+  border: 0.5px solid var(--color-dark-border);
+  color: white;
+}
+
+/* Red accent card */
+.radr-card-red {
+  background: var(--color-red);
+  border-radius: var(--radius-xl);
+  color: white;
+  box-shadow: var(--shadow-red);
+}
+
+/* Hover lift */
+.radr-card-hover {
+  transition: transform var(--transition-base), box-shadow var(--transition-base);
+  text-decoration: none; color: inherit; display: block;
+}
+.radr-card-hover:hover { transform: translateY(-4px); box-shadow: var(--shadow-hover); }
+
+/* ── Buttons ─────────────────────────────────────────────── */
+.radr-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: 7px; padding: 12px 22px;
+  border-radius: var(--radius-md);
+  font-family: var(--font-body); font-size: 13.5px;
+  font-weight: 600; letter-spacing: 0.1px;
+  text-decoration: none; cursor: pointer; border: none;
+  white-space: nowrap;
+  transition: background var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+.radr-btn:active { transform: scale(0.97); }
+
+/* Primary — red */
+.radr-btn-primary { background: var(--color-red); color: white; }
+.radr-btn-primary:hover { background: var(--color-red-dark); transform: translateY(-1px); box-shadow: var(--shadow-red); }
+
+/* Cyan */
+.radr-btn-cyan { background: var(--color-cyan); color: var(--color-black); }
+.radr-btn-cyan:hover { background: var(--color-cyan-dark); transform: translateY(-1px); box-shadow: var(--shadow-cyan); }
+
+/* Dark */
+.radr-btn-dark { background: var(--color-black); color: white; }
+.radr-btn-dark:hover { background: var(--color-black-soft); transform: translateY(-1px); }
+
+/* White */
+.radr-btn-white { background: white; color: var(--color-black); }
+.radr-btn-white:hover { background: #f0f0f0; transform: translateY(-1px); }
+
+/* Ghost */
+.radr-btn-ghost {
+  background: transparent; color: var(--color-black);
+  border: 0.5px solid var(--color-border-mid);
+}
+.radr-btn-ghost:hover { background: var(--color-bg-muted); }
+
+/* Ghost on dark */
+.radr-btn-ghost-dark {
+  background: rgba(255,255,255,0.07);
+  color: rgba(255,255,255,0.8);
+  border: 0.5px solid rgba(255,255,255,0.12);
+}
+.radr-btn-ghost-dark:hover { background: rgba(255,255,255,0.13); color: white; }
+
+.radr-btn-sm { padding: 8px 16px;  font-size: 12.5px; border-radius: var(--radius-sm); }
+.radr-btn-lg { padding: 14px 28px; font-size: 14.5px; border-radius: var(--radius-lg); }
+
+/* ── Forms ───────────────────────────────────────────────── */
+.radr-field { margin-bottom: 20px; }
+.radr-field-label {
+  display: block; font-size: 0.6875rem; font-weight: 600;
+  letter-spacing: 1px; text-transform: uppercase;
+  color: var(--color-text-faint); margin-bottom: 8px;
+}
+.radr-input, .radr-textarea {
+  width: 100%; box-sizing: border-box; padding: 12px 16px;
+  border: 0.5px solid var(--color-border-mid);
+  border-radius: var(--radius-md);
+  font-size: 14px; font-family: var(--font-body);
+  color: var(--color-text); background: #fafafa; outline: none;
+  transition: border-color var(--transition-fast), background var(--transition-fast);
+}
+.radr-input:focus, .radr-textarea:focus {
+  border-color: var(--color-red); background: white;
+}
+.radr-textarea { resize: none; min-height: 140px; }
+
+/* ── Hero ────────────────────────────────────────────────── */
+.radr-hero {
+  position: relative; background-size: cover;
+  background-position: center; display: flex; align-items: center;
+}
+.radr-hero-overlay { position: absolute; inset: 0; pointer-events: none; }
+.radr-hero-overlay--dark   { background: linear-gradient(160deg, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.35) 100%); }
+.radr-hero-overlay--bottom { background: linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 55%); }
+.radr-hero-overlay--side   { background: linear-gradient(90deg, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.18) 100%); }
+.radr-hero-content { position: relative; z-index: 2; }
+
+/* ── Page hero (text-only) ───────────────────────────────── */
+.radr-page-hero {
+  padding: 160px 0 80px; text-align: center;
+  position: relative; overflow: hidden;
+}
+.radr-page-hero::before {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(ellipse 70% 60% at 50% 0%, rgba(217,79,43,0.07) 0%, transparent 70%);
+  pointer-events: none;
+}
+@media (max-width: 760px) { .radr-page-hero { padding: 140px 1.5rem 60px; } }
+
+/* ── Dividers ────────────────────────────────────────────── */
+.radr-divider      { border: none; border-top: 0.5px solid var(--color-border); }
+.radr-divider--dark { border-top-color: var(--color-dark-border); }
+
+/* ── Contact rows ────────────────────────────────────────── */
+.radr-contact-row { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; }
+.radr-contact-icon {
+  width: 40px; height: 40px; border-radius: var(--radius-sm);
+  background: var(--color-dark-surface);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+
+/* ── Social buttons ──────────────────────────────────────── */
+.radr-social-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px; border-radius: var(--radius-sm);
+  background: var(--color-dark-surface);
+  border: 0.5px solid var(--color-dark-border);
+  color: rgba(255,255,255,0.6); text-decoration: none;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+.radr-social-btn:hover { background: rgba(255,255,255,0.13); color: white; }
+.radr-social-btn--label { width: auto; padding: 8px 14px; gap: 6px; font-size: 12px; font-weight: 500; }
+
+/* ── FAQ grid ────────────────────────────────────────────── */
+.radr-faq-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+
+/* ── Blog / post cards ───────────────────────────────────── */
+.radr-post-card {
+  background: var(--color-bg-card); border-radius: var(--radius-lg);
+  border: 0.5px solid var(--color-border); overflow: hidden;
+  display: flex; flex-direction: column; text-decoration: none;
+  color: var(--color-text);
+  transition: transform var(--transition-base), box-shadow var(--transition-base);
+}
+.radr-post-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-hover); }
+.radr-post-card-img { width: 100%; object-fit: cover; display: block; background: var(--color-bg-muted); }
+.radr-post-card-body { padding: 18px; flex: 1; display: flex; flex-direction: column; }
+.radr-post-card-meta { font-size: 11px; color: var(--color-text-faint); margin-bottom: 8px; }
+.radr-post-card-title { font-family: var(--font-display); font-size: 0.95rem; font-weight: 700; line-height: 1.35; margin: 0 0 auto; text-transform: uppercase; letter-spacing: 0.5px; }
+.radr-post-card-cta { display: inline-flex; align-items: center; gap: 5px; margin-top: 14px; font-size: 12px; font-weight: 600; color: var(--color-red); }
+.radr-post-card-cta svg { transition: transform var(--transition-fast); }
+.radr-post-card:hover .radr-post-card-cta svg { transform: translateX(3px); }
+
+/* ── Sidebar recent items ────────────────────────────────── */
+.radr-recent-item {
+  display: flex; align-items: center; gap: 12px;
+  text-decoration: none; color: var(--color-text);
+  padding-bottom: 16px; margin-bottom: 16px;
+  border-bottom: 0.5px solid var(--color-border);
+}
+.radr-recent-item:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+.radr-recent-thumb {
+  width: 54px; height: 54px; border-radius: var(--radius-sm);
+  object-fit: cover; flex-shrink: 0; background: var(--color-bg-muted); display: block;
+}
+.radr-recent-text { font-size: 12.5px; font-weight: 500; line-height: 1.4; }
+
+/* ── Footer ──────────────────────────────────────────────── */
+.radr-footer { background: var(--color-dark-bg); color: white; padding: 64px 0 32px; }
+.radr-footer-grid { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 48px; }
+@media (max-width: 720px) { .radr-footer-grid { grid-template-columns: 1fr; gap: 36px; } }
+.radr-footer-brand { font-family: var(--font-display); font-size: 1.5rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+.radr-footer-desc { font-size: 13px; color: var(--color-dark-muted); line-height: 1.7; font-weight: 300; max-width: 300px; }
+.radr-footer-col-title { font-size: 10px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--color-dark-faint); margin-bottom: 18px; }
+.radr-footer-links { list-style: none; padding: 0; margin: 0; }
+.radr-footer-links li { margin-bottom: 12px; }
+.radr-footer-links a { font-size: 13.5px; color: var(--color-dark-muted); text-decoration: none; transition: color var(--transition-fast); }
+.radr-footer-links a:hover { color: var(--color-cyan); }
+.radr-footer-bottom { display: flex; align-items: center; justify-content: space-between; font-size: 11.5px; color: var(--color-dark-faint); flex-wrap: wrap; gap: 8px; }
+
+/* ── Coming soon card ────────────────────────────────────── */
+.radr-coming-card { max-width: 500px; margin: 60px auto 100px; text-align: center; }
+.radr-coming-icon {
+  width: 52px; height: 52px; background: var(--color-red);
+  border-radius: 14px; display: flex; align-items: center;
+  justify-content: center; margin: 0 auto 20px;
+  box-shadow: var(--shadow-red);
+}
+
+/* ── Animations ──────────────────────────────────────────── */
+@keyframes radr-spin    { to { transform: rotate(360deg); } }
+@keyframes radr-fade-up { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes radr-pulse   { from { opacity: 0.55; } to { opacity: 1; } }
+.radr-animate-fade-up { animation: radr-fade-up 400ms ease forwards; }
+.radr-skeleton { background: var(--color-bg-muted); border-radius: var(--radius-lg); animation: radr-pulse 1.5s ease infinite alternate; }
+
+/* ── Grid helpers ────────────────────────────────────────── */
+.radr-grid-2    { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+.radr-grid-3    { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.radr-grid-4    { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+.radr-grid-auto { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
+@media (max-width: 900px) { .radr-grid-3, .radr-grid-4 { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 600px) { .radr-grid-2, .radr-grid-3, .radr-grid-4 { grid-template-columns: 1fr; } }
+
+/* ── Utilities ───────────────────────────────────────────── */
+.radr-text-center  { text-align: center; }
+.radr-mt-auto      { margin-top: auto; }
+.radr-flex         { display: flex; }
+.radr-flex-center  { display: flex; align-items: center; justify-content: center; }
+.radr-flex-between { display: flex; align-items: center; justify-content: space-between; }
+.radr-gap-sm { gap: 8px; }
+.radr-gap-md { gap: 16px; }
+.radr-gap-lg { gap: 24px; }
+.radr-w-full { width: 100%; }
+
+/* ── Monetisation components ─────────────────────────────── */
+
+/* Pricing card */
+.radr-price-card {
+  background: var(--color-dark-card);
+  border: 0.5px solid var(--color-dark-border);
+  border-radius: var(--radius-2xl);
+  padding: 36px 32px;
+  color: white;
+  position: relative;
+  overflow: hidden;
+  transition: transform var(--transition-base), box-shadow var(--transition-base);
+}
+.radr-price-card:hover { transform: translateY(-4px); box-shadow: 0 16px 48px rgba(0,0,0,0.25); }
+.radr-price-card--featured {
+  border-color: var(--color-red);
+  box-shadow: 0 0 0 1px var(--color-red), var(--shadow-red);
+}
+.radr-price-card--featured::before {
+  content: 'Most Popular';
+  position: absolute; top: 16px; right: 16px;
+  background: var(--color-red); color: white;
+  font-family: var(--font-body); font-size: 10px; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase;
+  padding: 4px 10px; border-radius: var(--radius-pill);
+}
+.radr-price-amount {
+  font-family: var(--font-display); font-size: 3.5rem; font-weight: 800;
+  letter-spacing: -1px; line-height: 1; color: white;
+}
+.radr-price-amount sup { font-size: 1.5rem; vertical-align: super; }
+.radr-price-period { font-size: 13px; color: var(--color-dark-muted); margin-left: 4px; }
+.radr-price-feature {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 13.5px; color: var(--color-dark-muted);
+  padding: 8px 0; border-bottom: 0.5px solid var(--color-dark-border);
+}
+.radr-price-feature:last-child { border-bottom: none; }
+.radr-price-feature-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--color-cyan); flex-shrink: 0;
+}
+
+/* Promo / banner strip */
+.radr-promo-strip {
+  background: linear-gradient(135deg, var(--color-red) 0%, #B83E1F 100%);
+  color: white; padding: 14px 2rem; text-align: center;
+  font-family: var(--font-body); font-size: 13px; font-weight: 600;
+  letter-spacing: 0.2px;
+}
+.radr-promo-strip a { color: var(--color-cyan); text-decoration: underline; margin-left: 8px; }
+
+/* Badge */
+.radr-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-family: var(--font-body); font-size: 10px; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase;
+  padding: 3px 10px; border-radius: var(--radius-pill);
+}
+.radr-badge-red  { background: var(--color-red);  color: white; }
+.radr-badge-cyan { background: var(--color-cyan); color: var(--color-black); }
+.radr-badge-dark { background: var(--color-dark-card); color: var(--color-dark-muted); border: 0.5px solid var(--color-dark-border); }

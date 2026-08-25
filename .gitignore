@@ -1,0 +1,21 @@
+# env / secrets
+.env
+.env.*
+!.env.example
+serviceaccount.json
+*serviceaccount*.json
+firebase-adminsdk*.json
+
+# deps / build
+node_modules/
+dist/
+.vite/
+
+# system
+.DS_Store
+*.log
+
+# data exports / build artifacts
+dist.zip
+*-export.json
+uid-mapping.json
