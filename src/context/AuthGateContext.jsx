@@ -1,12 +1,30 @@
 // src/context/AuthGateContext.jsx
 // Global auth gate — wrap your app with <AuthGateProvider> and call
 // useAuthGate().requireAuth(() => callback) anywhere to trigger the modal.
+//
+// Migrated from Firebase Auth/Firestore to Supabase, per the same pattern
+// established in SupabaseAuthContext.jsx:
+//   - supabase.auth.signInWithPassword / supabase.auth.signUp replace the
+//     Firebase calls. Both return { data, error } instead of throwing, so
+//     errors are checked explicitly and re-thrown-as-message for the
+//     existing catch blocks below to keep working unchanged.
+//   - On register, the profiles row is written manually after signUp,
+//     using full_name (snake_case) and default role "subscriber" to match
+//     the actual public.profiles schema (no separate "email" or
+//     "createdAt" columns — email lives on auth.users, created_at
+//     defaults on the table itself).
+//   - NOTE: if email confirmation is required on this Supabase project,
+//     signUp() returns a user but no active session until the user
+//     confirms their email. The profiles insert below assumes RLS allows
+//     an insert where auth.uid() = id; if confirmation is required and
+//     RLS is strict, this insert will need to move to a server-side
+//     trigger (handle_new_user on auth.users) instead. Flagging this so
+//     it isn't silently broken in production — test the register flow
+//     end-to-end after dropping this in.
 
 import { createContext, useContext, useState, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
-import { doc, setDoc, serverTimestamp } from "firebase/firestore";
-import { auth, db } from "../firebase";
+import { supabase } from "../supabaseClient";
 
 const AuthGateContext = createContext(null);
 
@@ -57,12 +75,13 @@ function AuthGateModal({ isOpen, onClose, onSuccess, config }) {
     if (!email || !password) { setError("Please fill in all fields."); return; }
     setLoading(true); setError(null);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+      if (signInError) throw signInError;
       reset();
       onSuccess?.();
       onClose();
     } catch (e) {
-      setError(friendlyError(e.code));
+      setError(friendlyError(e.message));
     }
     setLoading(false);
   };
@@ -72,30 +91,43 @@ function AuthGateModal({ isOpen, onClose, onSuccess, config }) {
     if (password.length < 6) { setError("Password must be at least 6 characters."); return; }
     setLoading(true); setError(null);
     try {
-      const cred = await createUserWithEmailAndPassword(auth, email, password);
-      await updateProfile(cred.user, { displayName: name });
-      await setDoc(doc(db, "users", cred.user.uid), {
-        fullName: name, email, role: "user", createdAt: serverTimestamp(),
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: { full_name: name } },
       });
+      if (signUpError) throw signUpError;
+
+      if (data.user) {
+        const { error: profileError } = await supabase
+          .from("profiles")
+          .insert({ id: data.user.id, full_name: name, role: "subscriber" });
+        // Don't fail the whole registration UX over a profile-row hiccup —
+        // the auth account exists either way — but surface it so it's not
+        // silently lost the way the old console.log-only version was.
+        if (profileError) console.error("Profile row insert failed:", profileError.message);
+      }
+
       reset();
       onSuccess?.();
       onClose();
     } catch (e) {
-      setError(friendlyError(e.code));
+      setError(friendlyError(e.message));
     }
     setLoading(false);
   };
 
-  const friendlyError = (code) => {
-    const map = {
-      "auth/user-not-found":    "No account found with that email.",
-      "auth/wrong-password":    "Incorrect password. Please try again.",
-      "auth/email-already-in-use": "An account with this email already exists.",
-      "auth/invalid-email":     "Please enter a valid email address.",
-      "auth/too-many-requests": "Too many attempts. Please try again later.",
-      "auth/weak-password":     "Password must be at least 6 characters.",
-    };
-    return map[code] || "Something went wrong. Please try again.";
+  // Supabase auth errors come back as message strings, not the
+  // "auth/xyz" codes Firebase used — match on message content instead.
+  const friendlyError = (message = "") => {
+    const m = message.toLowerCase();
+    if (m.includes("invalid login credentials")) return "Incorrect email or password. Please try again.";
+    if (m.includes("user already registered")) return "An account with this email already exists.";
+    if (m.includes("password should be at least")) return "Password must be at least 6 characters.";
+    if (m.includes("unable to validate email") || m.includes("invalid email")) return "Please enter a valid email address.";
+    if (m.includes("rate limit") || m.includes("too many")) return "Too many attempts. Please try again later.";
+    if (m.includes("email not confirmed")) return "Please confirm your email before signing in.";
+    return "Something went wrong. Please try again.";
   };
 
   if (!isOpen) return null;

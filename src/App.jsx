@@ -4,7 +4,6 @@ import { ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 import theme from "assets/theme";
 import routes from "./routes";
-import { AuthProvider } from "context/AuthContext";
 import { AuthGateProvider } from "context/AuthGateContext";
 import { SupabaseAuthProvider, useSupabaseAuth } from "context/SupabaseAuthContext";
 
@@ -117,15 +116,13 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <SupabaseAuthProvider>
-        <AuthGateProvider>
-          <ThemeProvider theme={theme}>
-            <CssBaseline />
-            <AppRoutes />
-          </ThemeProvider>
-        </AuthGateProvider>
-      </SupabaseAuthProvider>
-    </AuthProvider>
+    <SupabaseAuthProvider>
+      <AuthGateProvider>
+        <ThemeProvider theme={theme}>
+          <CssBaseline />
+          <AppRoutes />
+        </ThemeProvider>
+      </AuthGateProvider>
+    </SupabaseAuthProvider>
   );
-} 
+}
