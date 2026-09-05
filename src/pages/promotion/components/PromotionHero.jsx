@@ -1,6 +1,14 @@
 import { SITE_STATS } from "../../../data/siteStats";
+import { SpotifyLogo, AppleMusicLogo, YoutubeLogo, TikTokLogo } from "components/PlatformLogos";
 
 const F = { d: "var(--font-display)", b: "var(--font-body)" };
+
+const HERO_PLATFORMS = [
+  { Logo: SpotifyLogo, label: "Spotify", desc: "Curated playlist placements", color: "#1DB954" },
+  { Logo: AppleMusicLogo, label: "Apple Music", desc: "Editorial pitching", color: "#FA243C" },
+  { Logo: YoutubeLogo, label: "YouTube", desc: "Shorts & UGC campaigns", color: "#FF0000" },
+  { Logo: TikTokLogo, label: "TikTok", desc: "Sound promotion", color: "#000000" }
+];
 
 function PromotionHero() {
   // Was: hardcoded { "Artists Featured": "200+", "Playlist Placements": "50+",
@@ -76,7 +84,7 @@ function PromotionHero() {
             </p>
 
             <div style={{ display: "flex", gap: "14px", flexWrap: "wrap" }}>
-              <a href="/submit-track" style={{
+              <a href="/campaigns" style={{
                 display: "inline-flex",
                 alignItems: "center",
                 gap: "8px",
@@ -89,10 +97,10 @@ function PromotionHero() {
                 textDecoration: "none",
                 boxShadow: "0 4px 20px rgba(217,79,43,0.35)"
               }}>
-                Submit Your Track
+                Start Campaign
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
               </a>
-              <a href="#channels" style={{
+              <a href="/campaigns" style={{
                 display: "inline-flex",
                 alignItems: "center",
                 gap: "8px",
@@ -105,7 +113,7 @@ function PromotionHero() {
                 textDecoration: "none",
                 border: "0.5px solid rgba(0,0,0,0.08)"
               }}>
-                Explore Channels
+                View Dashboard
               </a>
             </div>
 
@@ -133,12 +141,7 @@ function PromotionHero() {
             gap: "16px",
             padding: "20px"
           }}>
-            {[
-              { icon: "🎧", label: "Spotify", desc: "Curated playlist placements", color: "#1DB954" },
-              { icon: "🍎", label: "Apple Music", desc: "Editorial pitching", color: "#FA243C" },
-              { icon: "▶️", label: "YouTube", desc: "Shorts & UGC campaigns", color: "#FF0000" },
-              { icon: "📱", label: "TikTok", desc: "Sound promotion", color: "#000000" }
-            ].map(({ icon, label, desc, color }) => (
+            {HERO_PLATFORMS.map(({ Logo, label, desc }) => (
               <div key={label} style={{
                 background: "white",
                 borderRadius: "16px",
@@ -156,7 +159,9 @@ function PromotionHero() {
                 e.currentTarget.style.transform = "translateY(0)";
                 e.currentTarget.style.boxShadow = "0 2px 12px rgba(0,0,0,0.04)";
               }}>
-                <div style={{ fontSize: "28px", marginBottom: "8px" }}>{icon}</div>
+                <div style={{ marginBottom: "8px" }}>
+                  <Logo size={28} />
+                </div>
                 <div style={{ fontFamily: F.d, fontSize: "14px", fontWeight: 700, color: "#111", marginBottom: "4px" }}>{label}</div>
                 <div style={{ fontSize: "12px", color: "#888", fontWeight: 300 }}>{desc}</div>
               </div>

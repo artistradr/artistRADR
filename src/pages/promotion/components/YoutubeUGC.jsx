@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { YoutubeLogo } from "components/PlatformLogos";
 
 const F = { d: "var(--font-display)", b: "var(--font-body)" };
 
@@ -72,14 +73,14 @@ function YoutubeUGC() {
           width: "48px",
           height: "48px",
           borderRadius: "50%",
-          background: "#FF0000",
+          background: "white",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          fontSize: "20px",
-          flexShrink: 0
+          flexShrink: 0,
+          border: "0.5px solid rgba(255,0,0,0.15)"
         }}>
-          ▶️
+          <YoutubeLogo size={26} />
         </div>
         <div style={{ flex: 1 }}>
           <div style={{ fontFamily: F.d, fontSize: "16px", fontWeight: 700, color: "#111" }}>

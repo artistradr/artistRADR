@@ -72,7 +72,7 @@ function Promotion() {
       `}</style>
 
       <div style={{ fontFamily: F.b, background: "#f7f6f3", minHeight: "100vh" }}>
-        <Navbar routes={routes} action={{ type: "internal", route: "/submit-track", label: "Submit Track" }} />
+        <Navbar routes={routes} action={{ type: "internal", route: "/campaigns", label: "Start Campaign" }} />
 
         {/* Page header with breadcrumbs */}
         <div style={{ 
@@ -120,11 +120,11 @@ function Promotion() {
               Get Your Music on the RADR
             </h2>
             <p style={{ fontSize: "15px", color: "rgba(255,255,255,0.72)", fontWeight: 300, lineHeight: 1.75, marginBottom: "36px" }}>
-              Submit your track and let us help you get discovered across Spotify, Apple Music, YouTube, and beyond.
+              Launch a campaign and let us help you get discovered across Spotify, Apple Music, YouTube, and beyond.
             </p>
             <div style={{ display: "flex", gap: "12px", justifyContent: "center", flexWrap: "wrap" }}>
-              <a href="/submit-track" style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "white", color: "#D94F2B", padding: "14px 32px", borderRadius: "12px", fontSize: "14px", fontWeight: 700, textDecoration: "none" }}>
-                Submit Your Track
+              <a href="/campaigns" style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "white", color: "#D94F2B", padding: "14px 32px", borderRadius: "12px", fontSize: "14px", fontWeight: 700, textDecoration: "none" }}>
+                Start Campaign
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
               </a>
               <a href="/blog" style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "rgba(255,255,255,0.15)", color: "white", border: "0.5px solid rgba(255,255,255,0.3)", padding: "14px 32px", borderRadius: "12px", fontSize: "14px", fontWeight: 600, textDecoration: "none" }}>

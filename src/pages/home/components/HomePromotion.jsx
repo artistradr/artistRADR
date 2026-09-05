@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { SpotifyLogo, AppleMusicLogo, YoutubeLogo, TikTokLogo } from "components/PlatformLogos";
 
 const F = { d: "var(--font-display)", b: "var(--font-body)" };
 
@@ -28,9 +29,10 @@ function HomePromotion() {
           box-shadow: 0 12px 40px rgba(0,0,0,0.08);
         }
         .h-promo-icon {
-          font-size: 32px;
           margin-bottom: 12px;
-          display: block;
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
         .h-promo-name {
           font-family: var(--font-display);
@@ -73,13 +75,15 @@ function HomePromotion() {
 
           <div className="h-promo-grid">
             {[
-              { icon: "🎧", name: "Spotify", desc: "Curated playlist placements", link: "/promotion#channels" },
-              { icon: "🍎", name: "Apple Music", desc: "Editorial pitching", link: "/promotion#channels" },
-              { icon: "▶️", name: "YouTube", desc: "Shorts & UGC campaigns", link: "/promotion#channels" },
-              { icon: "📱", name: "TikTok", desc: "Sound promotion", link: "/promotion" },
-            ].map(({ icon, name, desc, link }) => (
+              { Logo: SpotifyLogo, name: "Spotify", desc: "Curated playlist placements", link: "/promotion#channels" },
+              { Logo: AppleMusicLogo, name: "Apple Music", desc: "Editorial pitching", link: "/promotion#channels" },
+              { Logo: YoutubeLogo, name: "YouTube", desc: "Shorts & UGC campaigns", link: "/promotion#channels" },
+              { Logo: TikTokLogo, name: "TikTok", desc: "Sound promotion", link: "/promotion" },
+            ].map(({ Logo, name, desc, link }) => (
               <Link key={name} to={link} className="h-promo-card">
-                <span className="h-promo-icon">{icon}</span>
+                <div className="h-promo-icon">
+                  <Logo size={32} />
+                </div>
                 <div className="h-promo-name">{name}</div>
                 <div className="h-promo-desc">{desc}</div>
               </Link>
@@ -87,7 +91,7 @@ function HomePromotion() {
           </div>
 
           <div style={{ textAlign: "center", marginTop: "32px" }}>
-            <Link to="/promotion" style={{
+            <Link to="/campaigns" style={{
               display: "inline-flex",
               alignItems: "center",
               gap: "8px",
@@ -100,7 +104,7 @@ function HomePromotion() {
               textDecoration: "none",
               boxShadow: "0 4px 20px rgba(217,79,43,0.35)"
             }}>
-              Explore Promotion Opportunities
+              Start Campaign
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
             </Link>
           </div>

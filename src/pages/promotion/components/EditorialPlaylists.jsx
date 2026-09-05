@@ -1,17 +1,9 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { SPOTIFY_PLAYLISTS } from "../../../data/spotifyFollows";
+import { SpotifyLogo } from "components/PlatformLogos";
 
 const F = { d: "var(--font-display)", b: "var(--font-body)" };
-
-// Purely decorative — keyed by playlist key so it degrades gracefully
-// (falls back to 🎧) if a new playlist is added to spotifyFollows.js
-// without updating this map.
-const PLAYLIST_ICONS = {
-  spotify_new_music: "🎵",
-  spotify_discoveries: "🌱",
-  spotify_spotlight: "✨",
-};
 
 function EditorialPlaylists() {
   const [hovered, setHovered] = useState(null);
@@ -66,8 +58,8 @@ function EditorialPlaylists() {
               pointerEvents: "none"
             }} />
 
-            <div style={{ fontSize: "32px", marginBottom: "12px" }}>
-              {PLAYLIST_ICONS[playlist.key] ?? "🎧"}
+            <div style={{ marginBottom: "12px" }}>
+              <SpotifyLogo size={32} />
             </div>
             <div style={{ fontFamily: F.d, fontSize: "18px", fontWeight: 700, color: "#111", marginBottom: "6px" }}>
               {playlist.label}
@@ -96,7 +88,7 @@ function EditorialPlaylists() {
       </div>
 
       <div style={{ textAlign: "center", marginTop: "36px" }}>
-        <Link to="/submit-track" style={{
+        <Link to="/campaigns" style={{
           display: "inline-flex",
           alignItems: "center",
           gap: "8px",
@@ -109,7 +101,7 @@ function EditorialPlaylists() {
           textDecoration: "none",
           border: "0.5px solid rgba(217,79,43,0.2)"
         }}>
-          Submit to Playlists
+          Start Campaign
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
         </Link>
       </div>

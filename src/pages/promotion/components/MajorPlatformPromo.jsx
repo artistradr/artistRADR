@@ -1,10 +1,12 @@
+import { SpotifyLogo, AppleMusicLogo, AmazonMusicLogo } from "components/PlatformLogos";
+
 const F = { d: "var(--font-display)", b: "var(--font-body)" };
 
 const PLATFORMS = [
   {
     id: "spotify",
     name: "Spotify",
-    icon: "🎧",
+    Logo: SpotifyLogo,
     color: "#1DB954",
     benefits: [
       "Curated playlist placements",
@@ -16,7 +18,7 @@ const PLATFORMS = [
   {
     id: "apple-music",
     name: "Apple Music",
-    icon: "🍎",
+    Logo: AppleMusicLogo,
     color: "#FA243C",
     benefits: [
       "Editorial pitching",
@@ -28,8 +30,8 @@ const PLATFORMS = [
   {
     id: "amazon",
     name: "Amazon Music",
-    icon: "📦",
-    color: "#FF9900",
+    Logo: AmazonMusicLogo,
+    color: "#00A8E1",
     benefits: [
       "Playlist placement strategy",
       "Voice assistant optimization (Alexa)",
@@ -80,7 +82,7 @@ function MajorPlatformPromo() {
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px" }}>
-              <div style={{ fontSize: "32px" }}>{platform.icon}</div>
+              <platform.Logo size={32} />
               <div>
                 <div style={{ fontFamily: F.d, fontSize: "18px", fontWeight: 700, color: "#111" }}>
                   {platform.name}
@@ -144,7 +146,7 @@ function MajorPlatformPromo() {
             Get personalized strategy for your release.
           </div>
         </div>
-        <a href="/submit-track" style={{
+        <a href="/campaigns" style={{
           display: "inline-flex",
           alignItems: "center",
           gap: "8px",
@@ -157,7 +159,7 @@ function MajorPlatformPromo() {
           textDecoration: "none",
           whiteSpace: "nowrap"
         }}>
-          Start Pitching
+          Start Campaign
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
         </a>
       </div>

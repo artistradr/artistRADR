@@ -22,6 +22,14 @@ import Register from "pages/Auth/Register";
 // NOTE: SpotifyCallback and YoutubeCallback are registered directly in App.jsx
 // as bare routes so they are never wrapped in any auth guard or navbar layout.
 
+// NOTE: "My Campaigns" below intentionally has no `component` field. The
+// actual <Route path="/campaigns"> is registered as a bare, auth-gated
+// route directly in App.jsx (same pattern as /profile), so it's excluded
+// from getRoutes()'s flatMap (which requires both `route` AND `component`).
+// This entry exists only so the link shows up in the navbar — omitting
+// `component` here avoids registering a second, duplicate <Route> for the
+// same path.
+
 const routes = [
   {
     name: "Discover & Explore",
@@ -66,6 +74,12 @@ const routes = [
         description: "Get your music discovered across platforms",
         route: "/promotion",
         component: <Promotion />,
+      },
+      {
+        name: "My Campaigns",
+        description: "Track and manage your active promotion campaigns",
+        route: "/campaigns",
+        // no `component` — see note above, route is registered in App.jsx
       },
       {
         name: "Contact Us",

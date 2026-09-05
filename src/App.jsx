@@ -21,6 +21,7 @@ import YoutubeCallback from "pages/Auth/YoutubeCallback";
 import BlogPost from "layouts/pages/blog/BlogPost";
 
 import Promotion from "pages/promotion/Promotion";
+import CampaignDashboard from "pages/Campaigns/CampaignDashboard";
 
 function AdminRoute({ children }) {
   const { user, userRole, loading, roleLoading } = useSupabaseAuth();
@@ -67,9 +68,10 @@ function AppRoutes() {
     <>
       {/* ── Automatic per-route SEO tags, driven by routes.js ──
            Covers every route listed in routes.js. Routes NOT in that map
-           (Home "/", /blog/:slug, admin, auth callbacks, password reset)
-           render null here and rely on their own page-level <SEOHead />
-           or on SEOHead's defaults — see RouteSEO.jsx for the full list. */}
+           (Home "/", /blog/:slug, admin, auth callbacks, password reset,
+           /campaigns) render null here and rely on their own page-level
+           <SEOHead /> or on SEOHead's defaults — see RouteSEO.jsx for the
+           full list. */}
       <RouteSEO />
 
       <Routes>
@@ -79,6 +81,12 @@ function AppRoutes() {
         {/* ── Home ── */}
         <Route path="/" element={<Home />} />
         <Route path="/promotion" element={<Promotion />} />
+
+        {/* ── Campaign Dashboard — bare route, not in routes.js ──
+             Reached via "Start Campaign" CTAs across the Promotion page,
+             not a navbar destination itself. Auth-gated: manages billing
+             and campaign spend, same guard as /profile. */}
+        <Route path="/campaigns" element={<PrivateRoute><CampaignDashboard /></PrivateRoute>} />
 
         {/* ── Blog post — bare route, not in routes.js ──
              Reached only via links from BlogPage (e.g. /blog/${post.slug}),

@@ -5,11 +5,21 @@ import { useSupabaseAuth } from "../../context/SupabaseAuthContext";
 
 const F = { d: "var(--font-display)", b: "var(--font-body)" };
 
+// Keep this list in sync with:
+//  - public.posts_category_check (DB constraint, Supabase project rjivkemajotafjvtalol)
+//  - AdminDashboard.jsx's POST_CATEGORIES
+//  - BlogPage.jsx's CATEGORIES
 const CATEGORIES = [
   { value: "new-release",  label: "New Release" },
   { value: "on-your-radr", label: "On Your RADR" },
   { value: "playlist",     label: "Playlist" },
   { value: "spotlights",   label: "Spotlights" },
+  { value: "single",       label: "Single" },
+  { value: "album",        label: "Album" },
+  { value: "ep",           label: "EP" },
+  { value: "news",         label: "News" },
+  { value: "updates",      label: "Updates" },
+  { value: "trending",     label: "Trending" },
 ];
 
 const inputStyle = {
@@ -35,10 +45,9 @@ export default function PostEditor() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
-    // Gate only once loading AND roleLoading have both resolved — see the
-    // same fix in AdminDashboard.jsx / MIGRATION.md's roleLoading note.
     if (loading || roleLoading) return;
     if (userRole !== "radrStaff") { navigate("/"); return; }
     if (isEdit) loadPost();
@@ -80,8 +89,6 @@ export default function PostEditor() {
     setCoverPreview(URL.createObjectURL(file));
   };
 
-  // Uploads to the `post-covers` Storage bucket at posts/{postId}/cover,
-  // same path shape as the Firebase Storage version (MIGRATION.md Section 2).
   const uploadCover = async (postId) => {
     if (!coverFile) return existingCover;
     const path = `posts/${postId}/cover`;
@@ -156,10 +163,42 @@ export default function PostEditor() {
 
   return (
     <div style={{ fontFamily: F.b, background: "#0E0E0E", minHeight: "100vh", color: "white" }}>
+      <style>{`
+        .pe-hamburger { display:none; }
+        .pe-overlay { display:none; pointer-events: none; }
+        .pe-sidebar { transition: transform 220ms ease; }
+        .pe-grid { display:grid; grid-template-columns: 1fr 300px; gap:24px; align-items:start; }
+        .pe-actions { display:flex; gap:10px; }
+        .pe-actions button { flex: 0 0 auto; }
+
+        @media (max-width: 768px) {
+          .pe-hamburger { display:flex; }
+          .pe-sidebar { position:fixed !important; transform: translateX(-100%); z-index:65; }
+          .pe-sidebar.open { transform: translateX(0); }
+          .pe-overlay.open { display:block !important; pointer-events: auto; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:55; }
+          .pe-main { margin-left:0 !important; max-width:100% !important; padding:72px 16px 40px !important; }
+          .pe-grid { grid-template-columns: 1fr !important; }
+          .pe-actions { flex-direction:column; }
+          .pe-actions button { width:100%; }
+        }
+      `}</style>
+
+      {/* Mobile hamburger */}
+      <button
+        className="pe-hamburger"
+        onClick={() => setSidebarOpen(true)}
+        aria-label="Open menu"
+        style={{ position: "fixed", top: "16px", left: "16px", zIndex: 50, width: "40px", height: "40px", alignItems: "center", justifyContent: "center", background: "#161616", border: "0.5px solid rgba(255,255,255,0.12)", borderRadius: "10px", color: "white", fontSize: "17px", cursor: "pointer" }}
+      >
+        ☰
+      </button>
+
+      <div className={`pe-overlay${sidebarOpen ? " open" : ""}`} onClick={() => setSidebarOpen(false)} />
+
       <div style={{ display: "flex" }}>
 
         {/* Sidebar */}
-        <aside style={{ width: "240px", background: "#161616", minHeight: "100vh", padding: "32px 20px", position: "fixed", top: 0, left: 0, borderRight: "0.5px solid rgba(255,255,255,0.07)", display: "flex", flexDirection: "column" }}>
+        <aside className={`pe-sidebar${sidebarOpen ? " open" : ""}`} style={{ width: "240px", background: "#161616", height: "100vh", padding: "32px 20px", position: "fixed", top: 0, left: 0, zIndex: 65, borderRight: "0.5px solid rgba(255,255,255,0.07)", display: "flex", flexDirection: "column", overflowY: "auto" }}>
           <div style={{ fontFamily: F.d, fontSize: "1.3rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "2px", marginBottom: "40px" }}>
             <span style={{ fontStyle: "italic", color: "var(--color-red)" }}>Artist</span> RADR
           </div>
@@ -169,35 +208,52 @@ export default function PostEditor() {
               { label: "New Post",  icon: "+", to: "/admin/new" },
               { label: "View Site", icon: "↗", to: "/" },
             ].map(({ label, icon, to }) => (
-              <Link key={label} to={to} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 14px", borderRadius: "10px", marginBottom: "4px", textDecoration: "none", color: "rgba(255,255,255,0.65)", fontSize: "13.5px", fontWeight: 500 }}>
+              <button
+                key={label}
+                onClick={() => {
+                  setSidebarOpen(false);
+                  navigate(to);
+                }}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "10px",
+                  padding: "10px 14px",
+                  borderRadius: "10px",
+                  marginBottom: "4px",
+                  textDecoration: "none",
+                  color: "rgba(255,255,255,0.65)",
+                  fontSize: "13.5px",
+                  fontWeight: 500,
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  width: "100%",
+                  textAlign: "left",
+                  fontFamily: F.b,
+                  transition: "color 150ms ease",
+                }}
+                onMouseEnter={(e) => e.target.style.color = "white"}
+                onMouseLeave={(e) => e.target.style.color = "rgba(255,255,255,0.65)"}
+              >
                 <span>{icon}</span>{label}
-              </Link>
+              </button>
             ))}
           </nav>
         </aside>
 
         {/* Main */}
-        <main style={{ marginLeft: "240px", flex: 1, padding: "40px", maxWidth: "900px" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "32px", flexWrap: "wrap", gap: "16px" }}>
-            <div>
-              <div style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "2px", textTransform: "uppercase", color: "var(--color-red)", marginBottom: "6px" }}>Admin</div>
-              <h1 style={{ fontFamily: F.d, fontSize: "2rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "1px", margin: 0 }}>
-                {isEdit ? "Edit Post" : "New Post"}
-              </h1>
-            </div>
-            <div style={{ display: "flex", gap: "10px" }}>
-              <button onClick={() => save("draft")} disabled={saving} style={{ padding: "10px 20px", borderRadius: "10px", background: "rgba(255,255,255,0.07)", border: "0.5px solid rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.7)", fontFamily: F.b, fontSize: "13px", fontWeight: 600, cursor: "pointer" }}>
-                Save Draft
-              </button>
-              <button onClick={() => save("published")} disabled={saving} style={{ padding: "10px 20px", borderRadius: "10px", background: "var(--color-red)", border: "none", color: "white", fontFamily: F.b, fontSize: "13px", fontWeight: 600, cursor: "pointer" }}>
-                {saving ? `Saving${uploadProgress > 0 ? ` ${uploadProgress}%` : "…"}` : "Publish"}
-              </button>
-            </div>
+        <main className="pe-main" style={{ marginLeft: "240px", flex: 1, padding: "40px", maxWidth: "900px", minWidth: 0 }}>
+          <div style={{ marginBottom: "32px" }}>
+            <div style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "2px", textTransform: "uppercase", color: "var(--color-red)", marginBottom: "6px" }}>Admin</div>
+            <h1 style={{ fontFamily: F.d, fontSize: "2rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "1px", margin: 0 }}>
+              {isEdit ? "Edit Post" : "New Post"}
+            </h1>
           </div>
 
           {error && <div style={{ background: "rgba(255,50,50,0.1)", border: "0.5px solid rgba(255,50,50,0.3)", borderRadius: "10px", padding: "12px 16px", color: "#ff6b6b", fontSize: "13px", marginBottom: "24px" }}>{error}</div>}
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: "24px", alignItems: "start" }}>
+          <div className="pe-grid">
 
             {/* Left — main content */}
             <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
@@ -208,24 +264,15 @@ export default function PostEditor() {
                 <input name="title" value={form.title} onChange={handle} placeholder="Post title…" style={{ ...inputStyle, fontSize: "18px", fontFamily: F.d, fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px" }} />
               </div>
 
-              {/* Slug */}
+              {/* Post Description */}
               <div>
-                <label style={{ display: "block", fontSize: "11px", fontWeight: 600, letterSpacing: "1px", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: "8px" }}>Slug *</label>
-                <div style={{ display: "flex", alignItems: "center", background: "#1C1C1C", border: "0.5px solid rgba(255,255,255,0.1)", borderRadius: "10px", overflow: "hidden" }}>
-                  <span style={{ padding: "12px 14px", color: "rgba(255,255,255,0.3)", fontSize: "13px", borderRight: "0.5px solid rgba(255,255,255,0.08)", whiteSpace: "nowrap" }}>artistradr.com/blog/</span>
-                  <input name="slug" value={form.slug} onChange={handle} placeholder="post-slug" style={{ ...inputStyle, border: "none", borderRadius: 0, flex: 1 }} />
-                </div>
-              </div>
-
-              {/* Excerpt */}
-              <div>
-                <label style={{ display: "block", fontSize: "11px", fontWeight: 600, letterSpacing: "1px", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: "8px" }}>Excerpt</label>
+                <label style={{ display: "block", fontSize: "11px", fontWeight: 600, letterSpacing: "1px", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: "8px" }}>Post Description</label>
                 <textarea name="excerpt" value={form.excerpt} onChange={handle} placeholder="Short description shown in listings…" rows={3} style={{ ...inputStyle, resize: "vertical" }} />
               </div>
 
-              {/* Content */}
+              {/* Blog Content */}
               <div>
-                <label style={{ display: "block", fontSize: "11px", fontWeight: 600, letterSpacing: "1px", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: "8px" }}>Content *</label>
+                <label style={{ display: "block", fontSize: "11px", fontWeight: 600, letterSpacing: "1px", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: "8px" }}>Blog Content *</label>
                 <textarea name="content" value={form.content} onChange={handle} placeholder="Write your post content here. HTML is supported." rows={18} style={{ ...inputStyle, resize: "vertical", lineHeight: 1.7 }} />
                 <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.25)", marginTop: "6px" }}>HTML supported — &lt;h2&gt;, &lt;p&gt;, &lt;strong&gt;, &lt;em&gt;, &lt;ul&gt;, &lt;img&gt;, &lt;a&gt;</div>
               </div>
@@ -269,6 +316,16 @@ export default function PostEditor() {
                 </select>
               </div>
             </div>
+          </div>
+
+          {/* Save / Publish — bottom of form */}
+          <div className="pe-actions" style={{ marginTop: "32px", paddingTop: "24px", borderTop: "0.5px solid rgba(255,255,255,0.08)", justifyContent: "flex-end" }}>
+            <button onClick={() => save("draft")} disabled={saving} style={{ padding: "13px 24px", borderRadius: "10px", background: "rgba(255,255,255,0.07)", border: "0.5px solid rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.7)", fontFamily: F.b, fontSize: "13.5px", fontWeight: 600, cursor: saving ? "default" : "pointer", opacity: saving ? 0.6 : 1 }}>
+              Save Draft
+            </button>
+            <button onClick={() => save("published")} disabled={saving} style={{ padding: "13px 24px", borderRadius: "10px", background: "var(--color-red)", border: "none", color: "white", fontFamily: F.b, fontSize: "13.5px", fontWeight: 600, cursor: saving ? "default" : "pointer", opacity: saving ? 0.7 : 1, boxShadow: "0 4px 16px rgba(217,79,43,0.3)" }}>
+              {saving ? `Saving${uploadProgress > 0 ? ` ${uploadProgress}%` : "…"}` : "Publish"}
+            </button>
           </div>
         </main>
       </div>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "../../../supabaseClient";
 import Navbar from "layouts/Navbar";
@@ -9,19 +9,38 @@ const F = { d: "var(--font-display)", b: "var(--font-body)" };
 
 // `value` must match the slugified `category` stored on each post row
 // (see mapCategory() in scripts/migrate-wp-to-supabase.mjs and PostEditor.jsx's dropdown).
+// Keep this list in sync with:
+//  - public.posts_category_check (DB constraint, Supabase project rjivkemajotafjvtalol)
+//  - PostEditor.jsx's CATEGORIES
+//  - AdminDashboard.jsx's POST_CATEGORIES
 const CATEGORIES = [
   { label: "All",          value: "all" },
   { label: "New Release",  value: "new-release" },
   { label: "On Your RADR", value: "on-your-radr" },
   { label: "Spotlights",   value: "spotlights" },
   { label: "Playlist",     value: "playlist" },
+  { label: "Single",       value: "single" },
+  { label: "Album",        value: "album" },
+  { label: "EP",           value: "ep" },
+  { label: "News",         value: "news" },
+  { label: "Updates",      value: "updates" },
+  { label: "Trending",     value: "trending" },
 ];
+
+// A post only counts as "actively" pinned while featured_until is in the
+// future. Once it lapses, this returns false and the post stops being
+// eligible as the hero on the next render — no cron job, no admin action.
+function isActivelyFeatured(post) {
+  return Boolean(post.featured_slot) && Boolean(post.featured_until) && new Date(post.featured_until) > new Date();
+}
 
 function BlogPage() {
   const [posts, setPosts]     = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter]   = useState("all");
   const [search, setSearch]   = useState("");
+  const [catOpen, setCatOpen] = useState(false);
+  const catDropdownRef = useRef(null);
 
   useEffect(() => {
     supabase
@@ -39,6 +58,22 @@ function BlogPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  // Close mobile category dropdown on outside click/tap.
+  useEffect(() => {
+    if (!catOpen) return;
+    const handleOutside = (e) => {
+      if (catDropdownRef.current && !catDropdownRef.current.contains(e.target)) {
+        setCatOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleOutside);
+    document.addEventListener("touchstart", handleOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleOutside);
+      document.removeEventListener("touchstart", handleOutside);
+    };
+  }, [catOpen]);
+
   const filtered = posts.filter((p) => {
     const matchSearch = search === "" ||
       p.title.toLowerCase().includes(search.toLowerCase());
@@ -46,9 +81,18 @@ function BlogPage() {
     return matchSearch && matchCat;
   });
 
-  // Featured = first post
-  const featured = filtered[0];
-  const rest     = filtered.slice(1);
+  // Hero selection: on the default unfiltered/unsearched view, prefer the
+  // active pin with the lowest slot number. Otherwise (no active pin, or
+  // the user is filtering/searching) fall back to the newest matching post
+  // — same as the pre-pinning behavior. Slots 2/3, if pinned, get no
+  // special treatment; they just sit wherever their publish date puts them
+  // in the regular grid below.
+  const isDefaultView = filter === "all" && search === "";
+  const activePins = isDefaultView
+    ? posts.filter(isActivelyFeatured).sort((a, b) => a.featured_slot - b.featured_slot)
+    : [];
+  const featured = activePins[0] || filtered[0];
+  const rest = filtered.filter((p) => p.id !== featured?.id);
 
   const categoryLabel = (value) =>
     CATEGORIES.find((c) => c.value === value)?.label || value || "";
@@ -121,6 +165,10 @@ function BlogPage() {
         .bp-featured:hover { transform: translateY(-3px); box-shadow: 0 16px 48px rgba(0,0,0,0.10); }
         .bp-featured:hover .bp-read-more { color: #D94F2B; }
 
+        /* Mobile category dropdown (hidden on desktop) */
+        .bp-cat-dropdown { display: none; }
+        .bp-pills-desktop { display: flex; gap: 8px; flex-wrap: wrap; }
+
         @media (max-width: 860px) {
           .bp-layout { grid-template-columns: 1fr !important; }
           .bp-sidebar { position: static !important; }
@@ -129,7 +177,29 @@ function BlogPage() {
         }
         @media (max-width: 600px) {
           .bp-grid { grid-template-columns: 1fr !important; }
-          .bp-filter-row { flex-wrap: wrap; }
+          .bp-filter-row { flex-wrap: nowrap !important; }
+          .bp-pills-desktop { display: none !important; }
+          .bp-cat-dropdown { display: block !important; position: relative; flex-shrink: 0; }
+          .bp-cat-dropdown-btn {
+            display: flex; align-items: center; gap: 6px;
+            padding: 7px 14px; border-radius: 100px;
+            background: #D94F2B; border: 0.5px solid #D94F2B; color: white;
+            font-family: var(--font-body); font-size: 12px; font-weight: 600;
+            letter-spacing: 0.5px; cursor: pointer; white-space: nowrap;
+          }
+          .bp-cat-dropdown-menu {
+            position: absolute; top: calc(100% + 8px); left: 0; z-index: 20;
+            background: white; border-radius: 12px; border: 0.5px solid rgba(0,0,0,0.08);
+            box-shadow: 0 12px 32px rgba(0,0,0,0.14);
+            min-width: 180px; max-height: 280px; overflow-y: auto; padding: 6px;
+          }
+          .bp-cat-dropdown-item {
+            display: block; width: 100%; text-align: left;
+            padding: 9px 12px; border-radius: 8px; border: none; background: none;
+            font-family: var(--font-body); font-size: 13px; color: #444; cursor: pointer;
+          }
+          .bp-cat-dropdown-item:hover { background: #f7f6f3; }
+          .bp-cat-dropdown-item.active { color: #D94F2B; font-weight: 700; background: rgba(217,79,43,0.08); }
         }
       `}</style>
 
@@ -158,7 +228,9 @@ function BlogPage() {
 
           {/* ── Filter + Search row ── */}
           <div className="bp-filter-row" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", marginBottom: "36px", flexWrap: "wrap" }}>
-            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+
+            {/* Desktop pill row */}
+            <div className="bp-pills-desktop">
               {CATEGORIES.map(({ label, value }) => (
                 <button
                   key={value}
@@ -169,8 +241,44 @@ function BlogPage() {
                 </button>
               ))}
             </div>
+
+            {/* Mobile category dropdown — single pill, opens a list */}
+            <div className="bp-cat-dropdown" ref={catDropdownRef}>
+              <button
+                type="button"
+                className="bp-cat-dropdown-btn"
+                onClick={() => setCatOpen((o) => !o)}
+                aria-haspopup="listbox"
+                aria-expanded={catOpen}
+              >
+                {categoryLabel(filter)}
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ transform: catOpen ? "rotate(180deg)" : "none", transition: "transform 150ms ease" }}>
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </button>
+              {catOpen && (
+                <div className="bp-cat-dropdown-menu" role="listbox">
+                  {CATEGORIES.map(({ label, value }) => (
+                    <button
+                      key={value}
+                      type="button"
+                      role="option"
+                      aria-selected={filter === value}
+                      className={`bp-cat-dropdown-item${filter === value ? " active" : ""}`}
+                      onClick={() => {
+                        setFilter(value);
+                        setCatOpen(false);
+                      }}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
             {/* Search */}
-            <div style={{ position: "relative", minWidth: "200px" }}>
+            <div style={{ position: "relative", minWidth: "200px", flex: "1 1 auto" }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2" strokeLinecap="round" style={{ position: "absolute", left: "13px", top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}>
                 <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
               </svg>
@@ -202,7 +310,9 @@ function BlogPage() {
                 </div>
               ) : (
                 <>
-                  {/* Featured post — large card */}
+                  {/* Featured post — large card. Pulls the lowest-numbered
+                      active pin on the default view; otherwise falls back
+                      to the newest matching post. */}
                   {featured && (
                     <Link to={`/blog/${featured.slug}`} className="bp-featured">
                       <div className="bp-featured-img" style={{ height: "360px", overflow: "hidden", position: "relative" }}>
