@@ -9,6 +9,7 @@ function Navbar({ routes = [], action = null }) {
   const [activeDropdown, setActiveDropdown] = useState("");
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [showSearch, setShowSearch] = useState(true);
   const [scrolled, setScrolled] = useState(false);
   const closeTimer = useRef(null);
   const location = useLocation();
@@ -17,8 +18,12 @@ function Navbar({ routes = [], action = null }) {
 
   useEffect(() => {
     const checkSize = () => {
-      setIsMobile(window.innerWidth < 1200);
-      if (window.innerWidth >= 1200) setMobileOpen(false);
+      const w = window.innerWidth;
+      setIsMobile(w < 1200);
+      // Decorative search hides earlier than the mobile breakpoint so it
+      // never collides with nav links + CTA + avatar on medium desktops.
+      setShowSearch(w >= 1300);
+      if (w >= 1200) setMobileOpen(false);
     };
     const checkScroll = () => setScrolled(window.scrollY > 12);
     window.addEventListener("resize", checkSize);
@@ -60,7 +65,7 @@ function Navbar({ routes = [], action = null }) {
   const initial = user ? (user.displayName || user.email || "U")[0].toUpperCase() : "U";
 
   // Build desktop nav routes — when logged in, replace Get Started collapse
-  // with only: Playlist Submission, Contact Us, Sign Out (as button)
+  // with only: Playlist Submission, My Campaigns, Contact Us, Sign Out (as button)
   const desktopRoutes = routes.map((route) => {
     if (route.name === "Get Started") {
       return {
@@ -68,6 +73,7 @@ function Navbar({ routes = [], action = null }) {
         collapse: user
           ? [
               { name: "Playlist Submission", description: "Submit your track for playlists", route: "/submit-track" },
+              { name: "My Campaigns", description: "Track and manage your active promotion campaigns", route: "/campaigns" },
               { name: "Contact Us", description: "Get in touch with our team", route: "/contact-us" },
               { name: "__signout__" }, // special marker
             ]
@@ -99,143 +105,246 @@ function Navbar({ routes = [], action = null }) {
   return (
     <>
       <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        .radr-navbar {
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        /* ── Nav links ── */
         .radr-nav-link {
-          position: relative; display: inline-flex; align-items: center; gap: 4px;
-          padding: 7px 13px; border-radius: 9px; text-decoration: none; cursor: pointer;
-          color: #1a1a1a; font-size: 13.5px; font-weight: 500; letter-spacing: -0.15px;
-          transition: background 180ms ease, color 180ms ease;
+          position: relative; display: inline-flex; align-items: center; gap: 5px;
+          padding: 9px 15px; border-radius: 999px; text-decoration: none; cursor: pointer;
+          color: rgba(245,245,245,0.82); font-size: 13.5px; font-weight: 500; letter-spacing: -0.1px;
+          transition: background 220ms ease, color 220ms ease;
           white-space: nowrap; user-select: none; background: transparent; border: none; font-family: inherit;
         }
-        .radr-nav-link:hover { background: rgba(0,0,0,0.055); color: #000; }
+        .radr-nav-link:hover { background: rgba(255,255,255,0.06); color: #F5F5F5; }
+        .radr-nav-link:focus-visible { outline: 2px solid #FF542E; outline-offset: 2px; }
         .radr-nav-link::after {
-          content: ''; position: absolute; bottom: 3px; left: 13px; right: 13px;
-          height: 1.5px; background: #D94F2B; border-radius: 2px;
-          transform: scaleX(0); transition: transform 200ms cubic-bezier(0.4,0,0.2,1); transform-origin: center;
+          content: ''; position: absolute; bottom: 1px; left: 16px; right: 16px;
+          height: 2px; border-radius: 2px;
+          background: #FF542E;
+          box-shadow: 0 0 10px 1px rgba(255,84,46,0.55);
+          transform: scaleX(0); transition: transform 220ms cubic-bezier(0.4,0,0.2,1); transform-origin: center;
         }
+        .radr-nav-link.active { color: #F5F5F5; }
         .radr-nav-link.active::after { transform: scaleX(1); }
+        .radr-nav-caret { opacity: 0.5; transition: transform 220ms ease; }
+        .radr-nav-link:hover .radr-nav-caret { opacity: 0.85; }
 
-        .radr-cta {
-          display: inline-flex; align-items: center; gap: 6px; margin-left: 10px;
-          background: #D94F2B; color: #fff !important; padding: 8px 16px; border-radius: 10px;
-          font-size: 13px; font-weight: 600; text-decoration: none; letter-spacing: -0.2px;
-          transition: background 180ms ease, transform 120ms ease; white-space: nowrap;
+        /* ── Search (decorative) ── */
+        .radr-search {
+          display: flex; align-items: center; gap: 8px;
+          background: rgba(255,255,255,0.05);
+          border: 1px solid rgba(255,255,255,0.10);
+          border-radius: 999px; padding: 8px 14px 8px 12px;
+          min-width: 230px; max-width: 260px;
+          transition: background 220ms ease, border-color 220ms ease;
         }
-        .radr-cta:hover { background: #B83E1F; transform: translateY(-1px); }
+        .radr-search:focus-within { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.18); }
+        .radr-search svg { flex-shrink: 0; color: rgba(255,255,255,0.5); }
+        .radr-search input {
+          background: transparent; border: none; outline: none; width: 100%;
+          font-family: inherit; font-size: 12.5px; font-weight: 400; letter-spacing: -0.1px;
+          color: #F5F5F5;
+        }
+        .radr-search input::placeholder { color: rgba(255,255,255,0.42); }
 
+        /* ── CTA ── */
+        .radr-cta {
+          display: inline-flex; align-items: center; gap: 7px; margin-left: 4px;
+          background: linear-gradient(135deg, #FF542E 0%, #D94F2B 100%);
+          color: #fff !important; padding: 9px 18px; border-radius: 999px;
+          font-size: 13px; font-weight: 600; text-decoration: none; letter-spacing: -0.1px;
+          box-shadow: 0 4px 18px rgba(255,84,46,0.30);
+          transition: box-shadow 220ms ease, transform 180ms ease; white-space: nowrap; border: none; cursor: pointer;
+        }
+        .radr-cta:hover { transform: translateY(-1px); box-shadow: 0 6px 22px rgba(255,84,46,0.42); }
+        .radr-cta:focus-visible { outline: 2px solid #FF542E; outline-offset: 2px; }
+        .radr-cta svg { transition: transform 180ms ease; }
+        .radr-cta:hover svg { transform: translateX(2px); }
+
+        .radr-signin-link {
+          display: inline-flex; align-items: center; padding: 9px 15px; border-radius: 999px;
+          font-size: 13.5px; font-weight: 500; color: rgba(245,245,245,0.82); text-decoration: none;
+          margin-left: 2px; transition: background 220ms ease, color 220ms ease; font-family: inherit;
+        }
+        .radr-signin-link:hover { background: rgba(255,255,255,0.06); color: #F5F5F5; }
+
+        /* ── Dropdown / mega-menu ── */
         .radr-dropdown {
-          position: fixed; z-index: 300; background: #fff;
-          border: 0.5px solid rgba(0,0,0,0.1); border-radius: 13px; padding: 6px;
-          min-width: 230px; box-shadow: 0 8px 30px rgba(0,0,0,0.1), 0 2px 8px rgba(0,0,0,0.06);
-          animation: radrFadeIn 160ms ease forwards;
+          position: fixed; z-index: 300;
+          background: rgba(15,15,15,0.94);
+          backdrop-filter: blur(24px) saturate(150%);
+          -webkit-backdrop-filter: blur(24px) saturate(150%);
+          border: 1px solid rgba(255,255,255,0.10); border-radius: 18px; padding: 8px;
+          min-width: 260px; box-shadow: 0 20px 50px rgba(0,0,0,0.45);
+          animation: radrFadeIn 200ms cubic-bezier(0.4,0,0.2,1) forwards;
         }
         @keyframes radrFadeIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
 
         .radr-dropdown-item {
-          display: flex; align-items: flex-start; gap: 10px; padding: 9px 12px;
-          border-radius: 8px; text-decoration: none; color: #1a1a1a;
-          font-size: 13.5px; font-weight: 450; transition: background 150ms ease;
-          cursor: pointer; width: 100%; box-sizing: border-box; background: transparent; border: none; font-family: inherit; text-align: left;
+          display: flex; flex-direction: column; gap: 2px; padding: 10px 14px;
+          border-radius: 12px; text-decoration: none;
+          font-size: 13.5px; font-weight: 500; transition: background 180ms ease;
+          cursor: pointer; width: 100%; box-sizing: border-box; background: transparent; border: none;
+          font-family: inherit; text-align: left; color: rgba(245,245,245,0.88);
         }
-        .radr-dropdown-item:hover { background: rgba(217,79,43,0.06); }
-        .radr-dropdown-item--danger { color: #D94F2B !important; }
-        .radr-dropdown-item--danger:hover { background: rgba(217,79,43,0.08) !important; }
-        .radr-dropdown-icon {
-          width: 30px; height: 30px; border-radius: 7px; background: #f0f0f0;
-          display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px;
-        }
-        .radr-dropdown-item:hover .radr-dropdown-icon { background: rgba(217,79,43,0.12); }
-        .radr-dropdown-item--danger .radr-dropdown-icon { background: rgba(217,79,43,0.1); }
+        .radr-dropdown-item:hover { background: rgba(255,84,46,0.10); color: #F5F5F5; }
+        .radr-dropdown-item:focus-visible { outline: 2px solid #FF542E; outline-offset: -2px; }
+        .radr-dropdown-item-desc { font-size: 11.5px; font-weight: 400; color: rgba(255,255,255,0.48); }
+        .radr-dropdown-item:hover .radr-dropdown-item-desc { color: rgba(255,255,255,0.62); }
 
-        .radr-dropdown-divider { height: 0.5px; background: rgba(0,0,0,0.07); margin: 4px 8px; }
+        .radr-dropdown-item--danger { color: #FF8A6B !important; }
+        .radr-dropdown-item--danger:hover { background: rgba(255,84,46,0.12) !important; }
 
+        .radr-dropdown-divider { height: 1px; background: rgba(255,255,255,0.08); margin: 6px 8px; }
+
+        /* ── Mobile ── */
         .radr-mobile-item {
-          display: flex; align-items: center; padding: 10px 14px; border-radius: 10px;
-          text-decoration: none; color: #111; font-size: 14px; font-weight: 500;
-          transition: background 140ms ease; cursor: pointer;
+          display: flex; align-items: center; padding: 13px 16px; border-radius: 12px;
+          text-decoration: none; color: #F5F5F5; font-size: 15px; font-weight: 500;
+          transition: background 180ms ease; cursor: pointer;
         }
-        .radr-mobile-item:hover { background: rgba(0,0,0,0.05); }
+        .radr-mobile-item:hover { background: rgba(255,255,255,0.06); }
         .radr-mobile-child {
-          display: flex; align-items: center; padding: 8px 14px 8px 28px; border-radius: 10px;
-          text-decoration: none; color: #555; font-size: 13px; transition: background 140ms ease;
+          display: flex; align-items: center; padding: 11px 16px 11px 30px; border-radius: 12px;
+          text-decoration: none; color: rgba(255,255,255,0.6); font-size: 13.5px; transition: background 180ms ease;
         }
-        .radr-mobile-child:hover { background: rgba(0,0,0,0.05); color: #111; }
+        .radr-mobile-child:hover { background: rgba(255,255,255,0.06); color: #F5F5F5; }
 
         .radr-hamburger {
           display: flex; align-items: center; justify-content: center;
-          width: 36px; height: 36px; border-radius: 9px; cursor: pointer; color: #111;
-          transition: background 140ms ease; border: 0.5px solid rgba(0,0,0,0.12); background: transparent;
+          width: 38px; height: 38px; border-radius: 999px; cursor: pointer; color: #F5F5F5;
+          transition: background 180ms ease; border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.04);
         }
-        .radr-hamburger:hover { background: rgba(0,0,0,0.05); }
+        .radr-hamburger:hover { background: rgba(255,255,255,0.09); }
+        .radr-hamburger:focus-visible { outline: 2px solid #FF542E; outline-offset: 2px; }
 
-        .radr-mobile-collapse { overflow: hidden; max-height: 0; transition: max-height 260ms cubic-bezier(0.4,0,0.2,1); }
-        .radr-mobile-collapse.open { max-height: 900px; }
+        .radr-mobile-panel {
+          overflow: hidden; max-height: 0;
+          transition: max-height 320ms cubic-bezier(0.4,0,0.2,1);
+        }
+        .radr-mobile-panel.open { max-height: 900px; }
 
+        .radr-mobile-divider { height: 1px; background: rgba(255,255,255,0.08); margin: 10px 10px; }
+
+        /* ── Avatar ── */
         .radr-avatar-btn {
-          width: 34px; height: 34px; border-radius: 50%;
-          background: linear-gradient(135deg, #D94F2B 0%, #B83E1F 100%);
-          color: white !important; display: inline-flex; align-items: center; justify-content: center;
-          font-size: 13px; font-weight: 800; cursor: pointer; flex-shrink: 0;
-          border: 2px solid rgba(217,79,43,0.4);
-          box-shadow: 0 2px 10px rgba(217,79,43,0.45);
-          text-decoration: none; transition: transform 150ms ease, box-shadow 150ms ease;
+          width: 36px; height: 36px; border-radius: 50%;
+          background: #16181A;
+          color: #F5F5F5 !important; display: inline-flex; align-items: center; justify-content: center;
+          font-size: 13px; font-weight: 700; cursor: pointer; flex-shrink: 0;
+          border: 1.5px solid rgba(255,84,46,0.55);
+          box-shadow: 0 0 14px rgba(255,84,46,0.25);
+          text-decoration: none; transition: transform 180ms ease, box-shadow 180ms ease;
         }
-        .radr-avatar-btn:hover { transform: scale(1.08); box-shadow: 0 4px 16px rgba(217,79,43,0.55); }
+        .radr-avatar-btn:hover { transform: scale(1.03); box-shadow: 0 0 18px rgba(255,84,46,0.4); }
+        .radr-avatar-btn:focus-visible { outline: 2px solid #FF542E; outline-offset: 2px; }
       `}</style>
 
-      <nav style={{
-        position: "fixed", top: scrolled ? "0.6rem" : "1rem", left: "50%",
-        transform: "translateX(-50%)",
-        width: scrolled ? "calc(100% - 2rem)" : "calc(100% - 3rem)",
-        maxWidth: "1180px", zIndex: 200,
-        background: scrolled ? "rgba(255,255,255,0.96)" : "rgba(255,255,255,0.85)",
-        backdropFilter: "saturate(180%) blur(24px)", WebkitBackdropFilter: "saturate(180%) blur(24px)",
-        borderRadius: "14px", border: "0.5px solid rgba(0,0,0,0.08)",
-        boxShadow: scrolled ? "0 4px 24px rgba(0,0,0,0.10)" : "0 2px 12px rgba(0,0,0,0.06)",
-        padding: "0 1.25rem", transition: "all 300ms cubic-bezier(0.4,0,0.2,1)",
-      }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", height: "56px" }}>
-
+      <nav
+        className="radr-navbar"
+        style={{
+          position: "fixed",
+          top: scrolled ? "16px" : "24px",
+          left: "50%",
+          transform: "translateX(-50%)",
+          width: scrolled ? "calc(100% - 2rem)" : "calc(100% - 3rem)",
+          maxWidth: "1180px",
+          zIndex: 200,
+          background: scrolled ? "rgba(7,9,10,0.88)" : "rgba(10,12,14,0.72)",
+          backdropFilter: scrolled ? "blur(28px) saturate(160%)" : "blur(24px) saturate(150%)",
+          WebkitBackdropFilter: scrolled ? "blur(28px) saturate(160%)" : "blur(24px) saturate(150%)",
+          borderRadius: "999px",
+          border: "1px solid rgba(255,255,255,0.10)",
+          boxShadow: scrolled ? "0 24px 70px rgba(0,0,0,0.42)" : "0 20px 60px rgba(0,0,0,0.30)",
+          padding: "0 16px 0 22px",
+          transition: "all 280ms cubic-bezier(0.4,0,0.2,1)",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            height: scrolled ? "64px" : "72px",
+            transition: "height 280ms cubic-bezier(0.4,0,0.2,1)",
+            gap: "18px",
+          }}
+        >
           {/* Brand */}
-          <Link to="/" style={{ textDecoration: "none", display: "flex", alignItems: "center" }}>
-            <img src={radrLogo} alt="Artist RADR" style={{ height: "32px", width: "auto", display: "block" }} />
+          <Link to="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", flexShrink: 0 }}>
+            <img src={radrLogo} alt="Artist RADR" style={{ height: "28px", width: "auto", display: "block" }} />
           </Link>
 
           {/* Desktop nav */}
           {!isMobile && (
-            <div style={{ display: "flex", alignItems: "center", gap: "2px" }}>
-              {desktopRoutes.map(({ name, href, route, collapse }) => {
-                const isActive = route && location.pathname === route;
-                if (href) return <a key={name} href={href} target="_blank" rel="noreferrer" className="radr-nav-link">{name}</a>;
-                if (collapse) return (
-                  <span key={name} className="radr-nav-link"
-                    onMouseEnter={(e) => handleDropdownEnter(e, name)}
-                    onMouseLeave={handleDropdownLeave}>
-                    {name}
-                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ opacity: 0.45, marginLeft: "1px" }}>
-                      <path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </span>
-                );
-                return <Link key={name} to={route || "/"} className={`radr-nav-link${isActive ? " active" : ""}`}>{name}</Link>;
-              })}
+            <div style={{ display: "flex", alignItems: "center", gap: "18px", flex: 1, justifyContent: "flex-end" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "2px" }}>
+                <Link
+                  to="/blog"
+                  className={`radr-nav-link${location.pathname === "/blog" ? " active" : ""}`}
+                >
+                  RADR
+                </Link>
+                {desktopRoutes.map(({ name, href, route, collapse }) => {
+                  const isActive = route && location.pathname === route;
+                  if (href) return <a key={name} href={href} target="_blank" rel="noreferrer" className="radr-nav-link">{name}</a>;
+                  if (collapse) return (
+                    <span key={name} className="radr-nav-link"
+                      onMouseEnter={(e) => handleDropdownEnter(e, name)}
+                      onMouseLeave={handleDropdownLeave}>
+                      {name}
+                      <svg className="radr-nav-caret" width="10" height="10" viewBox="0 0 10 10" fill="none">
+                        <path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </span>
+                  );
+                  return <Link key={name} to={route || "/"} className={`radr-nav-link${isActive ? " active" : ""}`}>{name}</Link>;
+                })}
+              </div>
+
+              {/* Search — decorative only, no backend wired up */}
+              {showSearch && (
+                <div className="radr-search">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                    <circle cx="11" cy="11" r="7" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                  </svg>
+                  <input type="text" placeholder="Search articles, artists, topics…" aria-label="Search" />
+                </div>
+              )}
 
               {/* Auth area */}
               {user ? (
-                <Link to="/profile" className="radr-avatar-btn" title={user.displayName || user.email} style={{ marginLeft: "10px" }}>
+                <Link to="/profile" className="radr-avatar-btn" title={user.displayName || user.email}>
                   {initial}
                 </Link>
               ) : (
                 <>
-                  <Link to="/sign-in"
-                    style={{ display: "inline-flex", alignItems: "center", padding: "7px 14px", borderRadius: "9px", fontSize: "13.5px", fontWeight: 500, color: "#1a1a1a", textDecoration: "none", marginLeft: "4px", transition: "background 180ms ease" }}
-                    onMouseEnter={(e) => e.currentTarget.style.background = "rgba(0,0,0,0.055)"}
-                    onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}>
-                    Sign In
-                  </Link>
+                  <Link to="/sign-in" className="radr-signin-link">Sign In</Link>
                   {action && (
                     action.type === "internal"
-                      ? <Link to={action.route || "/"} className="radr-cta">{action.label}</Link>
-                      : <a href={action.route} target="_blank" rel="noreferrer" className="radr-cta">{action.label}</a>
+                      ? (
+                        <Link to={action.route || "/"} className="radr-cta">
+                          {action.label}
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                            <polyline points="12 5 19 12 12 19" />
+                          </svg>
+                        </Link>
+                      )
+                      : (
+                        <a href={action.route} target="_blank" rel="noreferrer" className="radr-cta">
+                          {action.label}
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                            <polyline points="12 5 19 12 12 19" />
+                          </svg>
+                        </a>
+                      )
                   )}
                 </>
               )}
@@ -248,7 +357,7 @@ function Navbar({ routes = [], action = null }) {
               {user && (
                 <Link to="/profile" className="radr-avatar-btn" title="Profile">{initial}</Link>
               )}
-              <button className="radr-hamburger" onClick={() => setMobileOpen((p) => !p)} aria-label="Menu">
+              <button className="radr-hamburger" onClick={() => setMobileOpen((p) => !p)} aria-label="Menu" aria-expanded={mobileOpen}>
                 {mobileOpen
                   ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                   : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><line x1="3" y1="7" x2="21" y2="7"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="17" x2="21" y2="17"/></svg>
@@ -257,90 +366,95 @@ function Navbar({ routes = [], action = null }) {
             </div>
           )}
         </div>
+      </nav>
 
-        {/* Mobile menu */}
-        {isMobile && (
-          <div className={`radr-mobile-collapse${mobileOpen ? " open" : ""}`}>
-            <div style={{ paddingBottom: "10px" }}>
-              {mobileRoutes.map(({ name, route, href, collapse }) => (
-                <MobileNavItem key={name} name={name} route={route} href={href} collapse={collapse} onClose={() => setMobileOpen(false)} />
-              ))}
+      {/* Mobile menu — separate floating glass panel below the navbar */}
+      {isMobile && (
+        <div
+          className={`radr-mobile-panel${mobileOpen ? " open" : ""}`}
+          style={{
+            position: "fixed",
+            top: scrolled ? "84px" : "100px",
+            left: "50%",
+            transform: "translateX(-50%)",
+            width: "calc(100% - 32px)",
+            maxWidth: "480px",
+            zIndex: 199,
+            background: mobileOpen ? "rgba(10,12,14,0.92)" : "transparent",
+            backdropFilter: mobileOpen ? "blur(24px) saturate(150%)" : "none",
+            WebkitBackdropFilter: mobileOpen ? "blur(24px) saturate(150%)" : "none",
+            border: mobileOpen ? "1px solid rgba(255,255,255,0.10)" : "1px solid transparent",
+            borderRadius: "24px",
+            boxShadow: mobileOpen ? "0 24px 60px rgba(0,0,0,0.45)" : "none",
+            pointerEvents: mobileOpen ? "auto" : "none",
+            transition: "top 280ms cubic-bezier(0.4,0,0.2,1)",
+          }}
+        >
+          <div style={{ padding: "10px" }}>
+            <Link to="/blog" className="radr-mobile-item" onClick={() => setMobileOpen(false)}>RADR</Link>
+            {mobileRoutes.map(({ name, route, href, collapse }) => (
+              <MobileNavItem key={name} name={name} route={route} href={href} collapse={collapse} onClose={() => setMobileOpen(false)} />
+            ))}
 
-              {user ? (
-                <div style={{ margin: "8px 6px 4px", display: "flex", flexDirection: "column", gap: "8px" }}>
-                  {/* My Profile row */}
-                  <Link to="/profile" onClick={() => setMobileOpen(false)} style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px 16px", background: "rgba(217,79,43,0.06)", border: "0.5px solid rgba(217,79,43,0.15)", borderRadius: "12px", textDecoration: "none" }}>
-                    <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: "linear-gradient(135deg, #D94F2B 0%, #B83E1F 100%)", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "13px", fontWeight: 800, flexShrink: 0 }}>{initial}</div>
+            {user ? (
+              <>
+                <div className="radr-mobile-divider" />
+                <div style={{ margin: "4px 6px", display: "flex", flexDirection: "column", gap: "8px" }}>
+                  <Link to="/profile" onClick={() => setMobileOpen(false)} style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px 14px", background: "rgba(255,84,46,0.08)", border: "1px solid rgba(255,84,46,0.20)", borderRadius: "14px", textDecoration: "none" }}>
+                    <div style={{ width: "34px", height: "34px", borderRadius: "50%", background: "#16181A", border: "1.5px solid rgba(255,84,46,0.55)", boxShadow: "0 0 12px rgba(255,84,46,0.25)", color: "#F5F5F5", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "13px", fontWeight: 700, flexShrink: 0 }}>{initial}</div>
                     <div>
-                      <div style={{ fontSize: "14px", fontWeight: 600, color: "#111" }}>{user.displayName || "My Profile"}</div>
-                      <div style={{ fontSize: "11px", color: "#aaa" }}>{user.email}</div>
+                      <div style={{ fontSize: "14px", fontWeight: 600, color: "#F5F5F5" }}>{user.displayName || "My Profile"}</div>
+                      <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.48)" }}>{user.email}</div>
                     </div>
                   </Link>
-                  {/* Sign out — right under profile */}
-                  <button onClick={handleLogout} style={{ width: "100%", padding: "11px", background: "transparent", border: "0.5px solid rgba(217,79,43,0.25)", borderRadius: "10px", color: "#D94F2B", fontFamily: "inherit", fontWeight: 600, fontSize: "14px", cursor: "pointer", textAlign: "center" }}>
+                  <button onClick={handleLogout} style={{ width: "100%", padding: "12px", background: "transparent", border: "1px solid rgba(255,84,46,0.30)", borderRadius: "12px", color: "#FF8A6B", fontFamily: "inherit", fontWeight: 600, fontSize: "14px", cursor: "pointer", textAlign: "center" }}>
                     Sign Out
                   </button>
                 </div>
-              ) : (
-                <div style={{ margin: "8px 6px 4px", display: "flex", flexDirection: "column", gap: "8px" }}>
-                  <Link to="/sign-in" onClick={() => setMobileOpen(false)} style={{ display: "block", padding: "11px", background: "rgba(217,79,43,0.08)", border: "0.5px solid rgba(217,79,43,0.2)", color: "#D94F2B", borderRadius: "10px", textDecoration: "none", fontWeight: 600, fontSize: "14px", textAlign: "center" }}>
+              </>
+            ) : (
+              <>
+                <div className="radr-mobile-divider" />
+                <div style={{ margin: "4px 6px", display: "flex", flexDirection: "column", gap: "8px" }}>
+                  <Link to="/sign-in" onClick={() => setMobileOpen(false)} style={{ display: "block", padding: "12px", background: "rgba(255,84,46,0.10)", border: "1px solid rgba(255,84,46,0.25)", color: "#FF8A6B", borderRadius: "12px", textDecoration: "none", fontWeight: 600, fontSize: "14px", textAlign: "center" }}>
                     Sign In
                   </Link>
-                  <Link to="/register" onClick={() => setMobileOpen(false)} style={{ display: "block", padding: "11px", background: "#D94F2B", color: "white", borderRadius: "10px", textDecoration: "none", fontWeight: 600, fontSize: "14px", textAlign: "center" }}>
+                  <Link to="/register" onClick={() => setMobileOpen(false)} style={{ display: "block", padding: "12px", background: "linear-gradient(135deg, #FF542E 0%, #D94F2B 100%)", color: "white", borderRadius: "12px", textDecoration: "none", fontWeight: 600, fontSize: "14px", textAlign: "center", boxShadow: "0 4px 18px rgba(255,84,46,0.30)" }}>
                     Join RADR
                   </Link>
                 </div>
-              )}
-            </div>
+              </>
+            )}
           </div>
-        )}
-      </nav>
+        </div>
+      )}
 
-      {/* Desktop dropdown */}
+      {/* Desktop dropdown / mega-menu */}
       {dropdownAnchor && activeSection?.collapse && anchorRect && (
         <div className="radr-dropdown"
-          style={{ top: anchorRect.bottom + 8, left: anchorRect.left }}
+          style={{ top: anchorRect.bottom + 10, left: anchorRect.left }}
           onMouseEnter={handleDropdownMenuEnter}
           onMouseLeave={handleDropdownMenuLeave}>
-          {activeSection.collapse.map((item, i) => {
+          {activeSection.collapse.map((item) => {
             // Sign out marker
             if (item.name === "__signout__") return (
               <div key="signout">
                 <div className="radr-dropdown-divider" />
                 <button className="radr-dropdown-item radr-dropdown-item--danger" onClick={handleLogout}>
-                  <div className="radr-dropdown-icon">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#D94F2B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                      <polyline points="16 17 21 12 16 7"/>
-                      <line x1="21" y1="12" x2="9" y2="12"/>
-                    </svg>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: "13.5px", fontWeight: 500 }}>Sign Out</div>
-                  </div>
+                  Sign Out
                 </button>
               </div>
             );
 
             return item.href ? (
               <a key={item.name} href={item.href} target="_blank" rel="noreferrer" className="radr-dropdown-item">
-                <div className="radr-dropdown-icon">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>
-                </div>
-                <div>
-                  <div style={{ fontSize: "13.5px", fontWeight: 500, color: "#111" }}>{item.name}</div>
-                  {item.description && <div style={{ fontSize: "11.5px", color: "#aaa", marginTop: "1px" }}>{item.description}</div>}
-                </div>
+                <span>{item.name}</span>
+                {item.description && <span className="radr-dropdown-item-desc">{item.description}</span>}
               </a>
             ) : (
               <Link key={item.name} to={item.route || "/"} className="radr-dropdown-item">
-                <div className="radr-dropdown-icon">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>
-                </div>
-                <div>
-                  <div style={{ fontSize: "13.5px", fontWeight: 500, color: "#111" }}>{item.name}</div>
-                  {item.description && <div style={{ fontSize: "11.5px", color: "#aaa", marginTop: "1px" }}>{item.description}</div>}
-                </div>
+                <span>{item.name}</span>
+                {item.description && <span className="radr-dropdown-item-desc">{item.description}</span>}
               </Link>
             );
           })}
@@ -355,14 +469,15 @@ function MobileNavItem({ name, route, href, collapse, onClose }) {
   if (collapse) {
     return (
       <div>
-        <div className="radr-mobile-item" onClick={() => setOpen((p) => !p)} style={{ justifyContent: "space-between" }}>
+        <div className="radr-mobile-item" onClick={() => setOpen((p) => !p)} style={{ justifyContent: "space-between" }} role="button" tabIndex={0}
+          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setOpen((p) => !p); }}>
           <span>{name}</span>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"
-            style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 200ms ease", opacity: 0.5 }}>
+            style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 220ms ease", opacity: 0.55 }}>
             <polyline points="6 9 12 15 18 9"/>
           </svg>
         </div>
-        <div className={`radr-mobile-collapse${open ? " open" : ""}`}>
+        <div className={`radr-mobile-panel${open ? " open" : ""}`}>
           {collapse.map((child) =>
             child.href
               ? <a key={child.name} href={child.href} target="_blank" rel="noreferrer" className="radr-mobile-child" onClick={onClose}>{child.name}</a>
@@ -379,6 +494,14 @@ function MobileNavItem({ name, route, href, collapse, onClose }) {
 Navbar.propTypes = {
   routes: PropTypes.arrayOf(PropTypes.object).isRequired,
   action: PropTypes.shape({ type: PropTypes.oneOf(["internal", "external"]), route: PropTypes.string, label: PropTypes.string }),
+};
+
+MobileNavItem.propTypes = {
+  name: PropTypes.string.isRequired,
+  route: PropTypes.string,
+  href: PropTypes.string,
+  collapse: PropTypes.array,
+  onClose: PropTypes.func,
 };
 
 export default Navbar;

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "../../../supabaseClient";
 import Navbar from "layouts/Navbar";
@@ -6,8 +6,183 @@ import Footer from "layouts/Footer";
 import routes from "routes";
 import SEOHead from "components/SEOHead";
 
-const F = { d: "var(--font-display)", b: "var(--font-body)" };
+import "./BlogPost/components/blogPost.css";
+import { stripHtml, formatLongDate, formatShortDate, estimateReadMinutes, buildShareLinks } from "./BlogPost/components/blogPost.utils";
 
+/* ────────────────────────────────────────────────────────────
+   Small inline icons — not reused anywhere else, so they live
+   right here instead of a separate icons file.
+   ──────────────────────────────────────────────────────────── */
+const BackArrowIcon = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="19" y1="12" x2="5" y2="12" />
+    <polyline points="12 19 5 12 12 5" />
+  </svg>
+);
+const XIcon = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M18.9 2H22l-7.6 8.7L23.4 22h-7.1l-5.5-7.2L4.5 22H1.4l8.2-9.3L1 2h7.3l5 6.6L18.9 2Zm-1.2 18h1.9L7.4 4h-2l12.3 16Z" /></svg>
+);
+const FacebookIcon = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M13.5 21v-8h2.7l.4-3.1h-3.1V8c0-.9.25-1.5 1.55-1.5H16.7V3.7C16.4 3.66 15.4 3.58 14.24 3.58c-2.4 0-4.04 1.47-4.04 4.16V9.9H7.5V13h2.7v8h3.3Z" /></svg>
+);
+const WhatsAppIcon = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.1a9.9 9.9 0 0 0-8.5 15L2 22l5.1-1.3a9.9 9.9 0 0 0 4.9 1.3h0a9.9 9.9 0 0 0 0-19.8Zm0 18a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.1Zm4.5-6.1c-.2-.1-1.4-.7-1.7-.8-.2-.1-.4-.1-.6.1-.2.2-.6.8-.8 1-.1.2-.3.2-.5.1-.2-.1-1-.4-1.9-1.2-.7-.6-1.2-1.4-1.3-1.6-.1-.2 0-.4.1-.5l.4-.4c.1-.1.2-.3.2-.4.1-.2 0-.3 0-.4-.1-.1-.6-1.4-.8-1.9-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.4.1-.7.3-.2.2-.9.9-.9 2.1s.9 2.5 1.1 2.6c.1.2 1.8 2.8 4.4 3.9.6.3 1.1.4 1.5.5.6.2 1.2.2 1.6.1.5-.1 1.4-.6 1.6-1.1.2-.5.2-1 .1-1.1-.1-.1-.2-.2-.4-.3Z" /></svg>
+);
+const LinkedInIcon = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M4.98 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5ZM3 9h4v12H3V9Zm7 0h3.8v1.7h.1c.5-1 1.9-2.1 3.9-2.1 4.2 0 5 2.8 5 6.3V21h-4v-5.4c0-1.3 0-3-1.9-3s-2.1 1.4-2.1 2.9V21h-4V9Z" /></svg>
+);
+const EmailIcon = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2" /><path d="m22 6-10 7L2 6" /></svg>
+);
+const LinkIcon = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>
+);
+
+/* ────────────────────────────────────────────────────────────
+   Title + author/date/read-time
+   ──────────────────────────────────────────────────────────── */
+const PostHeader = ({ post, author }) => (
+  <>
+    <h1 className="bp-title" dangerouslySetInnerHTML={{ __html: post.title }} />
+    <div className="bp-meta-row">
+      <div className="bp-avatar">{author[0]}</div>
+      <div>
+        <div className="bp-author-name">{author}</div>
+        <div className="bp-author-date">{formatLongDate(post.published_at)}</div>
+      </div>
+      <div className="bp-meta-divider" />
+      <div className="bp-read-time">{estimateReadMinutes(post.content)} min read</div>
+    </div>
+  </>
+);
+
+/* ────────────────────────────────────────────────────────────
+   Cover image — desktop blurred-backdrop vs. mobile natural
+   ──────────────────────────────────────────────────────────── */
+const CoverImage = ({ src, alt }) => {
+  if (!src) return null;
+  return (
+    <>
+      <div className="bp-cover-desktop bp-cover">
+        <img src={src} alt="" aria-hidden="true" className="bp-cover-backdrop" />
+        <img src={src} alt={alt} className="bp-cover-fg" />
+      </div>
+      <div className="bp-cover-mobile bp-cover-mobile-wrap">
+        <img src={src} alt={alt} className="bp-cover-mobile-img" />
+      </div>
+    </>
+  );
+};
+
+/* ────────────────────────────────────────────────────────────
+   Share button + dropdown (real platform links + copy link)
+   ──────────────────────────────────────────────────────────── */
+const ShareMenu = ({ url, title }) => {
+  const [open, setOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleClick = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [open]);
+
+  const links = buildShareLinks(url, title);
+  const targets = [
+    { name: "X", href: links.x, icon: <XIcon /> },
+    { name: "Facebook", href: links.facebook, icon: <FacebookIcon /> },
+    { name: "WhatsApp", href: links.whatsapp, icon: <WhatsAppIcon /> },
+    { name: "LinkedIn", href: links.linkedin, icon: <LinkedInIcon /> },
+    { name: "Email", href: links.email, icon: <EmailIcon /> },
+  ];
+
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  return (
+    <div ref={menuRef} className="bp-share-wrap">
+      <button type="button" className="bp-pill" onClick={() => setOpen((v) => !v)}>
+        Share
+      </button>
+
+      {open && (
+        <div className="bp-share-dropdown">
+          {targets.map((t) => (
+            <a
+              key={t.name}
+              href={t.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bp-share-item"
+              onClick={() => setOpen(false)}
+            >
+              <span className="bp-share-icon">{t.icon}</span>
+              {t.name}
+            </a>
+          ))}
+          <div className="bp-share-divider" />
+          <button type="button" className="bp-share-item bp-share-item--btn" onClick={handleCopyLink}>
+            <span className="bp-share-icon"><LinkIcon /></span>
+            {copied ? "Copied!" : "Copy Link"}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
+/* ────────────────────────────────────────────────────────────
+   Sidebar: recent posts + submit CTA
+   ──────────────────────────────────────────────────────────── */
+const Sidebar = ({ recentPosts, currentSlug }) => (
+  <aside className="bp-sidebar">
+    <div className="bp-card">
+      <div className="bp-card-title">
+        <span className="bp-card-title-bar" />
+        Recent Posts
+      </div>
+      {recentPosts
+        .filter((r) => r.slug !== currentSlug)
+        .slice(0, 5)
+        .map((recent) => (
+          <Link to={`/blog/${recent.slug}`} key={recent.id} className="bp-recent-link">
+            <div className="bp-recent-thumb">
+              {recent.cover_url && <img src={recent.cover_url} alt="" />}
+            </div>
+            <div className="bp-recent-info">
+              <div className="bp-recent-title" dangerouslySetInnerHTML={{ __html: recent.title }} />
+              <div className="bp-recent-date">{formatShortDate(recent.published_at)}</div>
+            </div>
+          </Link>
+        ))}
+    </div>
+
+    <div className="bp-cta-card">
+      <div className="bp-cta-glow" />
+      <div className="bp-cta-content">
+        <div className="bp-cta-eyebrow">Get on the RADR</div>
+        <div className="bp-cta-title">Submit Your Track</div>
+        <p className="bp-cta-copy">Get your music in front of thousands of listeners.</p>
+        <Link to="/submit-track" className="bp-cta-button">Submit Now →</Link>
+      </div>
+    </div>
+  </aside>
+);
+
+/* ────────────────────────────────────────────────────────────
+   Page
+   ──────────────────────────────────────────────────────────── */
 const BlogPost = () => {
   const { slug } = useParams();
   const [post, setPost] = useState(null);
@@ -46,41 +221,41 @@ const BlogPost = () => {
   }, []);
 
   // ── Loading state ──
-  if (loading) return (
-    <div style={{ fontFamily: F.b, minHeight: "100vh", background: "#f7f6f3", display: "flex", flexDirection: "column" }}>
-      <Navbar routes={routes} action={{ type: "internal", route: "/submit-track", label: "Submit Track" }} />
-      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "16px" }}>
-          <div style={{ width: "36px", height: "36px", borderRadius: "50%", border: "2.5px solid #D94F2B", borderTopColor: "transparent", animation: "spin 0.8s linear infinite" }} />
-          <span style={{ fontSize: "13px", color: "#aaa" }}>Loading article…</span>
+  if (loading) {
+    return (
+      <div className="bp-loading-wrap">
+        <Navbar routes={routes} action={{ type: "internal", route: "/submit-track", label: "Submit Track" }} />
+        <div className="bp-loading-center">
+          <div className="bp-spinner-wrap">
+            <div className="bp-spinner" />
+            <span className="bp-loading-label">Loading article…</span>
+          </div>
         </div>
       </div>
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-    </div>
-  );
+    );
+  }
 
   // ── Not found ──
-  if (!post) return (
-    <div style={{ fontFamily: F.b, minHeight: "100vh", background: "#f7f6f3", display: "flex", flexDirection: "column" }}>
-      <Navbar routes={routes} action={{ type: "internal", route: "/submit-track", label: "Submit Track" }} />
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "16px" }}>
-        <p style={{ color: "#aaa", fontSize: "14px" }}>Post not found.</p>
-        <Link to="/blog" style={{ fontSize: "13px", fontWeight: 600, color: "#D94F2B", textDecoration: "none" }}>← Back to Blog</Link>
+  if (!post) {
+    return (
+      <div className="bp-notfound-wrap">
+        <Navbar routes={routes} action={{ type: "internal", route: "/submit-track", label: "Submit Track" }} />
+        <div className="bp-notfound-center">
+          <p className="bp-notfound-text">Post not found.</p>
+          <Link to="/blog" className="bp-notfound-link">← Back to Blog</Link>
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
 
   const featuredImage = post.cover_url || "";
   const author = post.author_name || "Artist RADR";
-  const date = new Date(post.published_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
-
-  // ── Strip HTML for SEO title/description ──
-  const plainTitle = post.title?.replace(/<[^>]+>/g, "") || "Blog Post";
-  const plainExcerpt = post.excerpt?.replace(/<[^>]+>/g, "") || post.content?.replace(/<[^>]+>/g, "")?.slice(0, 160) || "";
+  const plainTitle = stripHtml(post.title) || "Blog Post";
+  const plainExcerpt = stripHtml(post.excerpt) || stripHtml(post.content).slice(0, 160);
+  const shareUrl = typeof window !== "undefined" ? window.location.href : `https://artistradr.com/blog/${post.slug}`;
 
   return (
     <>
-      {/* ── SEOHead ── */}
       <SEOHead
         title={plainTitle}
         description={plainExcerpt.slice(0, 160)}
@@ -91,158 +266,29 @@ const BlogPost = () => {
         author={author}
       />
 
-      <style>{`
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        .bp-article-body h2 {
-          font-family: var(--font-display);
-          font-size: 1.5rem; font-weight: 700; text-transform: uppercase;
-          letter-spacing: 1px; color: #111; margin: 2.2rem 0 0.8rem;
-        }
-        .bp-article-body h3 {
-          font-family: var(--font-display);
-          font-size: 1.15rem; font-weight: 700; text-transform: uppercase;
-          letter-spacing: 0.5px; color: #111; margin: 1.8rem 0 0.6rem;
-        }
-        .bp-article-body p {
-          font-size: 16px; line-height: 1.85; color: #333;
-          font-weight: 300; margin-bottom: 1.4rem;
-        }
-        .bp-article-body img {
-          width: 100%; border-radius: 12px; margin: 1.5rem 0; display: block;
-        }
-        .bp-article-body a { color: #D94F2B; text-underline-offset: 3px; }
-        .bp-article-body blockquote {
-          border-left: 3px solid #D94F2B;
-          margin: 2rem 0; padding: 4px 0 4px 20px;
-          font-style: italic; color: #666; font-size: 1.05rem; line-height: 1.7;
-        }
-        .bp-article-body ul, .bp-article-body ol {
-          padding-left: 1.4rem; margin-bottom: 1.4rem;
-        }
-        .bp-article-body li { font-size: 15px; line-height: 1.75; color: #333; margin-bottom: 6px; font-weight: 300; }
-        .bp-article-body strong { font-weight: 600; color: #111; }
-
-        .bp-recent-link { display: flex; align-items: center; gap: 12px; text-decoration: none; color: #111; padding-bottom: 14px; margin-bottom: 14px; border-bottom: 0.5px solid rgba(0,0,0,0.06); transition: opacity 150ms ease; }
-        .bp-recent-link:last-child { padding-bottom: 0; margin-bottom: 0; border-bottom: none; }
-        .bp-recent-link:hover { opacity: 0.75; }
-
-        .bp-cover-mobile { display: none; }
-        .bp-cover-desktop { display: block; }
-
-        @media (max-width: 860px) {
-          .bp-layout { grid-template-columns: 1fr !important; }
-          .bp-sidebar { position: static !important; }
-        }
-        @media (max-width: 700px) {
-          .bp-cover-desktop { display: none; }
-          .bp-cover-mobile { display: block; }
-        }
-      `}</style>
-
-      <div style={{ fontFamily: F.b, background: "#f7f6f3", minHeight: "100vh" }}>
+      <div className="bp-page">
         <Navbar routes={routes} action={{ type: "internal", route: "/submit-track", label: "Submit Track" }} />
 
-        {/* ── Page wrapper — matches nav width ── */}
-        <div style={{ maxWidth: "1180px", margin: "0 auto", padding: "100px 1.5rem 0" }}>
-
-          {/* ── Back link ── */}
-          <Link to="/blog" style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "11px", fontWeight: 600, letterSpacing: "1.5px", textTransform: "uppercase", color: "#aaa", textDecoration: "none", marginBottom: "28px" }}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        <div className="bp-wrapper">
+          <Link to="/blog" className="bp-back-link">
+            <BackArrowIcon />
             Back to Blog
           </Link>
 
-          {/* ── Title ── */}
-          <h1
-            style={{ fontFamily: F.d, fontSize: "clamp(2rem, 4.5vw, 3.4rem)", fontWeight: 800, textTransform: "uppercase", letterSpacing: "1.5px", lineHeight: 1.05, color: "#111", marginBottom: "20px", maxWidth: "820px" }}
-            dangerouslySetInnerHTML={{ __html: post.title }}
-          />
+          <PostHeader post={post} author={author} />
+          <CoverImage src={featuredImage} alt={plainTitle} />
 
-          {/* ── Author + date row ── */}
-          <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "32px", flexWrap: "wrap" }}>
-            <div style={{ width: "36px", height: "36px", borderRadius: "50%", background: "#D94F2B", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: "14px", fontWeight: 700 }}>{author[0]}</div>
-            <div>
-              <div style={{ fontSize: "13px", fontWeight: 600, color: "#111" }}>{author}</div>
-              <div style={{ fontSize: "11px", color: "#aaa" }}>{date}</div>
-            </div>
-            <div style={{ width: "1px", height: "28px", background: "rgba(0,0,0,0.1)", margin: "0 4px" }} />
-            <div style={{ fontSize: "11px", color: "#aaa", fontWeight: 500 }}>
-              {Math.ceil((post.content?.replace(/<[^>]+>/g, "")?.split(" ")?.length || 0) / 200)} min read
-            </div>
-          </div>
-
-          {/* ── Cover image ── */}
-          {featuredImage && (
-            <>
-              {/* Desktop — blurred backdrop, no black bars */}
-              <div className="bp-cover-desktop" style={{ width: "100%", height: "480px", borderRadius: "16px", overflow: "hidden", marginBottom: "48px", position: "relative" }}>
-                <img src={featuredImage} alt="" aria-hidden="true" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: "blur(28px) brightness(0.55) saturate(1.4)", transform: "scale(1.08)", display: "block" }} />
-                <img src={featuredImage} alt={plainTitle} style={{ position: "relative", zIndex: 1, display: "block", margin: "0 auto", height: "100%", width: "auto", maxWidth: "100%", objectFit: "contain" }} />
-              </div>
-              {/* Mobile — full width, natural portrait height, no cropping */}
-              <div className="bp-cover-mobile" style={{ width: "100%", borderRadius: "12px", overflow: "hidden", marginBottom: "32px" }}>
-                <img src={featuredImage} alt={plainTitle} style={{ width: "100%", height: "auto", display: "block" }} />
-              </div>
-            </>
-          )}
-
-          {/* ── Two column layout ── */}
-          <div className="bp-layout" style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: "56px", alignItems: "start", paddingBottom: "100px" }}>
-
-            {/* Article */}
+          <div className="bp-layout">
             <article>
-              <div
-                className="bp-article-body"
-                dangerouslySetInnerHTML={{ __html: post.content }}
-              />
+              <div className="bp-article-body" dangerouslySetInnerHTML={{ __html: post.content }} />
 
-              {/* Tags / share strip */}
-              <div style={{ marginTop: "48px", paddingTop: "28px", borderTop: "0.5px solid rgba(0,0,0,0.08)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "12px" }}>
-                <Link to="/blog" style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "12px", fontWeight: 600, color: "#D94F2B", textDecoration: "none", padding: "9px 18px", borderRadius: "100px", background: "rgba(217,79,43,0.07)", border: "0.5px solid rgba(217,79,43,0.2)" }}>
-                  ← More Articles
-                </Link>
-                <div style={{ fontSize: "12px", color: "#aaa" }}>Share this article</div>
+              <div className="bp-article-actions">
+                <Link to="/blog" className="bp-pill">← More Articles</Link>
+                <ShareMenu url={shareUrl} title={plainTitle} />
               </div>
             </article>
 
-            {/* Sidebar */}
-            <aside className="bp-sidebar" style={{ position: "sticky", top: "100px" }}>
-
-              {/* Recent posts */}
-              <div style={{ background: "white", borderRadius: "16px", border: "0.5px solid rgba(0,0,0,0.07)", padding: "24px", marginBottom: "20px" }}>
-                <div style={{ fontFamily: F.d, fontSize: "0.9rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "1.5px", color: "#111", marginBottom: "20px", display: "flex", alignItems: "center", gap: "8px" }}>
-                  <span style={{ width: "4px", height: "14px", borderRadius: "2px", background: "#D94F2B", display: "inline-block" }} />
-                  Recent Posts
-                </div>
-                {recentPosts.filter((r) => r.slug !== slug).slice(0, 5).map((recent) => {
-                  const rDate = new Date(recent.published_at).toLocaleDateString("en-US", { month: "short", day: "numeric" });
-                  return (
-                    <Link to={`/blog/${recent.slug}`} key={recent.id} className="bp-recent-link">
-                      <div style={{ flexShrink: 0, width: "56px", height: "56px", borderRadius: "10px", overflow: "hidden", background: "#eeecea" }}>
-                        {recent.cover_url && <img src={recent.cover_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />}
-                      </div>
-                      <div style={{ minWidth: 0 }}>
-                        <div style={{ fontFamily: F.b, fontSize: "12.5px", fontWeight: 500, lineHeight: 1.4, color: "#111", marginBottom: "3px", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }} dangerouslySetInnerHTML={{ __html: recent.title }} />
-                        <div style={{ fontSize: "11px", color: "#bbb" }}>{rDate}</div>
-                      </div>
-                    </Link>
-                  );
-                })}
-              </div>
-
-              {/* CTA card */}
-              <div style={{ background: "#111", borderRadius: "16px", padding: "24px", position: "relative", overflow: "hidden" }}>
-                <div style={{ position: "absolute", top: "-30px", right: "-30px", width: "120px", height: "120px", borderRadius: "50%", background: "radial-gradient(circle, rgba(217,79,43,0.25) 0%, transparent 70%)", pointerEvents: "none" }} />
-                <div style={{ position: "relative", zIndex: 1 }}>
-                  <div style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "2px", textTransform: "uppercase", color: "#D94F2B", marginBottom: "10px" }}>Get on the RADR</div>
-                  <div style={{ fontFamily: F.d, fontSize: "1.1rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px", color: "white", lineHeight: 1.2, marginBottom: "12px" }}>Submit Your Track</div>
-                  <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.5)", lineHeight: 1.6, marginBottom: "16px", fontWeight: 300 }}>Get your music in front of thousands of listeners.</p>
-                  <Link to="/submit-track" style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "#D94F2B", color: "white", padding: "10px 18px", borderRadius: "8px", fontFamily: F.b, fontSize: "12.5px", fontWeight: 600, textDecoration: "none" }}>
-                    Submit Now →
-                  </Link>
-                </div>
-              </div>
-            </aside>
+            <Sidebar recentPosts={recentPosts} currentSlug={slug} />
           </div>
         </div>
 

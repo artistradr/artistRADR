@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { supabase } from "../../supabaseClient";
 import { useSupabaseAuth } from "../../context/SupabaseAuthContext";
@@ -29,6 +29,150 @@ const inputStyle = {
   fontSize: "14px", outline: "none",
 };
 
+const toolbarBtnStyle = {
+  padding: "8px 12px", borderRadius: "8px", background: "rgba(255,255,255,0.06)",
+  border: "0.5px solid rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.8)",
+  fontFamily: "var(--font-body)", fontSize: "12.5px", fontWeight: 600, cursor: "pointer",
+  whiteSpace: "nowrap", lineHeight: 1,
+};
+
+const toolbarBtnActiveStyle = {
+  ...toolbarBtnStyle,
+  background: "rgba(77,217,208,0.14)",
+  border: "0.5px solid rgba(77,217,208,0.35)",
+  color: "var(--color-cyan)",
+};
+
+// ── Draft autosave (sessionStorage) ─────────────────────────────────────────
+const DRAFT_STORAGE_KEY = "radr_post_draft";
+
+function readDraft() {
+  try {
+    const raw = sessionStorage.getItem(DRAFT_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeDraft(draft) {
+  try {
+    sessionStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft));
+  } catch {}
+}
+
+function clearDraft() {
+  try {
+    sessionStorage.removeItem(DRAFT_STORAGE_KEY);
+  } catch {}
+}
+
+function extractSpotifyEmbedSrc(url) {
+  const m = url.match(/open\.spotify\.com\/(track|album|artist|playlist|episode|show)\/([a-zA-Z0-9]+)/);
+  if (!m) return null;
+  return `https://open.spotify.com/embed/${m[1]}/${m[2]}`;
+}
+
+function extractYoutubeEmbedSrc(url) {
+  const m = url.match(/(?:youtu\.be\/|youtube\.com\/watch\?v=|youtube\.com\/embed\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{6,})/);
+  return m ? `https://www.youtube.com/embed/${m[1]}` : null;
+}
+
+function escapeHtml(str) {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+// Normalizes editor output to match the WordPress-migrated posts' block
+// structure. This now does two jobs, not one:
+//
+// 1. (as before) assigns wp-block-* classes to real h1-h6/p/ul elements
+//    that don't already carry one.
+// 2. (NEW) rebuilds the top level of the document when it's NOT made of
+//    proper block elements at all — i.e. when staff typed or pasted
+//    directly into the editor and the browser produced bare text nodes
+//    or <div> line-breaks instead of <p> tags (Chrome's contentEditable
+//    default). Every top-level child is walked: real blocks (p, h1-h6,
+//    ul, ol, blockquote, figure) are kept as-is; <div> wrappers and bare
+//    text/inline nodes are converted into <p class="wp-block-paragraph">.
+//    This is what was missing before — it's why posts like "ERIGOTHI -
+//    MILLION MILESTONE" saved with zero heading/paragraph markup and
+//    didn't visually match properly-authored posts.
+function normalizeToWp(html) {
+  const container = document.createElement("div");
+  container.innerHTML = html;
+
+  const BLOCK_TAGS = new Set(["FIGURE", "H1", "H2", "H3", "H4", "H5", "H6", "P", "UL", "OL", "BLOCKQUOTE"]);
+  const rebuilt = [];
+
+  Array.from(container.childNodes).forEach((node) => {
+    if (node.nodeType === Node.ELEMENT_NODE && BLOCK_TAGS.has(node.tagName)) {
+      rebuilt.push(node);
+      return;
+    }
+    if (node.nodeType === Node.ELEMENT_NODE && node.tagName === "DIV") {
+      const inner = node.innerHTML.trim();
+      if (!inner || inner === "<br>") return; // empty spacer div — drop it
+      const p = document.createElement("p");
+      p.className = "wp-block-paragraph";
+      p.innerHTML = node.innerHTML;
+      rebuilt.push(p);
+      return;
+    }
+    if (node.nodeType === Node.TEXT_NODE) {
+      const text = node.textContent;
+      if (!text.trim()) return;
+      // Bare top-level text can contain literal newlines from typed
+      // content — treat blank-line gaps as paragraph breaks.
+      text.split(/\n{2,}/).forEach((chunk) => {
+        const trimmed = chunk.trim();
+        if (!trimmed) return;
+        const p = document.createElement("p");
+        p.className = "wp-block-paragraph";
+        p.textContent = trimmed;
+        rebuilt.push(p);
+      });
+      return;
+    }
+    if (node.nodeType === Node.ELEMENT_NODE) {
+      // Any other stray inline element (br, span, a, etc.) sitting at the
+      // top level — wrap it so it isn't silently lost.
+      const p = document.createElement("p");
+      p.className = "wp-block-paragraph";
+      p.appendChild(node.cloneNode(true));
+      rebuilt.push(p);
+    }
+  });
+
+  container.innerHTML = "";
+  rebuilt.forEach((n) => container.appendChild(n));
+
+  container.querySelectorAll("h1,h2,h3,h4,h5,h6").forEach((h) => {
+    if (!h.className) h.className = "wp-block-heading";
+  });
+  container.querySelectorAll("p").forEach((p) => {
+    if (!p.className) p.className = "wp-block-paragraph";
+  });
+  container.querySelectorAll("ul").forEach((ul) => {
+    if (!ul.className) ul.className = "wp-block-list";
+  });
+
+  // Drop a leading empty seeded heading if it was never filled in.
+  const first = container.firstElementChild;
+  if (
+    first &&
+    first.tagName === "H3" &&
+    first.classList.contains("wp-block-heading") &&
+    !first.textContent.trim()
+  ) {
+    container.removeChild(first);
+  }
+
+  return container.innerHTML.trim();
+}
+
 export default function PostEditor() {
   const { id } = useParams(); // undefined = new post
   const { user, userRole, loading, roleLoading } = useSupabaseAuth();
@@ -36,7 +180,7 @@ export default function PostEditor() {
   const isEdit = Boolean(id);
 
   const [form, setForm] = useState({
-    title: "", slug: "", excerpt: "", content: "",
+    title: "", slug: "", excerpt: "",
     category: "on-your-radr", status: "draft",
   });
   const [coverFile, setCoverFile] = useState(null);
@@ -46,12 +190,86 @@ export default function PostEditor() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+  const [activeTool, setActiveTool] = useState(null);
+  const [headingText, setHeadingText] = useState("");
+  const [paragraphText, setParagraphText] = useState("");
+  const [linkText, setLinkText] = useState("");
+  const [linkUrl, setLinkUrl] = useState("");
+  const [embedUrl, setEmbedUrl] = useState("");
+
+  const editorRef = useRef(null);
+  const lastRangeRef = useRef(null);
 
   useEffect(() => {
     if (loading || roleLoading) return;
     if (userRole !== "radrStaff") { navigate("/"); return; }
     if (isEdit) loadPost();
   }, [userRole, loading, roleLoading, id]);
+
+  // Forces the browser's contentEditable to create <p> on Enter instead of
+  // its Chrome default of <div>. This is the root-cause fix for posts
+  // saving with no paragraph/heading structure at all when staff typed
+  // straight into the editor instead of using the toolbar buttons.
+  useEffect(() => {
+    try {
+      document.execCommand("defaultParagraphSeparator", false, "p");
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    if (isEdit) return;
+    const draft = readDraft();
+    if (!draft) return;
+    if (!window.confirm("You have an unsaved draft from a previous session. Restore it?")) {
+      clearDraft();
+      return;
+    }
+    setForm((p) => ({ ...p, ...draft.form }));
+    requestAnimationFrame(() => {
+      if (editorRef.current) editorRef.current.innerHTML = draft.contentHtml || "";
+    });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (isEdit) return;
+    if (readDraft()) return;
+    requestAnimationFrame(() => {
+      const el = editorRef.current;
+      if (!el || el.innerHTML.trim()) return;
+      el.innerHTML = '<h3 class="wp-block-heading"><br></h3>';
+      const range = document.createRange();
+      const sel = window.getSelection();
+      range.selectNodeContents(el.firstChild);
+      range.collapse(true);
+      sel.removeAllRanges();
+      sel.addRange(range);
+      el.focus();
+    });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (!editorRef.current) return;
+      const contentHtml = editorRef.current.innerHTML;
+      const isEmpty = !form.title.trim() && !contentHtml.replace(/<[^>]*>/g, "").trim();
+      if (isEmpty) return;
+      writeDraft({ form, contentHtml, savedAt: Date.now() });
+      setHasUnsavedChanges(true);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [form]);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (!hasUnsavedChanges) return;
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [hasUnsavedChanges]);
 
   const loadPost = async () => {
     const { data, error: err } = await supabase
@@ -65,11 +283,11 @@ export default function PostEditor() {
         title: data.title || "",
         slug: data.slug || "",
         excerpt: data.excerpt || "",
-        content: data.content || "",
         category: data.category || "on-your-radr",
         status: data.status || "draft",
       });
       setExistingCover(data.cover_url || null);
+      if (editorRef.current) editorRef.current.innerHTML = data.content || "";
     }
   };
 
@@ -80,6 +298,102 @@ export default function PostEditor() {
       [name]: value,
       ...(name === "title" && !isEdit ? { slug: value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") } : {}),
     }));
+    setHasUnsavedChanges(true);
+  };
+
+  const rememberSelection = () => {
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount > 0 && editorRef.current?.contains(sel.anchorNode)) {
+      lastRangeRef.current = sel.getRangeAt(0).cloneRange();
+    }
+  };
+
+  const openTool = (tool) => {
+    rememberSelection();
+    setActiveTool((t) => (t === tool ? null : tool));
+  };
+
+  const closeTool = () => {
+    setActiveTool(null);
+    setHeadingText("");
+    setParagraphText("");
+    setLinkText("");
+    setLinkUrl("");
+    setEmbedUrl("");
+  };
+
+  const insertHtmlBlock = (html) => {
+    const el = editorRef.current;
+    if (!el) return;
+    el.focus();
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    if (lastRangeRef.current) {
+      sel.addRange(lastRangeRef.current);
+    } else {
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      range.collapse(false);
+      sel.addRange(range);
+    }
+    document.execCommand("insertHTML", false, html);
+    rememberSelection();
+    setHasUnsavedChanges(true);
+  };
+
+  const applyFormat = (command, value = null) => {
+    editorRef.current?.focus();
+    document.execCommand(command, false, value);
+    setHasUnsavedChanges(true);
+  };
+
+  const insertHeading = () => {
+    if (!headingText.trim()) return;
+    insertHtmlBlock(`<h3 class="wp-block-heading">${escapeHtml(headingText.trim())}</h3>`);
+    closeTool();
+  };
+
+  const insertParagraph = () => {
+    if (!paragraphText.trim()) return;
+    insertHtmlBlock(`<p class="wp-block-paragraph">${escapeHtml(paragraphText.trim())}</p>`);
+    closeTool();
+  };
+
+  const insertLink = () => {
+    if (!linkUrl.trim()) return;
+    const label = linkText.trim() || linkUrl.trim();
+    insertHtmlBlock(`<a href="${escapeHtml(linkUrl.trim())}" target="_blank" rel="noopener noreferrer">${escapeHtml(label)}</a>`);
+    closeTool();
+  };
+
+  const insertEmbed = (kind) => {
+    const src = kind === "spotify" ? extractSpotifyEmbedSrc(embedUrl.trim()) : extractYoutubeEmbedSrc(embedUrl.trim());
+    if (!src) {
+      window.alert(`Couldn't read that as a ${kind === "spotify" ? "Spotify track/album/artist/playlist" : "YouTube video"} link.`);
+      return;
+    }
+    const html = kind === "spotify"
+      ? `<figure class="wp-block-embed is-type-rich is-provider-spotify wp-block-embed-spotify wp-embed-aspect-21-9 wp-has-aspect-ratio"><div class="wp-block-embed__wrapper"><iframe title="Spotify Embed" style="border-radius:12px" src="${src}" width="100%" height="152" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe></div></figure><p class="wp-block-paragraph"><br></p>`
+      : `<figure class="wp-block-embed is-type-video is-provider-youtube wp-block-embed-youtube wp-embed-aspect-16-9 wp-has-aspect-ratio"><div class="wp-block-embed__wrapper"><iframe title="YouTube video player" src="${src}" width="750" height="422" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div></figure><p class="wp-block-paragraph"><br></p>`;
+    insertHtmlBlock(html);
+    closeTool();
+  };
+
+  // Intercepts paste so pasted content (Docs, ChatGPT, another site) can't
+  // inject its own <div>/<span style>/<meta> junk. Strips to plain text and
+  // wraps each blank-line-separated chunk into a real <p class=
+  // "wp-block-paragraph">, matching what typing + Enter now produces.
+  const handlePaste = (e) => {
+    e.preventDefault();
+    const text = (e.clipboardData || window.clipboardData).getData("text/plain");
+    if (!text) return;
+    const html = text
+      .split(/\n{2,}/)
+      .map((chunk) => chunk.trim())
+      .filter(Boolean)
+      .map((chunk) => `<p class="wp-block-paragraph">${escapeHtml(chunk)}</p>`)
+      .join("");
+    insertHtmlBlock(html);
   };
 
   const handleCover = (e) => {
@@ -87,6 +401,7 @@ export default function PostEditor() {
     if (!file) return;
     setCoverFile(file);
     setCoverPreview(URL.createObjectURL(file));
+    setHasUnsavedChanges(true);
   };
 
   const uploadCover = async (postId) => {
@@ -98,7 +413,7 @@ export default function PostEditor() {
     if (uploadError) throw uploadError;
     setUploadProgress(100);
     const { data } = supabase.storage.from("post-covers").getPublicUrl(path);
-    return data.publicUrl;
+    return `${data.publicUrl}?v=${Date.now()}`;
   };
 
   const save = async (statusOverride) => {
@@ -109,6 +424,7 @@ export default function PostEditor() {
     try {
       const finalStatus = statusOverride || form.status;
       const nowISO = new Date().toISOString();
+      const normalizedContent = normalizeToWp(editorRef.current?.innerHTML || "");
 
       if (isEdit) {
         const coverUrl = await uploadCover(id);
@@ -118,7 +434,7 @@ export default function PostEditor() {
             title: form.title,
             slug: form.slug,
             excerpt: form.excerpt,
-            content: form.content,
+            content: normalizedContent,
             category: form.category,
             status: finalStatus,
             cover_url: coverUrl,
@@ -133,7 +449,7 @@ export default function PostEditor() {
             title: form.title,
             slug: form.slug,
             excerpt: form.excerpt,
-            content: form.content,
+            content: normalizedContent,
             category: form.category,
             status: finalStatus,
             cover_url: null,
@@ -154,6 +470,8 @@ export default function PostEditor() {
           if (coverUpdateError) throw coverUpdateError;
         }
       }
+      clearDraft();
+      setHasUnsavedChanges(false);
       navigate("/admin");
     } catch (e) {
       setError("Failed to save: " + e.message);
@@ -170,6 +488,16 @@ export default function PostEditor() {
         .pe-grid { display:grid; grid-template-columns: 1fr 300px; gap:24px; align-items:start; }
         .pe-actions { display:flex; gap:10px; }
         .pe-actions button { flex: 0 0 auto; }
+        .pe-toolbar { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:0; padding:10px; background:#1C1C1C; border:0.5px solid rgba(255,255,255,0.1); border-bottom:none; border-radius:10px 10px 0 0; }
+        .pe-tool-box { display:flex; gap:8px; flex-wrap:wrap; align-items:center; padding:12px; background:#161616; border:0.5px solid rgba(255,255,255,0.1); border-top:none; }
+        .pe-editor { min-height:420px; padding:16px; background:#1C1C1C; border:0.5px solid rgba(255,255,255,0.1); border-radius:0 0 10px 10px; color:white; font-size:14px; line-height:1.7; outline:none; }
+        .pe-editor:empty:before { content: attr(data-placeholder); color: rgba(255,255,255,0.3); }
+        .pe-editor h3 { font-family: var(--font-display); font-weight:800; text-transform:uppercase; letter-spacing:0.5px; font-size:1.15rem; margin: 18px 0 10px; }
+        .pe-editor p { margin: 0 0 14px; }
+        .pe-editor ul { margin: 0 0 14px; padding-left: 22px; }
+        .pe-editor a { color: var(--color-cyan); }
+        .pe-editor figure { margin: 18px 0; }
+        .pe-editor iframe { max-width: 100%; }
 
         @media (max-width: 768px) {
           .pe-hamburger { display:flex; }
@@ -183,7 +511,6 @@ export default function PostEditor() {
         }
       `}</style>
 
-      {/* Mobile hamburger */}
       <button
         className="pe-hamburger"
         onClick={() => setSidebarOpen(true)}
@@ -197,7 +524,6 @@ export default function PostEditor() {
 
       <div style={{ display: "flex" }}>
 
-        {/* Sidebar */}
         <aside className={`pe-sidebar${sidebarOpen ? " open" : ""}`} style={{ width: "240px", background: "#161616", height: "100vh", padding: "32px 20px", position: "fixed", top: 0, left: 0, zIndex: 65, borderRight: "0.5px solid rgba(255,255,255,0.07)", display: "flex", flexDirection: "column", overflowY: "auto" }}>
           <div style={{ fontFamily: F.d, fontSize: "1.3rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "2px", marginBottom: "40px" }}>
             <span style={{ fontStyle: "italic", color: "var(--color-red)" }}>Artist</span> RADR
@@ -215,23 +541,11 @@ export default function PostEditor() {
                   navigate(to);
                 }}
                 style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "10px",
-                  padding: "10px 14px",
-                  borderRadius: "10px",
-                  marginBottom: "4px",
-                  textDecoration: "none",
-                  color: "rgba(255,255,255,0.65)",
-                  fontSize: "13.5px",
-                  fontWeight: 500,
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  width: "100%",
-                  textAlign: "left",
-                  fontFamily: F.b,
-                  transition: "color 150ms ease",
+                  display: "flex", alignItems: "center", gap: "10px", padding: "10px 14px",
+                  borderRadius: "10px", marginBottom: "4px", textDecoration: "none",
+                  color: "rgba(255,255,255,0.65)", fontSize: "13.5px", fontWeight: 500,
+                  background: "none", border: "none", cursor: "pointer", width: "100%",
+                  textAlign: "left", fontFamily: F.b, transition: "color 150ms ease",
                 }}
                 onMouseEnter={(e) => e.target.style.color = "white"}
                 onMouseLeave={(e) => e.target.style.color = "rgba(255,255,255,0.65)"}
@@ -242,7 +556,6 @@ export default function PostEditor() {
           </nav>
         </aside>
 
-        {/* Main */}
         <main className="pe-main" style={{ marginLeft: "240px", flex: 1, padding: "40px", maxWidth: "900px", minWidth: 0 }}>
           <div style={{ marginBottom: "32px" }}>
             <div style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "2px", textTransform: "uppercase", color: "var(--color-red)", marginBottom: "6px" }}>Admin</div>
@@ -253,47 +566,108 @@ export default function PostEditor() {
 
           {error && <div style={{ background: "rgba(255,50,50,0.1)", border: "0.5px solid rgba(255,50,50,0.3)", borderRadius: "10px", padding: "12px 16px", color: "#ff6b6b", fontSize: "13px", marginBottom: "24px" }}>{error}</div>}
 
+          <div style={{ background: "#161616", border: "0.5px solid rgba(255,255,255,0.07)", borderRadius: "14px", padding: "20px", marginBottom: "20px" }}>
+            <div style={{ fontSize: "11px", fontWeight: 600, letterSpacing: "1px", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: "12px" }}>Cover Image</div>
+            {(coverPreview || existingCover) && (
+              <img src={coverPreview || existingCover} alt="" style={{ width: "100%", maxHeight: "320px", objectFit: "cover", borderRadius: "10px", marginBottom: "12px", display: "block" }} />
+            )}
+            <label style={{ display: "block", padding: "14px", background: "rgba(255,255,255,0.05)", border: "0.5px dashed rgba(255,255,255,0.15)", borderRadius: "10px", textAlign: "center", cursor: "pointer", fontSize: "13px", color: "rgba(255,255,255,0.5)" }}>
+              {coverPreview || existingCover ? "Change image" : "Upload cover image"}
+              <input type="file" accept="image/*" onChange={handleCover} style={{ display: "none" }} />
+            </label>
+          </div>
+
           <div className="pe-grid">
 
-            {/* Left — main content */}
             <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
 
-              {/* Title */}
               <div>
-                <label style={{ display: "block", fontSize: "11px", fontWeight: 600, letterSpacing: "1px", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: "8px" }}>Title *</label>
+                <label style={{ display: "block", fontSize: "11px", fontWeight: 600, letterSpacing: "1px", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: "8px" }}>Title *  <span style={{ color: "rgba(255,255,255,0.25)", textTransform: "none", letterSpacing: 0, fontWeight: 400 }}>— shown in listings and metadata</span></label>
                 <input name="title" value={form.title} onChange={handle} placeholder="Post title…" style={{ ...inputStyle, fontSize: "18px", fontFamily: F.d, fontWeight: 700, textTransform: "uppercase", letterSpacing: "1px" }} />
               </div>
 
-              {/* Post Description */}
               <div>
                 <label style={{ display: "block", fontSize: "11px", fontWeight: 600, letterSpacing: "1px", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: "8px" }}>Post Description</label>
                 <textarea name="excerpt" value={form.excerpt} onChange={handle} placeholder="Short description shown in listings…" rows={3} style={{ ...inputStyle, resize: "vertical" }} />
               </div>
 
-              {/* Blog Content */}
               <div>
                 <label style={{ display: "block", fontSize: "11px", fontWeight: 600, letterSpacing: "1px", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: "8px" }}>Blog Content *</label>
-                <textarea name="content" value={form.content} onChange={handle} placeholder="Write your post content here. HTML is supported." rows={18} style={{ ...inputStyle, resize: "vertical", lineHeight: 1.7 }} />
-                <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.25)", marginTop: "6px" }}>HTML supported — &lt;h2&gt;, &lt;p&gt;, &lt;strong&gt;, &lt;em&gt;, &lt;ul&gt;, &lt;img&gt;, &lt;a&gt;</div>
+
+                <div className="pe-toolbar">
+                  <button type="button" onClick={() => applyFormat("bold")} style={{ ...toolbarBtnStyle, fontWeight: 800 }}>B</button>
+                  <button type="button" onClick={() => applyFormat("italic")} style={{ ...toolbarBtnStyle, fontStyle: "italic" }}>I</button>
+                  <button type="button" onClick={() => applyFormat("insertUnorderedList")} style={toolbarBtnStyle}>• List</button>
+                  <div style={{ width: "1px", height: "20px", background: "rgba(255,255,255,0.12)" }} />
+                  <button type="button" onClick={() => openTool("heading")} style={activeTool === "heading" ? toolbarBtnActiveStyle : toolbarBtnStyle}>+ Heading</button>
+                  <button type="button" onClick={() => openTool("paragraph")} style={activeTool === "paragraph" ? toolbarBtnActiveStyle : toolbarBtnStyle}>+ Paragraph</button>
+                  <button type="button" onClick={() => openTool("link")} style={activeTool === "link" ? toolbarBtnActiveStyle : toolbarBtnStyle}>+ Link</button>
+                  <div style={{ width: "1px", height: "20px", background: "rgba(255,255,255,0.12)" }} />
+                  <button type="button" onClick={() => openTool("spotify")} style={activeTool === "spotify" ? toolbarBtnActiveStyle : toolbarBtnStyle}>Spotify</button>
+                  <button type="button" onClick={() => openTool("youtube")} style={activeTool === "youtube" ? toolbarBtnActiveStyle : toolbarBtnStyle}>YouTube</button>
+                </div>
+
+                {activeTool === "heading" && (
+                  <div className="pe-tool-box">
+                    <input autoFocus value={headingText} onChange={(e) => setHeadingText(e.target.value)} onKeyDown={(e) => e.key === "Enter" && insertHeading()} placeholder="Subheading text — an in-body heading, separate from the post Title above" style={{ ...inputStyle, fontSize: "13px" }} />
+                    <button type="button" onClick={insertHeading} style={toolbarBtnStyle}>Insert</button>
+                    <button type="button" onClick={closeTool} style={{ ...toolbarBtnStyle, background: "none", border: "none", color: "rgba(255,255,255,0.4)" }}>Cancel</button>
+                  </div>
+                )}
+
+                {activeTool === "paragraph" && (
+                  <div className="pe-tool-box">
+                    <textarea autoFocus value={paragraphText} onChange={(e) => setParagraphText(e.target.value)} placeholder="Paragraph text…" rows={3} style={{ ...inputStyle, fontSize: "13px", resize: "vertical", flex: "1 1 100%" }} />
+                    <button type="button" onClick={insertParagraph} style={toolbarBtnStyle}>Insert</button>
+                    <button type="button" onClick={closeTool} style={{ ...toolbarBtnStyle, background: "none", border: "none", color: "rgba(255,255,255,0.4)" }}>Cancel</button>
+                  </div>
+                )}
+
+                {activeTool === "link" && (
+                  <div className="pe-tool-box">
+                    <input autoFocus value={linkText} onChange={(e) => setLinkText(e.target.value)} placeholder="Link text (optional — defaults to the URL)" style={{ ...inputStyle, fontSize: "13px", flex: "1 1 220px" }} />
+                    <input value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} onKeyDown={(e) => e.key === "Enter" && insertLink()} placeholder="https://…" style={{ ...inputStyle, fontSize: "13px", flex: "1 1 220px" }} />
+                    <button type="button" onClick={insertLink} style={toolbarBtnStyle}>Insert</button>
+                    <button type="button" onClick={closeTool} style={{ ...toolbarBtnStyle, background: "none", border: "none", color: "rgba(255,255,255,0.4)" }}>Cancel</button>
+                  </div>
+                )}
+
+                {activeTool === "spotify" && (
+                  <div className="pe-tool-box">
+                    <input autoFocus value={embedUrl} onChange={(e) => setEmbedUrl(e.target.value)} onKeyDown={(e) => e.key === "Enter" && insertEmbed("spotify")} placeholder="Paste Spotify track/album/artist/playlist link…" style={{ ...inputStyle, fontSize: "13px" }} />
+                    <button type="button" onClick={() => insertEmbed("spotify")} style={toolbarBtnStyle}>Insert</button>
+                    <button type="button" onClick={closeTool} style={{ ...toolbarBtnStyle, background: "none", border: "none", color: "rgba(255,255,255,0.4)" }}>Cancel</button>
+                  </div>
+                )}
+
+                {activeTool === "youtube" && (
+                  <div className="pe-tool-box">
+                    <input autoFocus value={embedUrl} onChange={(e) => setEmbedUrl(e.target.value)} onKeyDown={(e) => e.key === "Enter" && insertEmbed("youtube")} placeholder="Paste YouTube video link…" style={{ ...inputStyle, fontSize: "13px" }} />
+                    <button type="button" onClick={() => insertEmbed("youtube")} style={toolbarBtnStyle}>Insert</button>
+                    <button type="button" onClick={closeTool} style={{ ...toolbarBtnStyle, background: "none", border: "none", color: "rgba(255,255,255,0.4)" }}>Cancel</button>
+                  </div>
+                )}
+
+                <div
+                  ref={editorRef}
+                  className="pe-editor"
+                  contentEditable
+                  suppressContentEditableWarning
+                  onInput={() => setHasUnsavedChanges(true)}
+                  onKeyUp={rememberSelection}
+                  onMouseUp={rememberSelection}
+                  onPaste={handlePaste}
+                  data-placeholder="Write your post here…"
+                />
+
+                <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.25)", marginTop: "6px" }}>
+                  Starts with an empty headline — type your opening line there, then write the rest below. Pasted text is auto-formatted into paragraphs. Your draft autosaves locally every few seconds.
+                </div>
               </div>
             </div>
 
-            {/* Right — meta */}
             <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
 
-              {/* Cover image */}
-              <div style={{ background: "#161616", border: "0.5px solid rgba(255,255,255,0.07)", borderRadius: "14px", padding: "20px" }}>
-                <div style={{ fontSize: "11px", fontWeight: 600, letterSpacing: "1px", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: "12px" }}>Cover Image</div>
-                {(coverPreview || existingCover) && (
-                  <img src={coverPreview || existingCover} alt="" style={{ width: "100%", height: "160px", objectFit: "cover", borderRadius: "10px", marginBottom: "12px", display: "block" }} />
-                )}
-                <label style={{ display: "block", padding: "10px", background: "rgba(255,255,255,0.05)", border: "0.5px dashed rgba(255,255,255,0.15)", borderRadius: "10px", textAlign: "center", cursor: "pointer", fontSize: "13px", color: "rgba(255,255,255,0.5)" }}>
-                  {coverPreview || existingCover ? "Change image" : "Upload cover image"}
-                  <input type="file" accept="image/*" onChange={handleCover} style={{ display: "none" }} />
-                </label>
-              </div>
-
-              {/* Category */}
               <div style={{ background: "#161616", border: "0.5px solid rgba(255,255,255,0.07)", borderRadius: "14px", padding: "20px" }}>
                 <div style={{ fontSize: "11px", fontWeight: 600, letterSpacing: "1px", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: "12px" }}>Category</div>
                 {CATEGORIES.map(({ value, label }) => (
@@ -307,7 +681,6 @@ export default function PostEditor() {
                 ))}
               </div>
 
-              {/* Status */}
               <div style={{ background: "#161616", border: "0.5px solid rgba(255,255,255,0.07)", borderRadius: "14px", padding: "20px" }}>
                 <div style={{ fontSize: "11px", fontWeight: 600, letterSpacing: "1px", textTransform: "uppercase", color: "rgba(255,255,255,0.4)", marginBottom: "12px" }}>Status</div>
                 <select name="status" value={form.status} onChange={handle} style={{ ...inputStyle, appearance: "none" }}>
@@ -318,7 +691,6 @@ export default function PostEditor() {
             </div>
           </div>
 
-          {/* Save / Publish — bottom of form */}
           <div className="pe-actions" style={{ marginTop: "32px", paddingTop: "24px", borderTop: "0.5px solid rgba(255,255,255,0.08)", justifyContent: "flex-end" }}>
             <button onClick={() => save("draft")} disabled={saving} style={{ padding: "13px 24px", borderRadius: "10px", background: "rgba(255,255,255,0.07)", border: "0.5px solid rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.7)", fontFamily: F.b, fontSize: "13.5px", fontWeight: 600, cursor: saving ? "default" : "pointer", opacity: saving ? 0.6 : 1 }}>
               Save Draft

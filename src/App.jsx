@@ -14,11 +14,13 @@ import Profile from "pages/Auth/Profile";
 import ForgotPassword from "pages/Auth/ForgotPassword";
 import ResetPassword from "pages/Auth/ResetPassword";
 import AdminLogin from "pages/Admin/AdminLogin";
-import AdminDashboard from "pages/Admin/AdminDashboard";
+import AdminDashboard from "pages/Admin/AdminDashboard/AdminDashboard";
 import PostEditor from "pages/Admin/PostEditor";
 import SpotifyCallback from "pages/Auth/SpotifyCallback";
 import YoutubeCallback from "pages/Auth/YoutubeCallback";
 import BlogPost from "layouts/pages/blog/BlogPost";
+import PrivacyPolicy from "pages/PrivacyPolicy";
+import TermsAndConditions from "pages/TermsAndConditions";
 
 import Promotion from "pages/promotion/Promotion";
 import CampaignDashboard from "pages/Campaigns/CampaignDashboard";
@@ -69,9 +71,9 @@ function AppRoutes() {
       {/* ── Automatic per-route SEO tags, driven by routes.js ──
            Covers every route listed in routes.js. Routes NOT in that map
            (Home "/", /blog/:slug, admin, auth callbacks, password reset,
-           /campaigns) render null here and rely on their own page-level
-           <SEOHead /> or on SEOHead's defaults — see RouteSEO.jsx for the
-           full list. */}
+           /campaigns, /privacy-policy, /terms-and-conditions) render null
+           here and rely on their own page-level <SEOHead /> or on
+           SEOHead's defaults — see RouteSEO.jsx for the full list. */}
       <RouteSEO />
 
       <Routes>
@@ -87,6 +89,12 @@ function AppRoutes() {
              not a navbar destination itself. Auth-gated: manages billing
              and campaign spend, same guard as /profile. */}
         <Route path="/campaigns" element={<PrivateRoute><CampaignDashboard /></PrivateRoute>} />
+
+        {/* ── Legal — bare routes, not in routes.js ──
+             Previously a "Legal" navbar dropdown; that group has been
+             removed from the nav entirely. Link to these from the Footer. */}
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
 
         {/* ── Blog post — bare route, not in routes.js ──
              Reached only via links from BlogPage (e.g. /blog/${post.slug}),

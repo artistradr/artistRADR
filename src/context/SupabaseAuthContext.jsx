@@ -14,8 +14,18 @@
 //      against the Firebase version (which does throw) would otherwise
 //      silently "succeed" on a wrong password. AdminLogin.jsx's try/catch
 //      depends on this throwing.
+//   4. onAuthStateChange no longer re-triggers roleLoading (and therefore
+//      an AdminRoute/PostEditor remount) on TOKEN_REFRESHED events for a
+//      user who's already signed in — e.g. when the tab regains focus
+//      after being backgrounded, Supabase silently refreshes the access
+//      token and fires this listener again. Previously that re-ran
+//      fetchRole() unconditionally, which flips roleLoading back to true,
+//      which makes AdminRoute swap the whole page out for a "Loading…"
+//      screen and back — unmounting/remounting PostEditor and silently
+//      wiping any unsaved contentEditable draft. Only SIGNED_IN for a
+//      *new* user id, or SIGNED_OUT, now touches loading/roleLoading.
 
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import { supabase } from "../supabaseClient";
 
@@ -27,6 +37,11 @@ export function SupabaseAuthProvider({ children }) {
   const [roleError, setRoleError] = useState(null);
   const [loading, setLoading] = useState(true);
   const [roleLoading, setRoleLoading] = useState(true);
+
+  // Tracks which user id the role was last fetched for, so a
+  // TOKEN_REFRESHED (or any event) for the *same* user can update the
+  // user object without re-triggering the roleLoading gate.
+  const roleFetchedForRef = useRef(null);
 
   async function fetchRole(userId) {
     setRoleLoading(true);
@@ -50,6 +65,7 @@ export function SupabaseAuthProvider({ children }) {
     } else {
       setUserRole(data.role);
     }
+    roleFetchedForRef.current = userId;
     setRoleLoading(false);
   }
 
@@ -68,16 +84,33 @@ export function SupabaseAuthProvider({ children }) {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       const sessionUser = session?.user ?? null;
+
+      // Always keep the user/session object current — a token refresh
+      // does carry a legitimately updated session even for the same user.
       setUser(sessionUser);
-      if (sessionUser) {
-        fetchRole(sessionUser.id);
-      } else {
+
+      if (!sessionUser) {
         setUserRole(null);
         setRoleError(null);
         setRoleLoading(false);
+        roleFetchedForRef.current = null;
+        setLoading(false);
+        return;
       }
+
+      // Only re-run the role fetch (and its loading gate) when this is
+      // genuinely a different user than we last fetched for. A
+      // TOKEN_REFRESHED for the same id — the common case when a
+      // backgrounded tab regains focus — is a no-op here: the role we
+      // already have is still correct, and skipping this avoids flipping
+      // roleLoading back to true, which would unmount any page gated by
+      // AdminRoute (e.g. PostEditor) and lose unsaved work.
+      if (roleFetchedForRef.current !== sessionUser.id) {
+        fetchRole(sessionUser.id);
+      }
+
       setLoading(false);
     });
 
@@ -89,7 +122,10 @@ export function SupabaseAuthProvider({ children }) {
     if (error) throw error;
   };
 
-  const logout = () => supabase.auth.signOut();
+  const logout = () => {
+    roleFetchedForRef.current = null;
+    return supabase.auth.signOut();
+  };
 
   return (
     <SupabaseAuthContext.Provider

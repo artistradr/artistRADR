@@ -3,8 +3,6 @@ import BlogPage from "layouts/pages/blog/BlogPage";
 
 // Public Pages
 import ContactUs from "pages/ContactUs";
-import PrivacyPolicy from "pages/PrivacyPolicy";
-import TermsAndConditions from "pages/TermsAndConditions";
 
 // Toolkit Pages
 import Freebies from "pages/Toolkit/freebies";
@@ -29,6 +27,11 @@ import Register from "pages/Auth/Register";
 // This entry exists only so the link shows up in the navbar — omitting
 // `component` here avoids registering a second, duplicate <Route> for the
 // same path.
+
+// NOTE: Privacy Policy and Terms & Conditions used to live here as a
+// "Legal" nav group. That group has been removed entirely from the navbar.
+// Their routes are now registered as bare routes directly in App.jsx
+// (same pattern as /campaigns) and linked from the Footer instead.
 
 const routes = [
   {
@@ -70,16 +73,16 @@ const routes = [
         component: <PlaylistSubmissionPage />,
       },
       {
-        name: "Promotion",
-        description: "Get your music discovered across platforms",
-        route: "/promotion",
-        component: <Promotion />,
-      },
-      {
         name: "My Campaigns",
         description: "Track and manage your active promotion campaigns",
         route: "/campaigns",
         // no `component` — see note above, route is registered in App.jsx
+      },
+      {
+        name: "Promotion",
+        description: "Get your music discovered across platforms",
+        route: "/promotion",
+        component: <Promotion />,
       },
       {
         name: "Contact Us",
@@ -100,29 +103,6 @@ const routes = [
         route: "/register",
         component: <Register />,
         guestOnly: true,
-      },
-    ],
-  },
-  {
-    // Not in navRoutes' visible collapses — Privacy Policy is linked from the
-    // Footer, not the main nav, but still needs to be a routed page. If your
-    // Navbar component only renders items from named collapse groups above,
-    // this entry still works because App.jsx's getRoutes() flattens every
-    // collapse group recursively — it'll just render only in the Footer link,
-    // not as a nav dropdown item, unless you also add it above.
-    name: "Legal",
-    collapse: [
-      {
-        name: "Privacy Policy",
-        description: "How we handle your data",
-        route: "/privacy-policy",
-        component: <PrivacyPolicy />,
-      },
-      {
-        name: "Terms & Conditions",
-        description: "Rules for using RADR",
-        route: "/terms-and-conditions",
-        component: <TermsAndConditions />,
       },
     ],
   },
