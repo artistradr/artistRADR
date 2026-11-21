@@ -85,21 +85,98 @@ function escapeHtml(str) {
     .replace(/>/g, "&gt;");
 }
 
-// Normalizes editor output to match the WordPress-migrated posts' block
-// structure. This now does two jobs, not one:
+// Converts any uploaded cover image to JPEG before it's stored.
 //
-// 1. (as before) assigns wp-block-* classes to real h1-h6/p/ul elements
-//    that don't already carry one.
-// 2. (NEW) rebuilds the top level of the document when it's NOT made of
-//    proper block elements at all — i.e. when staff typed or pasted
-//    directly into the editor and the browser produced bare text nodes
-//    or <div> line-breaks instead of <p> tags (Chrome's contentEditable
-//    default). Every top-level child is walked: real blocks (p, h1-h6,
-//    ul, ol, blockquote, figure) are kept as-is; <div> wrappers and bare
+// Why: browsers/screenshot tools/exporters can hand us WebP (or other
+// formats), and Facebook's/X's link-preview crawlers do NOT reliably
+// support WebP for og:image/twitter:image even though it displays fine
+// on the live site itself. A post's cover can look completely correct
+// everywhere except in a shared link preview, where the image silently
+// fails to render. Normalizing every upload to JPEG here means that can
+// never happen again for new posts.
+function convertImageFileToJpeg(file, { quality = 0.85, maxWidth = 1600 } = {}) {
+  return new Promise((resolve, reject) => {
+    const objectUrl = URL.createObjectURL(file);
+    const img = new window.Image();
+    img.onload = () => {
+      let { width, height } = img;
+      if (width > maxWidth) {
+        height = Math.round((height * maxWidth) / width);
+        width = maxWidth;
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      // Flatten onto white first — JPEG has no alpha channel, so any
+      // transparent PNG/WebP source would otherwise turn black.
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, width, height);
+      ctx.drawImage(img, 0, 0, width, height);
+      canvas.toBlob(
+        (blob) => {
+          URL.revokeObjectURL(objectUrl);
+          if (!blob) { reject(new Error("Canvas toBlob failed")); return; }
+          const jpegName = file.name.replace(/\.\w+$/, "") + ".jpg";
+          resolve(new File([blob], jpegName, { type: "image/jpeg" }));
+        },
+        "image/jpeg",
+        quality
+      );
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error("Image failed to load for conversion"));
+    };
+    img.src = objectUrl;
+  });
+}
+
+// Defensive pass: pulls any block-level element (p, ul, ol, blockquote,
+// figure, or another heading) that ended up NESTED inside a heading back
+// out as a top-level sibling right after that heading.
+//
+// Why this matters: text-transform is an inherited CSS property, and
+// headings are styled uppercase. If a <p> ever ends up as a *child* of an
+// <h1-6> (which browsers can do when content is inserted while the caret
+// sits inside an empty heading — see the placeholder-escape logic in
+// insertHtmlBlock below), that <p> visually inherits the heading's
+// uppercase styling even though the <p> itself has no such rule. This
+// pass guarantees that can never survive into a saved post, regardless
+// of which browser/quirk produced the nesting.
+function unnestBlocksFromHeadings(container) {
+  const BLOCK_TAGS = new Set(["FIGURE", "H1", "H2", "H3", "H4", "H5", "H6", "P", "UL", "OL", "BLOCKQUOTE"]);
+  let changed = true;
+  while (changed) {
+    changed = false;
+    const headings = container.querySelectorAll("h1,h2,h3,h4,h5,h6");
+    for (const h of headings) {
+      const nestedBlocks = Array.from(h.children).filter((c) => BLOCK_TAGS.has(c.tagName));
+      if (nestedBlocks.length) {
+        nestedBlocks.forEach((block) => {
+          h.parentNode.insertBefore(block, h.nextSibling);
+        });
+        changed = true;
+      }
+    }
+  }
+}
+
+// Normalizes editor output to match the WordPress-migrated posts' block
+// structure. This does three jobs:
+//
+// 1. Assigns wp-block-* classes to real h1-h6/p/ul elements that don't
+//    already carry one.
+// 2. Rebuilds the top level of the document when it's NOT made of proper
+//    block elements at all — i.e. when staff typed or pasted directly
+//    into the editor and the browser produced bare text nodes or <div>
+//    line-breaks instead of <p> tags (Chrome's contentEditable default).
+//    Every top-level child is walked: real blocks (p, h1-h6, ul, ol,
+//    blockquote, figure) are kept as-is; <div> wrappers and bare
 //    text/inline nodes are converted into <p class="wp-block-paragraph">.
-//    This is what was missing before — it's why posts like "ERIGOTHI -
-//    MILLION MILESTONE" saved with zero heading/paragraph markup and
-//    didn't visually match properly-authored posts.
+// 3. (NEW) Un-nests any block element that ended up trapped inside a
+//    heading (see unnestBlocksFromHeadings above) so saved posts can
+//    never carry an inherited-uppercase bug onto the live blog page.
 function normalizeToWp(html) {
   const container = document.createElement("div");
   container.innerHTML = html;
@@ -148,6 +225,10 @@ function normalizeToWp(html) {
 
   container.innerHTML = "";
   rebuilt.forEach((n) => container.appendChild(n));
+
+  // Un-nest before class assignment so classes land on the correct,
+  // now-top-level elements.
+  unnestBlocksFromHeadings(container);
 
   container.querySelectorAll("h1,h2,h3,h4,h5,h6").forEach((h) => {
     if (!h.className) h.className = "wp-block-heading";
@@ -322,20 +403,60 @@ export default function PostEditor() {
     setEmbedUrl("");
   };
 
+  // Walks up from a node to find an ancestor heading (h1-h6) within the
+  // editor, if any.
+  const findHeadingAncestor = (node) => {
+    let cursor = node && node.nodeType === Node.TEXT_NODE ? node.parentElement : node;
+    while (cursor && cursor !== editorRef.current) {
+      if (/^H[1-6]$/.test(cursor.tagName)) return cursor;
+      cursor = cursor.parentElement;
+    }
+    return null;
+  };
+
   const insertHtmlBlock = (html) => {
     const el = editorRef.current;
     if (!el) return;
     el.focus();
     const sel = window.getSelection();
     sel.removeAllRanges();
-    if (lastRangeRef.current) {
-      sel.addRange(lastRangeRef.current);
-    } else {
-      const range = document.createRange();
-      range.selectNodeContents(el);
-      range.collapse(false);
-      sel.addRange(range);
+
+    let range = lastRangeRef.current ? lastRangeRef.current.cloneRange() : null;
+
+    // BUGFIX: if the caret is still sitting inside the empty placeholder
+    // heading (the seeded "<h3 class='wp-block-heading'><br></h3>" used
+    // for the post's opening line), document.execCommand('insertHTML')
+    // can insert the new block(s) AS CHILDREN of that heading instead of
+    // splitting out of it. Because text-transform is an inherited CSS
+    // property and headings are styled uppercase, any paragraph nested
+    // this way visually renders in caps even though the <p> itself has
+    // no uppercase rule — this was the cause of pasted content
+    // "turning uppercase". Detect that case and drop the (still-empty)
+    // placeholder heading first, so new content always lands as a
+    // sibling at the editor's top level, never as its child.
+    if (range) {
+      const headingAncestor = findHeadingAncestor(range.startContainer);
+      if (headingAncestor) {
+        const isEmpty = headingAncestor.textContent.replace(/\u200B/g, "").trim() === "";
+        if (isEmpty) {
+          const after = document.createRange();
+          after.setStartAfter(headingAncestor);
+          after.collapse(true);
+          headingAncestor.remove();
+          range = after;
+        }
+      }
     }
+
+    if (range) {
+      sel.addRange(range);
+    } else {
+      const fallback = document.createRange();
+      fallback.selectNodeContents(el);
+      fallback.collapse(false);
+      sel.addRange(fallback);
+    }
+
     document.execCommand("insertHTML", false, html);
     rememberSelection();
     setHasUnsavedChanges(true);
@@ -385,6 +506,7 @@ export default function PostEditor() {
   // "wp-block-paragraph">, matching what typing + Enter now produces.
   const handlePaste = (e) => {
     e.preventDefault();
+    rememberSelection();
     const text = (e.clipboardData || window.clipboardData).getData("text/plain");
     if (!text) return;
     const html = text
@@ -396,11 +518,20 @@ export default function PostEditor() {
     insertHtmlBlock(html);
   };
 
-  const handleCover = (e) => {
+  const handleCover = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    setCoverFile(file);
-    setCoverPreview(URL.createObjectURL(file));
+    try {
+      const jpegFile = await convertImageFileToJpeg(file);
+      setCoverFile(jpegFile);
+      setCoverPreview(URL.createObjectURL(jpegFile));
+    } catch (err) {
+      // If conversion fails for any reason, fall back to the original
+      // file rather than blocking the upload entirely.
+      console.error("Cover image conversion to JPEG failed, using original file:", err);
+      setCoverFile(file);
+      setCoverPreview(URL.createObjectURL(file));
+    }
     setHasUnsavedChanges(true);
   };
 
@@ -498,6 +629,13 @@ export default function PostEditor() {
         .pe-editor a { color: var(--color-cyan); }
         .pe-editor figure { margin: 18px 0; }
         .pe-editor iframe { max-width: 100%; }
+        /* Safety net: even if a paragraph/list/link ever ends up nested
+           inside a heading (browser paste quirks etc.), explicitly reset
+           text-transform so it can never visually inherit the heading's
+           uppercase styling. */
+        .pe-editor p, .pe-editor li, .pe-editor a, .pe-editor span, .pe-editor blockquote {
+          text-transform: none;
+        }
 
         @media (max-width: 768px) {
           .pe-hamburger { display:flex; }

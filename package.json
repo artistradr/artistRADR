@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "postbuild": "node scripts/generate-post-html.mjs",
     "lint": "eslint .",
     "preview": "vite preview"
   },
@@ -23,12 +24,14 @@
     "@tiptap/starter-kit": "^3.23.5",
     "axios": "^1.16.1",
     "dotenv": "^17.4.2",
+    "express": "^5.2.1",
     "firebase": "^12.13.0",
     "firebase-admin": "^14.2.0",
     "prop-types": "^15.8.1",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
-    "react-router-dom": "^7.15.1"
+    "react-router-dom": "^7.15.1",
+    "sharp": "^0.35.4"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

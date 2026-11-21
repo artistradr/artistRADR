@@ -7,7 +7,7 @@
 }
 
 /* ── Page shell ── */
-.bp-page { font-family: var(--font-body); background: #f7f6f3; min-height: 100vh; }
+.bp-page { font-family: var(--font-body); background: #f7f6f3; min-height: 100vh; overflow-x: hidden; }
 .bp-wrapper { max-width: 1180px; margin: 0 auto; padding: 100px 1.5rem 0; }
 
 /* ── Loading / not-found states ── */
@@ -43,6 +43,14 @@
 
 /* ── Two column layout ── */
 .bp-layout { display: grid; grid-template-columns: 1fr 300px; gap: 56px; align-items: start; padding-bottom: 100px; }
+/* Grid children default to min-width: auto, which means they refuse to
+   shrink smaller than their content (e.g. a fixed-width embed or table
+   inside the article). That forces the whole grid — and the page —
+   wider than the viewport. min-width: 0 lets them actually shrink to fit. */
+.bp-layout > article,
+.bp-layout > .bp-sidebar {
+  min-width: 0;
+}
 
 /* ── Article actions row (More Articles / Share) ── */
 .bp-article-actions { margin-top: 48px; padding-top: 28px; border-top: 0.5px solid rgba(0,0,0,0.08); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
@@ -110,6 +118,31 @@
 .bp-article-body ul, .bp-article-body ol { padding-left: 1.4rem; margin-bottom: 1.4rem; }
 .bp-article-body li { font-size: 15px; line-height: 1.75; color: #333; margin-bottom: 6px; font-weight: 300; }
 .bp-article-body strong { font-weight: 600; color: #111; }
+
+/* Anything embedded in migrated content that might carry a fixed pixel
+   width — WP embeds, pasted tables, iframes (Spotify/YouTube/etc),
+   code blocks — is constrained to the column instead of blowing it out. */
+.bp-article-body iframe,
+.bp-article-body video,
+.bp-article-body embed,
+.bp-article-body object {
+  max-width: 100%;
+}
+.bp-article-body table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+}
+.bp-article-body pre {
+  max-width: 100%;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.bp-article-body * {
+  max-width: 100%;
+}
 
 /* ── Responsive ── */
 @media (max-width: 860px) {
