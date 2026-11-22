@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:studio": "vite --mode studio --port 5174",
     "build": "vite build",
+    "build:studio": "vite build --mode studio --outDir dist-studio",
     "postbuild": "node scripts/generate-post-html.mjs",
     "lint": "eslint .",
     "preview": "vite preview"

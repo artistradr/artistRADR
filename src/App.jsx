@@ -25,17 +25,45 @@ import TermsAndConditions from "pages/TermsAndConditions";
 import Promotion from "pages/promotion/Promotion";
 import CampaignDashboard from "pages/Campaigns/CampaignDashboard";
 
+// ── Studio shell ────────────────────────────────────────────────────────
+import StudioLayout from "./studio/StudioLayout";
+import StudioHome from "./studio/StudioHome";
+import ModulePage from "./studio/ModulePage";
+
+// ── Build mode ──────────────────────────────────────────────────────────
+// "web"    -> artistradr.com          (public site + magazine + admin)
+// "studio" -> studio.artistradr.com   (admin / Studio only)
+// Set by VITE_APP_MODE in .env.studio (see package.json scripts).
+const IS_STUDIO = import.meta.env.VITE_APP_MODE === "studio";
+
+const fullScreenMessage = {
+  minHeight: "100vh",
+  background: "#0E0E0E",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  color: "rgba(255,255,255,0.4)",
+  fontSize: "14px",
+};
+
 function AdminRoute({ children }) {
   const { user, userRole, loading, roleLoading } = useSupabaseAuth();
   if (loading || roleLoading) {
-    return (
-      <div style={{ minHeight: "100vh", background: "#0E0E0E", display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.4)", fontSize: "14px" }}>
-        Loading…
-      </div>
-    );
+    return <div style={fullScreenMessage}>Loading…</div>;
   }
   if (!user) return <Navigate to="/admin/login" replace />;
-  if (userRole !== "radrStaff") return <Navigate to="/" replace />;
+  if (userRole !== "radrStaff") {
+    // On the Studio subdomain there is no public home page to send people to,
+    // so redirecting to "/" would loop. Show a message instead.
+    if (IS_STUDIO) {
+      return (
+        <div style={{ ...fullScreenMessage, color: "rgba(255,255,255,0.5)" }}>
+          RADR Studio is restricted to Artist RADR staff.
+        </div>
+      );
+    }
+    return <Navigate to="/" replace />;
+  }
   return children;
 }
 
@@ -46,6 +74,46 @@ function PrivateRoute({ children }) {
   return children;
 }
 
+// ── Studio build: admin + Studio routes only ────────────────────────────
+// To build a module for real, swap its <ModulePage id="..." /> element for
+// the real page component.
+function StudioRoutes() {
+  useEffect(() => {
+    // Keep Studio out of search engines.
+    const meta = document.createElement("meta");
+    meta.name = "robots";
+    meta.content = "noindex,nofollow";
+    document.head.appendChild(meta);
+    document.title = "RADR Studio";
+    return () => meta.remove();
+  }, []);
+
+  return (
+    <Routes>
+      {/* ── Existing admin (Magazine): unchanged, full-page ── */}
+      <Route path="/admin/login" element={<AdminLogin />} />
+      <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+      <Route path="/admin/new" element={<AdminRoute><PostEditor /></AdminRoute>} />
+      <Route path="/admin/edit/:id" element={<AdminRoute><PostEditor /></AdminRoute>} />
+
+      {/* ── Studio shell ── */}
+      <Route path="/studio" element={<AdminRoute><StudioLayout /></AdminRoute>}>
+        <Route index element={<StudioHome />} />
+        <Route path="discovery" element={<ModulePage id="discovery" />} />
+        <Route path="playlists" element={<ModulePage id="playlists" />} />
+        <Route path="create" element={<ModulePage id="studio" />} />
+        <Route path="publishing" element={<ModulePage id="publishing" />} />
+        <Route path="originals" element={<ModulePage id="originals" />} />
+        <Route path="ai" element={<ModulePage id="ai" />} />
+      </Route>
+
+      {/* Everything else goes to the Studio overview (logged-out users go to login) */}
+      <Route path="*" element={<Navigate to="/studio" replace />} />
+    </Routes>
+  );
+}
+
+// ── Public build: the full site (unchanged) ─────────────────────────────
 function AppRoutes() {
   const { pathname } = useLocation();
   const { user, userRole } = useSupabaseAuth();
@@ -136,7 +204,7 @@ export default function App() {
       <AuthGateProvider>
         <ThemeProvider theme={theme}>
           <CssBaseline />
-          <AppRoutes />
+          {IS_STUDIO ? <StudioRoutes /> : <AppRoutes />}
         </ThemeProvider>
       </AuthGateProvider>
     </SupabaseAuthProvider>
