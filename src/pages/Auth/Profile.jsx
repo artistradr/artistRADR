@@ -1,3 +1,4 @@
+// src/pages/Auth/Profile.jsx
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../../supabaseClient";
@@ -9,6 +10,10 @@ import Breadcrumbs from "components/Breadcrumbs";
 import AccountSidebar from "components/AccountSidebar";
 
 const F = { d: "var(--font-display)", b: "var(--font-body)" };
+
+// Where the "Open RADR Studio" button points. Set VITE_STUDIO_URL in .env for
+// local testing (e.g. http://localhost:5174); production defaults to the subdomain.
+const STUDIO_URL = import.meta.env.VITE_STUDIO_URL || "https://studio.artistradr.com";
 
 export default function Profile() {
   const { user, userRole, roleError, logout } = useSupabaseAuth();
@@ -133,12 +138,18 @@ export default function Profile() {
                   <div style={{ fontFamily: F.d, fontSize: "1.3rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "1px", color: "white", marginBottom: "4px" }}>Admin Dashboard</div>
                   <div style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)", fontWeight: 300 }}>Manage posts, content and platform settings</div>
                 </div>
-                <Link to="/admin" style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "#D94F2B", color: "white", padding: "12px 24px", borderRadius: "10px", fontFamily: F.b, fontSize: "13px", fontWeight: 700, textDecoration: "none", flexShrink: 0, boxShadow: "0 4px 16px rgba(217,79,43,0.4)", position: "relative", zIndex: 1 }}>
-                  Go to Admin
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
-                  </svg>
-                </Link>
+
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap", position: "relative", zIndex: 1 }}>
+                  <a href={STUDIO_URL} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "transparent", color: "white", padding: "12px 24px", borderRadius: "10px", border: "0.5px solid rgba(255,255,255,0.3)", fontFamily: F.b, fontSize: "13px", fontWeight: 700, textDecoration: "none", flexShrink: 0 }}>
+                    Open RADR Studio
+                  </a>
+                  <Link to="/admin" style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "#D94F2B", color: "white", padding: "12px 24px", borderRadius: "10px", fontFamily: F.b, fontSize: "13px", fontWeight: 700, textDecoration: "none", flexShrink: 0, boxShadow: "0 4px 16px rgba(217,79,43,0.4)" }}>
+                    Go to Admin
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+                    </svg>
+                  </Link>
+                </div>
               </div>
             )}
 
