@@ -1,3 +1,4 @@
+// src/App.jsx
 import { useEffect } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { ThemeProvider } from "@mui/material/styles";
@@ -29,6 +30,8 @@ import CampaignDashboard from "pages/Campaigns/CampaignDashboard";
 import StudioLayout from "./studio/StudioLayout";
 import StudioHome from "./studio/StudioHome";
 import ModulePage from "./studio/ModulePage";
+import PlaylistsPage from "./studio/pages/PlaylistsPage";
+import StudioSpotifyCallback from "./studio/StudioSpotifyCallback";
 
 // ── Build mode ──────────────────────────────────────────────────────────
 // "web"    -> artistradr.com          (public site + magazine + admin)
@@ -100,7 +103,8 @@ function StudioRoutes() {
       <Route path="/studio" element={<AdminRoute><StudioLayout /></AdminRoute>}>
         <Route index element={<StudioHome />} />
         <Route path="discovery" element={<ModulePage id="discovery" />} />
-        <Route path="playlists" element={<ModulePage id="playlists" />} />
+        <Route path="playlists" element={<PlaylistsPage />} />
+        <Route path="spotify/callback" element={<StudioSpotifyCallback />} />
         <Route path="create" element={<ModulePage id="studio" />} />
         <Route path="publishing" element={<ModulePage id="publishing" />} />
         <Route path="originals" element={<ModulePage id="originals" />} />

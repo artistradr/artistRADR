@@ -19,3 +19,5 @@ dist/
 dist.zip
 *-export.json
 uid-mapping.json
+
+supabase/.temp/
