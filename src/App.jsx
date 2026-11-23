@@ -31,6 +31,7 @@ import StudioLayout from "./studio/StudioLayout";
 import StudioHome from "./studio/StudioHome";
 import ModulePage from "./studio/ModulePage";
 import PlaylistsPage from "./studio/pages/PlaylistsPage";
+import DiscoveryPage from "./studio/pages/DiscoveryPage";
 import StudioSpotifyCallback from "./studio/StudioSpotifyCallback";
 
 // ── Build mode ──────────────────────────────────────────────────────────
@@ -102,7 +103,7 @@ function StudioRoutes() {
       {/* ── Studio shell ── */}
       <Route path="/studio" element={<AdminRoute><StudioLayout /></AdminRoute>}>
         <Route index element={<StudioHome />} />
-        <Route path="discovery" element={<ModulePage id="discovery" />} />
+        <Route path="discovery" element={<DiscoveryPage />} />
         <Route path="playlists" element={<PlaylistsPage />} />
         <Route path="spotify/callback" element={<StudioSpotifyCallback />} />
         <Route path="create" element={<ModulePage id="studio" />} />

@@ -10,6 +10,7 @@ import {
 import PlaylistTracks from "./PlaylistTracks";
 import PlaylistDraft from "./PlaylistDraft";
 import WriteTestPanel from "./WriteTestPanel";
+import ActivityLog from "./ActivityLog";
 import "./playlists.css";
 
 const fmt = (iso) => (iso ? new Date(iso).toLocaleString() : "Never");
@@ -22,6 +23,7 @@ export default function PlaylistsPage() {
   const [error, setError] = useState("");
   const [openId, setOpenId] = useState(null); // playlist whose draft editor is open
   const [liveId, setLiveId] = useState(null); // playlist whose live Spotify tracks are showing
+  const [showLog, setShowLog] = useState(false); // activity log panel
 
   const load = useCallback(async () => {
     setError("");
@@ -212,6 +214,20 @@ export default function PlaylistsPage() {
                 )}
               </div>
             ))}
+          </div>
+        )}
+      </div>
+
+      <div className="rs-panel">
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <h2 style={{ margin: 0, flex: 1 }}>Activity log</h2>
+          <button type="button" className="rs-btn" onClick={() => setShowLog((v) => !v)}>
+            {showLog ? "Hide activity" : "Show activity"}
+          </button>
+        </div>
+        {showLog && (
+          <div style={{ marginTop: 8, maxHeight: 460, overflowY: "auto" }}>
+            <ActivityLog supabase={supabase} playlists={playlists} />
           </div>
         )}
       </div>
