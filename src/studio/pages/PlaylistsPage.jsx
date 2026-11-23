@@ -9,7 +9,6 @@ import {
 } from "../spotify";
 import PlaylistTracks from "./PlaylistTracks";
 import PlaylistDraft from "./PlaylistDraft";
-import WriteTestPanel from "./WriteTestPanel";
 import ActivityLog from "./ActivityLog";
 import "./playlists.css";
 
@@ -150,8 +149,6 @@ export default function PlaylistsPage() {
           </div>
         )}
       </div>
-
-      {spotifyReady && <WriteTestPanel supabase={supabase} />}
 
       <div className="rs-panel">
         <h2>RADR playlists</h2>

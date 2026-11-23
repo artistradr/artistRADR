@@ -6,91 +6,12 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "../../supabaseClient";
+import SpotifySearch, { formatRelease } from "./SpotifySearch";
 import "./playlists.css";
 
 const fmtTime = (iso) => (iso ? new Date(iso).toLocaleString() : "");
 
-// supabase-js hides the JSON body of non-2xx function responses in error.context
-async function functionError(error) {
-  try {
-    const body = await error.context.json();
-    return body.error || error.message;
-  } catch {
-    return error.message;
-  }
-}
-
 const SOURCE_KINDS = ["manual", "playlist", "blog", "chart", "social", "other"];
-
-// ── Spotify search box, reused for adding and for matching ──────────────────
-function SearchBox({ initialQuery = "", pickLabel, onPick, busyKey }) {
-  const [query, setQuery] = useState(initialQuery);
-  const [results, setResults] = useState([]);
-  const [searching, setSearching] = useState(false);
-  const [searched, setSearched] = useState(false);
-  const [error, setError] = useState("");
-
-  const run = async (e) => {
-    e.preventDefault();
-    setError("");
-    setSearching(true);
-    const { data, error: fnErr } = await supabase.functions.invoke("studio-spotify", {
-      body: { action: "search", query },
-    });
-    if (fnErr) {
-      setError(await functionError(fnErr));
-      setResults([]);
-    } else {
-      setResults(data.tracks ?? []);
-    }
-    setSearched(true);
-    setSearching(false);
-  };
-
-  return (
-    <div>
-      <form onSubmit={run} style={{ display: "flex", gap: 8, marginBottom: 8 }}>
-        <input
-          type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Song or artist"
-          minLength={2}
-          maxLength={100}
-          style={{ flex: 1, padding: "6px 8px" }}
-        />
-        <button type="submit" className="rs-btn primary" disabled={searching || query.trim().length < 2}>
-          {searching ? "Searching…" : "Search Spotify"}
-        </button>
-      </form>
-      {error && <div className="rs-alert error">{error}</div>}
-      {searched && results.length === 0 && !searching && !error && <p>No results.</p>}
-      <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-        {results.map((t) => (
-          <li key={t.spotify_id} style={{ display: "flex", gap: 12, alignItems: "center", padding: "6px 0" }}>
-            {t.image && <img src={t.image} alt="" width={40} height={40} />}
-            <span style={{ flex: 1 }}>
-              <strong>{t.name}</strong>
-              <br />
-              <small>
-                {t.artists.join(", ")}
-                {t.album ? ` · ${t.album}` : ""}
-              </small>
-            </span>
-            <button
-              type="button"
-              className="rs-btn"
-              onClick={() => onPick(t)}
-              disabled={busyKey === t.spotify_id}
-            >
-              {busyKey === t.spotify_id ? "Working…" : pickLabel}
-            </button>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
 
 // ── One candidate row ─────────────────────────────────────────────────────────
 function CandidateRow({
@@ -121,6 +42,7 @@ function CandidateRow({
           <small>
             {c.artist_name}
             {sp?.album ? ` · ${sp.album}` : ""}
+            {sp?.release_date ? ` · Released ${formatRelease(sp.release_date)}` : ""}
           </small>
         </span>
         <span className="rs-chip">{c.status}</span>
@@ -202,7 +124,8 @@ function CandidateRow({
 
       {open && !hasMatch && matching && (
         <div style={{ marginTop: 8 }}>
-          <SearchBox
+          <SpotifySearch
+            supabase={supabase}
             initialQuery={`${c.track_title} ${c.artist_name}`.trim().slice(0, 100)}
             pickLabel="Use this match"
             onPick={async (t) => {
@@ -459,7 +382,7 @@ export default function DiscoveryPage() {
           />
         </div>
 
-        <SearchBox pickLabel="Add as candidate" onPick={addFromSpotify} busyKey={addingKey} />
+        <SpotifySearch supabase={supabase} pickLabel="Add as candidate" onPick={addFromSpotify} busyKey={addingKey} />
 
         <div style={{ marginTop: 8 }}>
           <button type="button" className="rs-btn" onClick={() => setShowManual((v) => !v)}>

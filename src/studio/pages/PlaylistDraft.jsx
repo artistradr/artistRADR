@@ -23,6 +23,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import SpotifySearch from "./SpotifySearch";
 
 const fmt = (ms) => {
   if (!ms) return "";
@@ -110,10 +111,6 @@ export default function PlaylistDraft({ supabase, playlistId }) {
   const [preview, setPreview] = useState(null);
   const [busy, setBusy] = useState(""); // "preview" | "approve" | "sync" | "discard"
 
-  const [query, setQuery] = useState("");
-  const [results, setResults] = useState([]);
-  const [searching, setSearching] = useState(false);
-  const [searched, setSearched] = useState(false);
   const [addingId, setAddingId] = useState(null);
 
   const sensors = useSensors(
@@ -192,24 +189,7 @@ export default function PlaylistDraft({ supabase, playlistId }) {
     await loadDraft();
   };
 
-  // ── search / add / remove ───────────────────────────────────────────────
-  const runSearch = async (e) => {
-    e.preventDefault();
-    clearMessages();
-    setSearching(true);
-    const { data, error: fnErr } = await supabase.functions.invoke("studio-spotify", {
-      body: { action: "search", query },
-    });
-    if (fnErr) {
-      setError(await functionError(fnErr));
-      setResults([]);
-    } else {
-      setResults(data.tracks ?? []);
-    }
-    setSearched(true);
-    setSearching(false);
-  };
-
+  // ── add / remove (search lives in SpotifySearch) ───────────────────────
   const addTrack = async (t) => {
     clearMessages();
     setAddingId(t.spotify_id);
@@ -456,49 +436,7 @@ export default function PlaylistDraft({ supabase, playlistId }) {
       )}
 
       <h3 style={{ margin: "16px 0 4px" }}>Search Spotify</h3>
-      <form onSubmit={runSearch} style={{ display: "flex", gap: 8, marginBottom: 8 }}>
-        <input
-          type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Song or artist"
-          minLength={2}
-          maxLength={100}
-          style={{ flex: 1, padding: "6px 8px" }}
-        />
-        <button type="submit" className="rs-btn primary" disabled={searching || query.trim().length < 2}>
-          {searching ? "Searching…" : "Search"}
-        </button>
-      </form>
-
-      {searched && results.length === 0 && !searching && <p>No results.</p>}
-      <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-        {results.map((t) => (
-          <li
-            key={t.spotify_id}
-            style={{ display: "flex", gap: 12, alignItems: "center", padding: "6px 0" }}
-          >
-            {t.image && <img src={t.image} alt="" width={40} height={40} />}
-            <span style={{ flex: 1 }}>
-              <strong>{t.name}</strong>
-              <br />
-              <small>
-                {t.artists.join(", ")}
-                {t.album ? ` · ${t.album}` : ""}
-              </small>
-            </span>
-            <small>{fmt(t.duration_ms)}</small>
-            <button
-              type="button"
-              className="rs-btn"
-              onClick={() => addTrack(t)}
-              disabled={addingId === t.spotify_id}
-            >
-              {addingId === t.spotify_id ? "Adding…" : "Add to draft"}
-            </button>
-          </li>
-        ))}
-      </ul>
+      <SpotifySearch supabase={supabase} pickLabel="Add to draft" onPick={addTrack} busyKey={addingId} />
     </div>
   );
 }
