@@ -90,11 +90,20 @@ function draw(ctx, T, titleLine, date, invert = false, logo = null) {
   // footer
   const fy = H - 84;
   ctx.fillStyle = O; ctx.fillRect(0, fy, W, 84);
-  // RADR logo on a white plate, bottom left
-  ctx.fillStyle = "#fff"; ctx.fillRect(56, fy + 8, 96, 68);
+  // RADR logo, bottom left, no box: transparent PNG with a thin white outline so it stands out on orange
   if (logo) {
-    const lh = 52, lw = lh * (logo.width / logo.height);
-    ctx.drawImage(logo, 56 + (96 - lw) / 2, fy + 8 + (68 - lh) / 2, lw, lh);
+    const lh = 64, lw = lh * (logo.width / logo.height), lx = 56, ly = fy + (84 - lh) / 2;
+    const sil = document.createElement("canvas");
+    sil.width = logo.width; sil.height = logo.height;
+    const sc = sil.getContext("2d");
+    sc.drawImage(logo, 0, 0);
+    sc.globalCompositeOperation = "source-in";
+    sc.fillStyle = "#fff"; sc.fillRect(0, 0, sil.width, sil.height);
+    const o = 3;
+    for (const [dx, dy] of [[-o, 0], [o, 0], [0, -o], [0, o], [-o, -o], [o, -o], [-o, o], [o, o]]) {
+      ctx.drawImage(sil, lx + dx, ly + dy, lw, lh);
+    }
+    ctx.drawImage(logo, lx, ly, lw, lh);
   }
   txt("@artistradr · artistradr.com", W / 2, fy + 51, 800, 22, "#fff", "center");
   txt("#RADRTOP10", W - 56, fy + 51, 800, 22, "#fff", "right");
