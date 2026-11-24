@@ -7,6 +7,7 @@ import Mic from "@mui/icons-material/Mic";
 import Article from "@mui/icons-material/Article";
 import AutoAwesome from "@mui/icons-material/AutoAwesome";
 import Dashboard from "@mui/icons-material/Dashboard";
+import EmojiEvents from "@mui/icons-material/EmojiEvents";
 
 // status: "live" | "next" | "planned"
 export const MODULES = [
@@ -65,6 +66,18 @@ export const MODULES = [
       "Captions and headline drafting",
       "Draft, review and approved states",
     ],
+  },
+  {
+    id: "top10",
+    label: "Top 10 Generator",
+    path: "/studio/artwork/top10",
+    Icon: EmojiEvents,
+    status: "live",
+    phase: "Artwork",
+    tagline: "Weekly, monthly and random Top 10 artwork from your playlists.",
+    description:
+      "Load 10 tracks from a RADR playlist, edit the title line and date, swap covers, approve, then download the 1080x1350 image.",
+    features: [],
   },
   {
     id: "publishing",

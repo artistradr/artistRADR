@@ -1,0 +1,243 @@
+// src/studio/pages/Top10Generator.jsx
+// Weekly Top 10 artwork. Design C is locked: header + track 1 from A, rows 2-10 + footer from B.
+import { useCallback, useEffect, useRef, useState } from "react";
+import { supabase } from "../../supabaseClient";
+import "@fontsource/montserrat/600.css";
+import "@fontsource/montserrat/800.css";
+import "@fontsource/montserrat/900.css";
+
+const W = 1080, H = 1350, O = "#FF5A1F", K = "#0B0B0B";
+const f = (w, s, extra = "") => `${extra}${w} ${s}px Montserrat, sans-serif`;
+const blank = () =>
+  Array.from({ length: 10 }, (_, i) => ({ title: `Track title ${i + 1}`, artist: "Artist name", cover: "", img: null }));
+
+function todayLabel() {
+  const d = new Date();
+  return `${d.getDate()} ${d.toLocaleString("en", { month: "long" })} ${String(d.getFullYear()).slice(2)}`.toUpperCase();
+}
+
+function loadImg(src) {
+  return new Promise((res) => {
+    if (!src) return res(null);
+    const i = new Image();
+    i.crossOrigin = "anonymous";
+    i.onload = () => res(i);
+    i.onerror = () => res(null);
+    i.src = src;
+  });
+}
+
+function draw(ctx, T, titleLine, date) {
+  const ls = (px) => { if ("letterSpacing" in ctx) ctx.letterSpacing = px + "px"; };
+  const fit = (t, w, s, min, maxW) => {
+    while (s > min) { ctx.font = f(w, s); if (ctx.measureText(t).width <= maxW) break; s -= 1; }
+    return s;
+  };
+  const txt = (t, x, y, w, s, col, align = "left", maxW, min = 14) => {
+    ls(0); ctx.fillStyle = col; ctx.textAlign = align; ctx.textBaseline = "alphabetic";
+    ctx.font = f(w, maxW ? fit(t, w, s, min, maxW) : s);
+    ctx.fillText(t, x, y);
+  };
+  const cover = (img, x, y, s, label) => {
+    ctx.save(); ctx.beginPath(); ctx.rect(x, y, s, s); ctx.clip();
+    if (img) {
+      const r = Math.max(s / img.width, s / img.height), w = img.width * r, h = img.height * r;
+      ctx.drawImage(img, x + (s - w) / 2, y + (s - h) / 2, w, h);
+    } else {
+      ctx.fillStyle = "#C9C9C9"; ctx.fillRect(x, y, s, s);
+      if (label) txt(label, x + s / 2, y + s / 2 + 6, 800, 18, "#555", "center");
+    }
+    ctx.restore();
+  };
+
+  ctx.fillStyle = K; ctx.fillRect(0, 0, W, H);
+  // header
+  ctx.fillStyle = O; ctx.fillRect(56, 44, 300, 48);
+  ls(5); txt("ARTIST RADR", 206, 78, 900, 24, "#fff", "center");
+  ls(-2); ctx.font = f(900, 118); ctx.fillStyle = "#fff"; ctx.textAlign = "left"; ctx.fillText("TOP 10", 50, 206);
+  txt(titleLine.toUpperCase(), W - 56, 150, 800, 26, O, "right", 380, 16);
+  txt(date.toUpperCase(), W - 56, 190, 800, 26, "#fff", "right", 380, 16);
+  // track 1
+  const y1 = 252;
+  cover(T[0].img, 56, y1, 230, "COVER #1");
+  ctx.fillStyle = O; ctx.fillRect(306, y1, W - 56 - 306, 230);
+  txt("01", 334, y1 + 104, 900, 92, "#fff");
+  txt(T[0].title.toUpperCase(), 334, y1 + 176, 900, 44, "#fff", "left", W - 56 - 334 - 28, 22);
+  txt(T[0].artist, 334, y1 + 212, 600, 26, "#fff", "left", W - 56 - 334 - 28, 16);
+  // rows 2-10
+  let y = y1 + 230 + 28;
+  for (let i = 1; i < 10; i++) {
+    ctx.fillStyle = "#181818"; ctx.fillRect(56, y, W - 112, 72);
+    txt(String(i + 1).padStart(2, "0"), 95, y + 49, 900, 36, O, "center");
+    cover(T[i].img, 154, y, 72, "");
+    txt(T[i].title, 246, y + 34, 800, 28, "#fff", "left", W - 56 - 246 - 20, 16);
+    txt(T[i].artist, 246, y + 60, 600, 20, "#A8A8A8", "left", W - 56 - 246 - 20, 13);
+    y += 80;
+  }
+  // footer
+  const fy = H - 84;
+  ctx.fillStyle = O; ctx.fillRect(0, fy, W, 84);
+  ctx.fillStyle = "#fff"; ctx.fillRect(56, fy + 22, 70, 40);
+  ls(0); ctx.font = f(900, 34, "italic "); ctx.fillStyle = O; ctx.textAlign = "center"; ctx.fillText("AR", 91, fy + 55);
+  txt("@artistradr · artistradr.com", W / 2, fy + 51, 800, 22, "#fff", "center");
+  txt("#RADRTOP10", W - 56, fy + 51, 800, 22, "#fff", "right");
+}
+
+export default function Top10Generator() {
+  const canvasRef = useRef(null);
+  const [tracks, setTracks] = useState(blank);
+  const [titleLine, setTitleLine] = useState("THIS WEEK");
+  const [date, setDate] = useState(todayLabel());
+  const [json, setJson] = useState("");
+  const [msg, setMsg] = useState("");
+  const [fontsReady, setFontsReady] = useState(false);
+  const [playlists, setPlaylists] = useState([]);
+  const [playlistId, setPlaylistId] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [approved, setApproved] = useState(false);
+
+  useEffect(() => {
+    Promise.all([
+      document.fonts.load(f(900, 40)),
+      document.fonts.load(f(800, 20)),
+      document.fonts.load(f(600, 20)),
+    ]).catch(() => {}).then(() => setFontsReady(true));
+  }, []);
+
+  useEffect(() => {
+    supabase
+      .from("radr_playlists")
+      .select("id, title")
+      .eq("is_archived", false)
+      .order("title")
+      .then(({ data, error }) => {
+        if (error) setMsg(`Could not load playlists: ${error.message}`);
+        else setPlaylists(data ?? []);
+      });
+  }, []);
+
+  useEffect(() => {
+    const c = canvasRef.current;
+    if (c && fontsReady) draw(c.getContext("2d"), tracks, titleLine, date);
+  }, [tracks, titleLine, date, fontsReady]);
+
+  const edit = (fn) => { setApproved(false); fn(); };
+  const patch = (i, p) => edit(() => setTracks((t) => t.map((x, n) => (n === i ? { ...x, ...p } : x))));
+
+  const setCoverUrl = async (i, url) => {
+    const img = await loadImg(url);
+    patch(i, { cover: url, img });
+    setMsg(url && !img ? `Cover ${i + 1} could not load. Upload the image instead.` : "");
+  };
+  const setCoverFile = async (i, file) => {
+    if (!file) return;
+    patch(i, { cover: file.name, img: await loadImg(URL.createObjectURL(file)) });
+  };
+
+  const loadPlaylist = useCallback(async (id) => {
+    setPlaylistId(id);
+    if (!id) return;
+    setLoading(true); setMsg("");
+    const { data, error } = await supabase.functions.invoke("studio-spotify", {
+      body: { action: "playlist_tracks", playlist_id: id },
+    });
+    if (error) {
+      let m = error.message;
+      try { m = (await error.context.json()).error || m; } catch { /* keep default */ }
+      setMsg(`Could not load tracks: ${m}`);
+      setLoading(false);
+      return;
+    }
+    const list = (data?.tracks ?? []).slice(0, 10);
+    const next = blank();
+    await Promise.all(
+      list.map(async (t, i) => {
+        next[i] = {
+          title: t.name || "",
+          artist: (t.artists || []).join(", "),
+          cover: t.image || "",
+          img: await loadImg(t.image),
+        };
+      })
+    );
+    setApproved(false);
+    setTracks(next);
+    setLoading(false);
+    if (list.length < 10) setMsg(`This playlist has only ${list.length} tracks. Add more or fill the rest by hand.`);
+  }, []);
+
+  const loadJson = async () => {
+    try {
+      const a = JSON.parse(json);
+      const next = blank();
+      for (let i = 0; i < 10 && i < a.length; i++) {
+        next[i] = { title: a[i].title || "", artist: a[i].artist || "", cover: a[i].cover || "", img: await loadImg(a[i].cover) };
+      }
+      setApproved(false); setTracks(next); setMsg("");
+    } catch { setMsg("That JSON could not be read."); }
+  };
+
+  const download = () => {
+    try {
+      canvasRef.current.toBlob((b) => {
+        if (!b) { setMsg("A cover image blocked the export. Upload that cover instead of using a URL."); return; }
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(b);
+        a.download = `radr-top10-${Date.now()}.png`;
+        a.click();
+      }, "image/png");
+    } catch { setMsg("A cover image blocked the export. Upload that cover instead of using a URL."); }
+  };
+
+  const inp = { padding: 8, border: "1px solid #444", background: "transparent", color: "inherit", font: "inherit", width: "100%", boxSizing: "border-box" };
+
+  return (
+    <>
+      <h1 className="rs-h1">Top 10 Generator</h1>
+      <p className="rs-sub">Pick a playlist or fill the 10 tracks, check the preview, approve it, then download the 1080×1350 image. Nothing is posted automatically.</p>
+
+      <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,420px)", gap: 24, alignItems: "start" }}>
+        <div>
+          <select style={{ ...inp, marginBottom: 10 }} value={playlistId} onChange={(e) => loadPlaylist(e.target.value)}>
+            <option value="">{loading ? "Loading…" : "Load tracks from a RADR playlist…"}</option>
+            {playlists.map((p) => <option key={p.id} value={p.id} style={{ color: "#000" }}>{p.title}</option>)}
+          </select>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
+            <input style={inp} value={titleLine} onChange={(e) => edit(() => setTitleLine(e.target.value))} placeholder="Title line" />
+            <input style={inp} value={date} onChange={(e) => edit(() => setDate(e.target.value))} placeholder="Date" />
+          </div>
+
+          {tracks.map((t, i) => (
+            <div key={`${i}-${t.cover}`} style={{ display: "grid", gridTemplateColumns: "26px 1.2fr 1fr 1fr 74px", gap: 6, marginBottom: 6, alignItems: "center" }}>
+              <b style={{ color: O }}>{i + 1}</b>
+              <input style={inp} value={t.title} onChange={(e) => patch(i, { title: e.target.value })} placeholder="Title" />
+              <input style={inp} value={t.artist} onChange={(e) => patch(i, { artist: e.target.value })} placeholder="Artist" />
+              <input style={inp} defaultValue={t.cover} onBlur={(e) => e.target.value !== t.cover && setCoverUrl(i, e.target.value)} placeholder="Cover URL" />
+              <label style={{ ...inp, textAlign: "center", cursor: "pointer" }}>
+                Cover
+                <input type="file" accept="image/*" hidden onChange={(e) => setCoverFile(i, e.target.files[0])} />
+              </label>
+            </div>
+          ))}
+
+          <textarea style={{ ...inp, height: 90, marginTop: 14 }} value={json} onChange={(e) => setJson(e.target.value)}
+            placeholder='Or paste JSON: [{"title":"","artist":"","cover":"https://..."}]' />
+          <button type="button" className="rs-signout" style={{ marginTop: 8 }} onClick={loadJson}>Load JSON</button>
+        </div>
+
+        <div>
+          <canvas ref={canvasRef} width={W} height={H} style={{ width: "100%", height: "auto", border: "1px solid #444" }} />
+          <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+            <button type="button" className="rs-signout" onClick={() => setApproved(true)} disabled={approved}>
+              {approved ? "Approved ✓" : "Approve"}
+            </button>
+            <button type="button" className="rs-signout" onClick={download} disabled={!approved}>Download PNG</button>
+          </div>
+          {!approved && <p style={{ fontSize: 12, marginTop: 8, opacity: 0.6 }}>Approve the preview to enable download. Any edit resets approval.</p>}
+          {msg && <p style={{ fontSize: 12, marginTop: 8 }}>{msg}</p>}
+        </div>
+      </div>
+    </>
+  );
+}

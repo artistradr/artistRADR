@@ -225,3 +225,9 @@ Routes in Studio mode: `/studio` (overview), `/studio/discovery`, `/studio/playl
 ## Paste-ready kickoff for Claude Code
 
 > Read `ARTIST_RADR_STATUS.md` and `ARTIST_RADR_PLAN.md` in the repo root. We are on branch `feature/studio` in `~/artist-radr`. Studio is live at studio.artistradr.com. Do not change existing public-site behaviour, and do not run destructive migrations or external account actions without asking. Spotify sync, Discovery and the activity log are built and working. Continue with Discovery sources (Instagram via the official API, once the Meta app exists) and the remaining items in the plan. Every new table needs staff-only RLS using `public.radr_is_staff()`, and tokens must stay server-side. Never deploy an Edge Function without checking the file's first line and contents first. Show a change preview and require approval before any live playlist change. Add named paths to `git add`, never `git add -A`.
+
+## Top 10 Generator (2026-11-24)
+- Added Studio page /studio/artwork/top10 (src/studio/pages/Top10Generator.jsx), menu item "Top 10 Generator" in modules.js.
+- Loads tracks from radr_playlists via the studio-spotify edge function (playlist_tracks). Design C locked. Approve gates Download PNG.
+- Added @fontsource/montserrat to package.json: run npm install before testing.
+- Not done yet: Save to library (needs a storage bucket + table), Friday auto-run, monthly/random title presets.
