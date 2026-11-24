@@ -170,7 +170,7 @@
 
 | Item | Detail | Action |
 |---|---|---|
-| **Service-role key in git history** | A real Supabase service-role key is in `scripts/env.migration.example` (first commit `f33388e`) and in a local `scripts/.env.migration.save`. The repo is private. Chosen to leave for now. | Rotate the key before the repo is shared or made public. |
+| **Service-role key in git history** | A real **legacy JWT** `service_role` key (expires 2036) is in `scripts/env.migration.example` (first commit `f33388e`) and in a local `scripts/.env.migration.save`. The repo is private. | **In progress 2026-11-24.** Follow the runbook in section 7. Only `studio-spotify` and `studio-instagram` use it; the older functions and the database triggers do not. |
 | **Sync edge cases partly tested** | One real sync succeeded and conflict detection is confirmed. Remove plus reorder and blocked cases (local files, unmatched tracks) are not yet exercised. | Test on a throwaway playlist before relying on it for live RADR playlists. |
 | Wrong file in git history | Commit `61322dc` contains a Free Republick function (`r2-video`). Setting names only, no secrets. | Check history before ever making the repo public. |
 | Remote-only old migrations | 22 August/September migrations exist on the remote but not as repo files. `supabase db push` would complain. | Avoid `db push`. Optionally pull them later with `supabase db pull`. |
@@ -234,3 +234,19 @@ Things to check when we resume, in this order:
 6. Trending audio (Meta Audio API), match songs on Spotify, create candidates with `signals` filled in.
 
 **Limits to remember:** Business and Creator accounts only; point-in-time counts; reels give audio type but no track title; no scraping. Development mode works for people with a role on the app; check whether Advanced access or App Review is needed before wider use.
+
+---
+
+## 7. Runbook: rotate the leaked service-role key
+
+Order matters. Deactivating the legacy keys breaks anything still using them, including the public site if its browser key is the old `anon` JWT.
+
+1. Supabase dashboard, Settings, API Keys: create the new keys (a **publishable** key and a **secret** key). Legacy keys keep working until step 7.
+2. Check the browser key: `VITE_SUPABASE_PUBLISHABLE_KEY` in `.env`. If it starts with `eyJ` it is the legacy anon key; replace it with the new `sb_publishable_...` key and rebuild and upload both the public site and Studio. If it already starts with `sb_publishable_`, nothing to do.
+3. Supabase, Edge Functions, Secrets: add `STUDIO_SECRET_KEY` = the new secret key (typed in the dashboard, never in chat).
+4. Pull the repo and redeploy `studio-spotify` and `studio-instagram` (they prefer `STUDIO_SECRET_KEY`, fall back to the legacy key). Check first line and `grep -c STUDIO_SECRET_KEY` before each deploy.
+5. Test: Playlists page loads and search works; Discovery page loads.
+6. Replace the key in any local `.env.migration` used by the one-off scripts, and delete `scripts/.env.migration.save`.
+7. Deactivate the legacy keys (Settings, API Keys, Legacy tab). Retest the public site, Studio login, Playlists and Discovery.
+8. Later: move to JWT signing keys, then revoke the legacy JWT secret (the leaked key is a JWT signed by it). Check the effect on logged-in users first.
+9. Remove the key text from `scripts/env.migration.example` (replace with a placeholder) and commit. It stays in git history, which is harmless once the key is dead.

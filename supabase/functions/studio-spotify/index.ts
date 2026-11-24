@@ -12,7 +12,8 @@
 //   { action: "sync", draft_id }               -> apply an APPROVED draft to the live playlist
 //
 // Secrets: STUDIO_SPOTIFY_CLIENT_ID, STUDIO_SPOTIFY_CLIENT_SECRET
-// Auto-provided: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+// Server key: STUDIO_SECRET_KEY (a Supabase secret key, sb_secret_...), falling back to the auto-provided
+// SUPABASE_SERVICE_ROLE_KEY. Auto-provided: SUPABASE_URL
 //
 // verify_jwt is OFF on purpose: this function authenticates the caller itself
 // (session token -> user -> profiles.role = 'radrStaff').
@@ -414,7 +415,8 @@ Deno.serve(async (req: Request) => {
 
   const admin = createClient(
     Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    // New secret key first (set as the STUDIO_SECRET_KEY function secret); legacy key as fallback.
+    (Deno.env.get("STUDIO_SECRET_KEY") ?? Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"))!,
     { auth: { persistSession: false } },
   );
 
