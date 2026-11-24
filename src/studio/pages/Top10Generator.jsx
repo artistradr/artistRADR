@@ -27,7 +27,16 @@ function loadImg(src) {
   });
 }
 
-function draw(ctx, T, titleLine, date) {
+// Spotify cover URLs end in a size code: 4851 = 64px, 1e02 = 300px, b273 = 640px. Use 640.
+function bigCover(url) {
+  return url ? url.replace(/ab67616d0000(4851|1e02)/, "ab67616d0000b273") : url;
+}
+
+function draw(ctx, T, titleLine, date, invert = false) {
+  const bg = invert ? "#FFFFFF" : K, fg = invert ? "#0B0B0B" : "#fff";
+  const rowBg = invert ? "#F0F0F0" : "#181818", sub = invert ? "#666666" : "#A8A8A8";
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
   const ls = (px) => { if ("letterSpacing" in ctx) ctx.letterSpacing = px + "px"; };
   const fit = (t, w, s, min, maxW) => {
     while (s > min) { ctx.font = f(w, s); if (ctx.measureText(t).width <= maxW) break; s -= 1; }
@@ -50,13 +59,13 @@ function draw(ctx, T, titleLine, date) {
     ctx.restore();
   };
 
-  ctx.fillStyle = K; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
   // header
   ctx.fillStyle = O; ctx.fillRect(56, 44, 300, 48);
   ls(5); txt("ARTIST RADR", 206, 78, 900, 24, "#fff", "center");
-  ls(-2); ctx.font = f(900, 118); ctx.fillStyle = "#fff"; ctx.textAlign = "left"; ctx.fillText("TOP 10", 50, 206);
+  ls(-2); ctx.font = f(900, 118); ctx.fillStyle = fg; ctx.textAlign = "left"; ctx.fillText("TOP 10", 50, 206);
   txt(titleLine.toUpperCase(), W - 56, 150, 800, 26, O, "right", 380, 16);
-  txt(date.toUpperCase(), W - 56, 190, 800, 26, "#fff", "right", 380, 16);
+  txt(date.toUpperCase(), W - 56, 190, 800, 26, fg, "right", 380, 16);
   // track 1
   const y1 = 252;
   cover(T[0].img, 56, y1, 230, "COVER #1");
@@ -67,11 +76,11 @@ function draw(ctx, T, titleLine, date) {
   // rows 2-10
   let y = y1 + 230 + 28;
   for (let i = 1; i < 10; i++) {
-    ctx.fillStyle = "#181818"; ctx.fillRect(56, y, W - 112, 72);
+    ctx.fillStyle = rowBg; ctx.fillRect(56, y, W - 112, 72);
     txt(String(i + 1).padStart(2, "0"), 95, y + 49, 900, 36, O, "center");
     cover(T[i].img, 154, y, 72, "");
-    txt(T[i].title, 246, y + 34, 800, 28, "#fff", "left", W - 56 - 246 - 20, 16);
-    txt(T[i].artist, 246, y + 60, 600, 20, "#A8A8A8", "left", W - 56 - 246 - 20, 13);
+    txt(T[i].title, 246, y + 34, 800, 28, fg, "left", W - 56 - 246 - 20, 16);
+    txt(T[i].artist, 246, y + 60, 600, 20, sub, "left", W - 56 - 246 - 20, 13);
     y += 80;
   }
   // footer
@@ -96,6 +105,7 @@ export default function Top10Generator() {
   const [loading, setLoading] = useState(false);
   const [approved, setApproved] = useState(false);
   const [preset, setPreset] = useState("THIS WEEK");
+  const [invert, setInvert] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -119,8 +129,8 @@ export default function Top10Generator() {
 
   useEffect(() => {
     const c = canvasRef.current;
-    if (c && fontsReady) draw(c.getContext("2d"), tracks, titleLine, date);
-  }, [tracks, titleLine, date, fontsReady]);
+    if (c && fontsReady) draw(c.getContext("2d"), tracks, titleLine, date, invert);
+  }, [tracks, titleLine, date, fontsReady, invert]);
 
   const edit = (fn) => { setApproved(false); fn(); };
   const patch = (i, p) => edit(() => setTracks((t) => t.map((x, n) => (n === i ? { ...x, ...p } : x))));
@@ -155,8 +165,8 @@ export default function Top10Generator() {
         next[i] = {
           title: t.name || "",
           artist: (t.artists || []).join(", "),
-          cover: t.image || "",
-          img: await loadImg(t.image),
+          cover: bigCover(t.image) || "",
+          img: await loadImg(bigCover(t.image)),
         };
       })
     );
@@ -204,7 +214,7 @@ export default function Top10Generator() {
         if (!b) { setMsg("A cover image blocked the export. Upload that cover instead of using a URL."); return; }
         const a = document.createElement("a");
         a.href = URL.createObjectURL(b);
-        a.download = `radr-top10-${Date.now()}.png`;
+        a.download = `radr-top10${invert ? "-light" : ""}-${Date.now()}.png`;
         a.click();
       }, "image/png");
     } catch { setMsg("A cover image blocked the export. Upload that cover instead of using a URL."); }
@@ -235,6 +245,9 @@ export default function Top10Generator() {
               {loading ? "Creating…" : "Create Top 10"}
             </button>
             <button type="button" className="rs-signout" onClick={clearAll} disabled={loading}>Clear</button>
+            <button type="button" className="rs-signout" onClick={() => { setApproved(false); setInvert((v) => !v); }}>
+              {invert ? "Style: Light" : "Style: Dark"}
+            </button>
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
