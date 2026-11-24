@@ -15,7 +15,7 @@
 | 2 | Playlists (Spotify first) | **Done for Spotify.** Search with release dates, draft editor, review, approve, sync, conflict detection and activity log all working. Apple Music undecided |
 | 3 | Discovery | **In progress.** Manual candidates, review and accept-into-draft built. Instagram: backend and Studio panel built and pushed, but **the Facebook login step is blocked (parked 2026-11-24)** |
 | 4 | RADR Studio modules (artwork, spotlights) | Not started |
-| 5 | Buffer publishing | Not started |
+| 5 | Publishing (manual) | **Buffer dropped from the plan 2026-11-24.** Staff post by hand for now. Studio will only hold approved artwork and captions |
 | 6 | RADR AI | Not started |
 | 7 | Friday automation | Not started |
 | 8 | Magazine & RADR Originals | Not started (existing posts admin stays live) |
@@ -137,11 +137,10 @@
 - [ ] Caption drafting
 - [ ] Draft → review → approved states
 
-### Phase 5 — Buffer
-- [ ] Verify current Buffer API and supported channels
-- [ ] Connect Buffer, read channels
-- [ ] Post drafts, per-channel preview, approval
-- [ ] Schedule, track status, safe retry
+### Phase 5 — Publishing (manual, Buffer removed 2026-11-24)
+- [ ] Approved artwork library view with download (the Top 10 library table already exists)
+- [ ] Copy-ready captions and hashtags
+- [ ] "Posted by staff" record: channel and date
 
 ### Phase 6 — RADR AI
 - [ ] Provider-independent tool layer in Edge Functions

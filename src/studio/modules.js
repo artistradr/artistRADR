@@ -86,14 +86,13 @@ export const MODULES = [
     Icon: Send,
     status: "planned",
     phase: "Phase 5",
-    tagline: "Approve, schedule and track social posts through Buffer.",
+    tagline: "Approved artwork and captions, posted manually by staff for now.",
     description:
-      "Per-channel previews, an approval step, and status tracking from draft to published.",
+      "A place for approved artwork and captions. Staff post to each platform by hand and record where and when.",
     features: [
-      "Buffer connection and channel list",
-      "Platform-specific previews and limits",
-      "Draft → needs review → approved → scheduled → published",
-      "Error display and safe retries",
+      "Approved artwork ready to download",
+      "Copy-ready captions and hashtags",
+      "Mark as posted by staff, with channel and date",
     ],
   },
   {
@@ -131,7 +130,7 @@ export const MODULES = [
       "Discover, Prepare and Execute permission levels, with explicit approval before anything goes live.",
     features: [
       "Provider-independent tool layer",
-      "Discovery, playlist, Studio and Buffer tools",
+      "Discovery, playlist and Studio tools",
       "Approval gates and action summaries",
       "Activity history",
     ],
