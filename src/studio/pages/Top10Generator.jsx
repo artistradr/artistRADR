@@ -70,9 +70,13 @@ function draw(ctx, T, titleLine, date, invert = false) {
   const y1 = 252;
   cover(T[0].img, 56, y1, 230, "COVER #1");
   ctx.fillStyle = O; ctx.fillRect(306, y1, W - 56 - 306, 230);
-  txt("01", 334, y1 + 104, 900, 92, "#fff");
-  txt(T[0].title.toUpperCase(), 334, y1 + 176, 900, 44, "#fff", "left", W - 56 - 334 - 28, 22);
-  txt(T[0].artist, 334, y1 + 212, 600, 26, "#fff", "left", W - 56 - 334 - 28, 16);
+  // "01" and the title share one line; the artist sits underneath.
+  txt("01", 334, y1 + 124, 900, 76, "#fff");
+  ctx.font = f(900, 76);
+  const numW = ctx.measureText("01").width;
+  const tx = 334 + numW + 22;
+  txt(T[0].title.toUpperCase(), tx, y1 + 124, 900, 60, "#fff", "left", W - 56 - tx - 24, 22);
+  txt(T[0].artist, 334, y1 + 176, 600, 32, "#fff", "left", W - 56 - 334 - 28, 16);
   // rows 2-10
   let y = y1 + 230 + 28;
   for (let i = 1; i < 10; i++) {
