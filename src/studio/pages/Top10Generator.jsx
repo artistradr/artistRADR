@@ -95,6 +95,7 @@ export default function Top10Generator() {
   const [playlistId, setPlaylistId] = useState("");
   const [loading, setLoading] = useState(false);
   const [approved, setApproved] = useState(false);
+  const [preset, setPreset] = useState("THIS WEEK");
 
   useEffect(() => {
     Promise.all([
@@ -135,7 +136,6 @@ export default function Top10Generator() {
   };
 
   const loadPlaylist = useCallback(async (id) => {
-    setPlaylistId(id);
     if (!id) return;
     setLoading(true); setMsg("");
     const { data, error } = await supabase.functions.invoke("studio-spotify", {
@@ -165,6 +165,27 @@ export default function Top10Generator() {
     setLoading(false);
     if (list.length < 10) setMsg(`This playlist has only ${list.length} tracks. Add more or fill the rest by hand.`);
   }, []);
+
+  // One click: clear everything, set the title line and today's date, load the playlist's top 10.
+  const createTop10 = async () => {
+    if (!playlistId) { setMsg("Pick a playlist first."); return; }
+    setApproved(false);
+    setTracks(blank());
+    setTitleLine(preset);
+    setDate(todayLabel());
+    await loadPlaylist(playlistId);
+  };
+
+  const pickPlaylist = (id) => {
+    setPlaylistId(id);
+    const title = (playlists.find((p) => p.id === id)?.title || "").toLowerCase();
+    if (title.includes("spotlight")) setPreset("RADR SPOTLIGHT");
+  };
+
+  const clearAll = () => {
+    setApproved(false); setTracks(blank()); setTitleLine("THIS WEEK"); setDate(todayLabel());
+    setPlaylistId(""); setPreset("THIS WEEK"); setJson(""); setMsg("");
+  };
 
   const loadJson = async () => {
     try {
@@ -198,10 +219,23 @@ export default function Top10Generator() {
 
       <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,420px)", gap: 24, alignItems: "start" }}>
         <div>
-          <select style={{ ...inp, marginBottom: 10 }} value={playlistId} onChange={(e) => loadPlaylist(e.target.value)}>
-            <option value="">{loading ? "Loading…" : "Load tracks from a RADR playlist…"}</option>
-            {playlists.map((p) => <option key={p.id} value={p.id} style={{ color: "#000" }}>{p.title}</option>)}
-          </select>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
+            <select style={inp} value={playlistId} onChange={(e) => pickPlaylist(e.target.value)}>
+              <option value="">Pick a playlist…</option>
+              {playlists.map((p) => <option key={p.id} value={p.id} style={{ color: "#000" }}>{p.title}</option>)}
+            </select>
+            <select style={inp} value={preset} onChange={(e) => setPreset(e.target.value)}>
+              {["THIS WEEK", "THIS MONTH", "RADR SPOTLIGHT", "RADR PICKS"].map((v) => (
+                <option key={v} value={v} style={{ color: "#000" }}>{v}</option>
+              ))}
+            </select>
+          </div>
+          <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+            <button type="button" className="rs-signout" onClick={createTop10} disabled={loading || !playlistId}>
+              {loading ? "Creating…" : "Create Top 10"}
+            </button>
+            <button type="button" className="rs-signout" onClick={clearAll} disabled={loading}>Clear</button>
+          </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
             <input style={inp} value={titleLine} onChange={(e) => edit(() => setTitleLine(e.target.value))} placeholder="Title line" />
