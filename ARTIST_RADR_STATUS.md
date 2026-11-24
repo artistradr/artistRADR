@@ -235,3 +235,10 @@ Routes in Studio mode: `/studio` (overview), `/studio/discovery`, `/studio/playl
 ## Submissions in Studio (2026-11-24)
 - The "Originals" placeholder is replaced by "Submissions" at /studio/submissions (src/studio/pages/SubmissionsPage.jsx). It reuses the Magazine admin's useSubmissions hook and SubmissionsTab, so playlist_submissions approve/reject (and the Resend emails) work the same. /admin still works.
 - Top 10 Generator: Save to library is live (bucket studio-artwork, table top10_artworks, migration 20261124220000 applied to project rjivkemajotafjvtalol).
+
+## Buffer drafts (Phase 5, first slice, 2026-11-24)
+- Studio > Top 10 Generator: after Approve and Save to library, "Send to Buffer (draft only)" appears. It copies the chosen PNG to the public bucket `studio-public` (Buffer needs a public URL) and calls the Edge Function `studio-buffer`, which creates a Buffer DRAFT (saveToDraft: true). Nothing is published or scheduled from Studio; review it in Buffer.
+- Table `buffer_posts` (one live draft per artwork + channel). Migration 20261124230000 applied to project rjivkemajotafjvtalol.
+- To go live: create a Buffer personal API key (Buffer Settings > API, owner only), add it as Supabase secret BUFFER_API_KEY, then `supabase functions deploy studio-buffer --no-verify-jwt --use-api`.
+- Buffer API notes (checked 2026-11-24): GraphQL at https://api.buffer.com, Bearer personal key, no media upload endpoint (public image URL only), limits 100 req/15 min and 250/day on Free, errors can come back as HTTP 200.
+- Not built: scheduling from Studio, status polling (Buffer has no webhooks), multi-channel send.

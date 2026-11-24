@@ -2,6 +2,7 @@
 // Weekly Top 10 artwork. Design C is locked: header + track 1 from A, rows 2-10 + footer from B.
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "../../supabaseClient";
+import BufferDraftPanel from "./BufferDraftPanel";
 import "@fontsource/montserrat/600.css";
 import "@fontsource/montserrat/800.css";
 import "@fontsource/montserrat/900.css";
@@ -129,6 +130,10 @@ export default function Top10Generator() {
   const [preset, setPreset] = useState("THIS WEEK");
   const [headerLabel, setHeaderLabel] = useState("ARTIST RADR");
   const [saving, setSaving] = useState(false);
+  const [savedId, setSavedId] = useState(null);
+
+  // Any edit un-approves the image, and a changed image is no longer the saved one.
+  useEffect(() => { if (!approved) setSavedId(null); }, [approved]);
 
   useEffect(() => {
     Promise.all([
@@ -252,7 +257,7 @@ export default function Top10Generator() {
       if (up1.error) throw up1.error;
       const up2 = await supabase.storage.from("studio-artwork").upload(lightPath, light, { contentType: "image/png" });
       if (up2.error) throw up2.error;
-      const { error } = await supabase.from("top10_artworks").insert({
+      const { data, error } = await supabase.from("top10_artworks").insert({
         playlist_id: playlistId || null,
         header_label: headerLabel,
         title_line: titleLine,
@@ -261,8 +266,9 @@ export default function Top10Generator() {
         dark_path: darkPath,
         light_path: lightPath,
         approved_by: u?.user?.id ?? null,
-      });
+      }).select("id").single();
       if (error) throw error;
+      setSavedId(data.id);
       setMsg("Saved to library.");
     } catch (e) {
       setMsg(`Could not save: ${e.message || e}`);
@@ -350,6 +356,21 @@ export default function Top10Generator() {
           </div>
           {!approved && <p style={{ fontSize: 12, marginTop: 8, opacity: 0.6 }}>Approve the preview to enable download. Any edit resets approval.</p>}
           {msg && <p style={{ fontSize: 12, marginTop: 8 }}>{msg}</p>}
+          {savedId && (
+            <BufferDraftPanel
+              key={savedId}
+              artworkId={savedId}
+              getBlob={(k) => blobOf(k === "dark" ? canvasRef : lightRef)}
+              defaultCaption={[
+                `${headerLabel} · ${titleLine} ${date}`,
+                "",
+                ...tracks.map((t, i) => `${String(i + 1).padStart(2, "0")} ${t.title} - ${t.artist}`),
+                "",
+                "#RADRTOP10",
+              ].join("\n")}
+              inputStyle={inp}
+            />
+          )}
         </div>
       </div>
     </>
