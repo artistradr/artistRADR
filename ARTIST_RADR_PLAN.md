@@ -1,6 +1,6 @@
 # Artist RADR — Plan & TODO
 
-**Last updated:** 2026-11-24 (new API keys live on both sites; legacy keys still to be turned off)
+**Last updated:** 2026-11-24 (legacy keys off; public site rebuild and upload to verify)
 **Companion file:** `ARTIST_RADR_STATUS.md` (current state, commands, env, handoff)
 **Product brief:** the original "Artist RADR — Product Vision & Development Brief" still applies, with the changes recorded in section 1.
 
@@ -170,7 +170,7 @@
 
 | Item | Detail | Action |
 |---|---|---|
-| **Service-role key in git history** | A real **legacy JWT** `service_role` key (expires 2036) is in `scripts/env.migration.example` (first commit `f33388e`) and in a local `scripts/.env.migration.save`. The repo is private. | **In progress 2026-11-24.** Steps 1 to 5 of the runbook are done and tested live; next is step 7 (deactivate legacy keys). See section 7. Only `studio-spotify` and `studio-instagram` use it; the older functions and the database triggers do not. |
+| **Service-role key in git history** | A real **legacy JWT** `service_role` key (expires 2036) is in `scripts/env.migration.example` (first commit `f33388e`) and in a local `scripts/.env.migration.save`. The repo is private. | **In progress 2026-11-24.** Steps 1 to 5 done. Legacy keys are now rejected (401 seen 2026-11-24). Still to verify: the public site rebuilt with the new key AND in public mode is uploaded and working (see section 7 notes). Then cleanup steps 6, 8, 9. Only `studio-spotify` and `studio-instagram` use it; the older functions and the database triggers do not. |
 | **Sync edge cases partly tested** | One real sync succeeded and conflict detection is confirmed. Remove plus reorder and blocked cases (local files, unmatched tracks) are not yet exercised. | Test on a throwaway playlist before relying on it for live RADR playlists. |
 | Wrong file in git history | Commit `61322dc` contains a Free Republick function (`r2-video`). Setting names only, no secrets. | Check history before ever making the repo public. |
 | Remote-only old migrations | 22 August/September migrations exist on the remote but not as repo files. `supabase db push` would complain. | Avoid `db push`. Optionally pull them later with `supabase db pull`. |
@@ -246,6 +246,8 @@ Order matters. Deactivating the legacy keys breaks anything still using them, in
 3. **Done.** `STUDIO_SECRET_KEY` function secret added (new secret key, never in chat).
 4. **Done.** `studio-spotify` and `studio-instagram` redeployed (they prefer `STUDIO_SECRET_KEY`).
 5. **Done.** Tested: public site posts, admin and Studio login, Playlists and Discovery.
+   **Found 2026-11-24:** `.env` still held the legacy anon key and also `VITE_APP_MODE=studio`, so a public build from it was a Studio build with the old key. Fix: `.env` gets the `sb_publishable_...` key and no `VITE_APP_MODE` line. Rebuild with `npm run build` (postbuild must print "Wrote N static post page(s)", not a 401), upload, test in a private window.
+7. Legacy keys deactivated (Settings, API Keys, Legacy tab). Re-enable there if a site breaks while fixing.
 6. Replace the key in any local `.env.migration` used by the one-off scripts, and delete `scripts/.env.migration.save`.
 7. Deactivate the legacy keys (Settings, API Keys, Legacy tab). Retest the public site, Studio login, Playlists and Discovery.
 8. Later: move to JWT signing keys, then revoke the legacy JWT secret (the leaked key is a JWT signed by it). Check the effect on logged-in users first.

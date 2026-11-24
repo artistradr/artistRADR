@@ -215,6 +215,9 @@ Routes in Studio mode: `/studio` (overview), `/studio/discovery`, `/studio/playl
 - Browsers rename repeated downloads (`index (1).ts`). Always check a file's first line and a `grep` before copying or deploying it.
 - Meta only accepts https OAuth redirect URIs: Instagram Connect cannot be tested on `http://127.0.0.1`.
 - Meta tokens and the app secret never go in chat or the repo. Instagram reads only Business and Creator accounts; likes can be hidden by the account.
+- **Studio mode is set only in `.env.studio`.** Never put `VITE_APP_MODE=studio` in `.env`: it forces Studio mode on `npm run dev` and `npm run build` (public site redirects to the login). `npm run dev:studio` / `build:studio` set the mode themselves. Check a public build: postbuild prints "Wrote N static post page(s)" and `/admin/login` lands on `/admin`.
+- Vite reads env only at startup, and moves to the next port if one is busy: stop old servers (`pkill -f vite`) before checking.
+- Browser Supabase key is the `sb_publishable_...` key in `.env` and `.env.studio` (never the old `eyJ...` anon key, which is now rejected).
 - Open security item: a real legacy `service_role` key exists in git history (`scripts/env.migration.example`, first commit). Rotation is in progress: both sites and both functions now use the new keys and pass live checks; the remaining step is deactivating the legacy keys (plan section 7, step 7). `studio-spotify` and `studio-instagram` now read `STUDIO_SECRET_KEY` first and fall back to `SUPABASE_SERVICE_ROLE_KEY`.
 
 ---
