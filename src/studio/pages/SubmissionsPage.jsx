@@ -15,7 +15,7 @@ export default function SubmissionsPage() {
   }, []);
 
   return (
-    <div style={{ "--color-red": "#ff5a36", "--font-body": '"DM Sans", system-ui, sans-serif' }}>
+    <div style={{ "--color-red": "#ff5a36", "--color-cyan": "#5ce1e6", "--font-body": '"DM Sans", system-ui, sans-serif', "--font-display": '"DM Sans", system-ui, sans-serif' }}>
       <AdminStyles />
       <h1 className="rs-h1">Submissions</h1>
       <p className="rs-sub">
