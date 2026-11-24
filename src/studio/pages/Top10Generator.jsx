@@ -32,7 +32,7 @@ function bigCover(url) {
   return url ? url.replace(/ab67616d0000(4851|1e02)/, "ab67616d0000b273") : url;
 }
 
-function draw(ctx, T, titleLine, date, invert = false, logo = null) {
+function draw(ctx, T, titleLine, date, invert = false, logo = null, headerLabel = "") {
   const bg = invert ? "#FFFFFF" : K, fg = invert ? "#0B0B0B" : "#fff";
   const rowBg = invert ? "#F0F0F0" : "#181818", sub = invert ? "#666666" : "#A8A8A8";
   ctx.imageSmoothingEnabled = true;
@@ -61,8 +61,12 @@ function draw(ctx, T, titleLine, date, invert = false, logo = null) {
 
   ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
   // header
-  ctx.fillStyle = O; ctx.fillRect(56, 44, 300, 48);
-  ls(5); txt("ARTIST RADR", 206, 78, 900, 24, "#fff", "center");
+  const label = (headerLabel || "ARTIST RADR").toUpperCase();
+  const lsz = fit(label, 900, 24, 12, 500);
+  ctx.font = f(900, lsz);
+  const bw = Math.max(200, ctx.measureText(label).width + 48);
+  ctx.fillStyle = O; ctx.fillRect(56, 44, bw, 48);
+  txt(label, 56 + bw / 2, 78, 900, lsz, "#fff", "center");
   ls(-2); ctx.font = f(900, 118); ctx.fillStyle = fg; ctx.textAlign = "left"; ctx.fillText("TOP 10", 50, 206);
   txt(titleLine.toUpperCase(), W - 56, 150, 800, 26, O, "right", 380, 16);
   txt(date.toUpperCase(), W - 56, 190, 800, 26, fg, "right", 380, 16);
@@ -92,7 +96,7 @@ function draw(ctx, T, titleLine, date, invert = false, logo = null) {
   ctx.fillStyle = O; ctx.fillRect(0, fy, W, 84);
   // RADR logo, bottom left, no box: transparent PNG with a thin white outline so it stands out on orange
   if (logo) {
-    const lh = 64, lw = lh * (logo.width / logo.height), lx = 56, ly = fy + (84 - lh) / 2;
+    const lh = 44, lw = lh * (logo.width / logo.height), lx = 56, ly = fy + (84 - lh) / 2;
     const sil = document.createElement("canvas");
     sil.width = logo.width; sil.height = logo.height;
     const sc = sil.getContext("2d");
@@ -105,7 +109,6 @@ function draw(ctx, T, titleLine, date, invert = false, logo = null) {
     }
     ctx.drawImage(logo, lx, ly, lw, lh);
   }
-  txt("@artistradr · artistradr.com", W / 2, fy + 51, 800, 22, "#fff", "center");
   txt("#RADRTOP10", W - 56, fy + 51, 800, 22, "#fff", "right");
 }
 
@@ -124,6 +127,7 @@ export default function Top10Generator() {
   const [loading, setLoading] = useState(false);
   const [approved, setApproved] = useState(false);
   const [preset, setPreset] = useState("THIS WEEK");
+  const [headerLabel, setHeaderLabel] = useState("ARTIST RADR");
 
   useEffect(() => {
     Promise.all([
@@ -148,9 +152,9 @@ export default function Top10Generator() {
   useEffect(() => {
     if (!fontsReady) return;
     const dark = canvasRef.current, light = lightRef.current;
-    if (dark) draw(dark.getContext("2d"), tracks, titleLine, date, false, logo);
-    if (light) draw(light.getContext("2d"), tracks, titleLine, date, true, logo);
-  }, [tracks, titleLine, date, fontsReady, logo]);
+    if (dark) draw(dark.getContext("2d"), tracks, titleLine, date, false, logo, headerLabel);
+    if (light) draw(light.getContext("2d"), tracks, titleLine, date, true, logo, headerLabel);
+  }, [tracks, titleLine, date, fontsReady, logo, headerLabel]);
 
   useEffect(() => { loadImg("/radr-logo.png").then(setLogo); }, []);
 
@@ -210,13 +214,14 @@ export default function Top10Generator() {
 
   const pickPlaylist = (id) => {
     setPlaylistId(id);
-    const title = (playlists.find((p) => p.id === id)?.title || "").toLowerCase();
-    if (title.includes("spotlight")) setPreset("RADR SPOTLIGHT");
+    const name = playlists.find((p) => p.id === id)?.title || "";
+    setHeaderLabel(name || "ARTIST RADR");
+    if (name.toLowerCase().includes("spotlight")) setPreset("RADR SPOTLIGHT");
   };
 
   const clearAll = () => {
     setApproved(false); setTracks(blank()); setTitleLine("THIS WEEK"); setDate(todayLabel());
-    setPlaylistId(""); setPreset("THIS WEEK"); setJson(""); setMsg("");
+    setPlaylistId(""); setPreset("THIS WEEK"); setHeaderLabel("ARTIST RADR"); setJson(""); setMsg("");
   };
 
   const loadJson = async () => {
@@ -269,6 +274,7 @@ export default function Top10Generator() {
             <button type="button" className="rs-signout" onClick={clearAll} disabled={loading}>Clear</button>
           </div>
 
+          <input style={{ ...inp, marginBottom: 10 }} value={headerLabel} onChange={(e) => edit(() => setHeaderLabel(e.target.value))} placeholder="Header tag (defaults to the playlist name)" />
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
             <input style={inp} value={titleLine} onChange={(e) => edit(() => setTitleLine(e.target.value))} placeholder="Title line" />
             <input style={inp} value={date} onChange={(e) => edit(() => setDate(e.target.value))} placeholder="Date" />
