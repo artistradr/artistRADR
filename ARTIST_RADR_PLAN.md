@@ -1,6 +1,6 @@
 # Artist RADR — Plan & TODO
 
-**Last updated:** 2026-11-24 (Instagram backend deployed)
+**Last updated:** 2026-11-24 (new API keys live on both sites; legacy keys still to be turned off)
 **Companion file:** `ARTIST_RADR_STATUS.md` (current state, commands, env, handoff)
 **Product brief:** the original "Artist RADR — Product Vision & Development Brief" still applies, with the changes recorded in section 1.
 
@@ -170,7 +170,7 @@
 
 | Item | Detail | Action |
 |---|---|---|
-| **Service-role key in git history** | A real **legacy JWT** `service_role` key (expires 2036) is in `scripts/env.migration.example` (first commit `f33388e`) and in a local `scripts/.env.migration.save`. The repo is private. | **In progress 2026-11-24.** Follow the runbook in section 7. Only `studio-spotify` and `studio-instagram` use it; the older functions and the database triggers do not. |
+| **Service-role key in git history** | A real **legacy JWT** `service_role` key (expires 2036) is in `scripts/env.migration.example` (first commit `f33388e`) and in a local `scripts/.env.migration.save`. The repo is private. | **In progress 2026-11-24.** Steps 1 to 5 of the runbook are done and tested live; next is step 7 (deactivate legacy keys). See section 7. Only `studio-spotify` and `studio-instagram` use it; the older functions and the database triggers do not. |
 | **Sync edge cases partly tested** | One real sync succeeded and conflict detection is confirmed. Remove plus reorder and blocked cases (local files, unmatched tracks) are not yet exercised. | Test on a throwaway playlist before relying on it for live RADR playlists. |
 | Wrong file in git history | Commit `61322dc` contains a Free Republick function (`r2-video`). Setting names only, no secrets. | Check history before ever making the repo public. |
 | Remote-only old migrations | 22 August/September migrations exist on the remote but not as repo files. `supabase db push` would complain. | Avoid `db push`. Optionally pull them later with `supabase db pull`. |
@@ -193,7 +193,7 @@
 2. Which non-Spotify sources to use for Discovery?
 3. Podcast hosting and RSS provider.
 4. Final accent colour (`--rs-accent`) for Studio.
-5. When to rotate the exposed service-role key.
+5. ~~When to rotate the exposed service-role key.~~ In progress, see section 7.
 6. Which Instagram accounts to watch first (artists, labels, blogs)? Business and Creator accounts only.
 
 **Resolved:** which test playlist to use for the first write check (a private throwaway on `admin@artistradr.com`, done 2026-11-23).
@@ -241,11 +241,11 @@ Things to check when we resume, in this order:
 
 Order matters. Deactivating the legacy keys breaks anything still using them, including the public site if its browser key is the old `anon` JWT.
 
-1. Supabase dashboard, Settings, API Keys: create the new keys (a **publishable** key and a **secret** key). Legacy keys keep working until step 7.
-2. **Checked 2026-11-24: `.env` still has the legacy anon key (`eyJ...`).** Replace it with the `sb_publishable_...` key, rebuild and upload BOTH the public site (`npm run build`, which also needs the new key for `scripts/generate-post-html.mjs`, now read from `.env`) and Studio. Already-uploaded builds contain the old key and stop working when the legacy keys are turned off. Check the browser key: `VITE_SUPABASE_PUBLISHABLE_KEY` in `.env`. If it starts with `eyJ` it is the legacy anon key; replace it with the new `sb_publishable_...` key and rebuild and upload both the public site and Studio. If it already starts with `sb_publishable_`, nothing to do.
-3. Supabase, Edge Functions, Secrets: add `STUDIO_SECRET_KEY` = the new secret key (typed in the dashboard, never in chat).
-4. Pull the repo and redeploy `studio-spotify` and `studio-instagram` (they prefer `STUDIO_SECRET_KEY`, fall back to the legacy key). Check first line and `grep -c STUDIO_SECRET_KEY` before each deploy.
-5. Test: Playlists page loads and search works; Discovery page loads.
+1. **Done.** Supabase, Settings, API Keys: new publishable and secret keys created. Legacy keys keep working until step 7.
+2. **Done 2026-11-24.** `VITE_SUPABASE_PUBLISHABLE_KEY` in `.env` (and `.env.studio` if present) now holds the `sb_publishable_...` key. Public site (`npm run build`) and Studio (`npm run build:studio`) rebuilt and uploaded; live checks passed.
+3. **Done.** `STUDIO_SECRET_KEY` function secret added (new secret key, never in chat).
+4. **Done.** `studio-spotify` and `studio-instagram` redeployed (they prefer `STUDIO_SECRET_KEY`).
+5. **Done.** Tested: public site posts, admin and Studio login, Playlists and Discovery.
 6. Replace the key in any local `.env.migration` used by the one-off scripts, and delete `scripts/.env.migration.save`.
 7. Deactivate the legacy keys (Settings, API Keys, Legacy tab). Retest the public site, Studio login, Playlists and Discovery.
 8. Later: move to JWT signing keys, then revoke the legacy JWT secret (the leaked key is a JWT signed by it). Check the effect on logged-in users first.

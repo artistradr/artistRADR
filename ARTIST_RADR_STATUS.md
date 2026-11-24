@@ -1,6 +1,6 @@
 # Artist RADR — Project Status & Handoff
 
-**As of:** 2026-11-24 (early morning)
+**As of:** 2026-11-24 (morning)
 Compact summary of everything built and decided so far. Paste this into a new chat or Claude Code to restore context. The roadmap and full TODO are in `ARTIST_RADR_PLAN.md`.
 
 ---
@@ -215,7 +215,7 @@ Routes in Studio mode: `/studio` (overview), `/studio/discovery`, `/studio/playl
 - Browsers rename repeated downloads (`index (1).ts`). Always check a file's first line and a `grep` before copying or deploying it.
 - Meta only accepts https OAuth redirect URIs: Instagram Connect cannot be tested on `http://127.0.0.1`.
 - Meta tokens and the app secret never go in chat or the repo. Instagram reads only Business and Creator accounts; likes can be hidden by the account.
-- Open security item: a real legacy `service_role` key exists in git history (`scripts/env.migration.example`, first commit). Rotation is in progress; the runbook is in plan section 7. `studio-spotify` and `studio-instagram` now read `STUDIO_SECRET_KEY` first and fall back to `SUPABASE_SERVICE_ROLE_KEY`.
+- Open security item: a real legacy `service_role` key exists in git history (`scripts/env.migration.example`, first commit). Rotation is in progress: both sites and both functions now use the new keys and pass live checks; the remaining step is deactivating the legacy keys (plan section 7, step 7). `studio-spotify` and `studio-instagram` now read `STUDIO_SECRET_KEY` first and fall back to `SUPABASE_SERVICE_ROLE_KEY`.
 
 ---
 
