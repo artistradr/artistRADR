@@ -43,6 +43,7 @@
 import fs from "fs/promises";
 import path from "path";
 import { fileURLToPath } from "url";
+import "dotenv/config"; // reads VITE_SUPABASE_PUBLISHABLE_KEY from .env
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -56,9 +57,14 @@ const DIST_DIR = path.join(__dirname, "..", "dist");
 // script for a staging project.
 const SUPABASE_URL =
   process.env.SUPABASE_URL || "https://rjivkemajotafjvtalol.supabase.co";
+// Public (browser-safe) key: the new sb_publishable_... key, or the legacy anon key.
 const SUPABASE_ANON_KEY =
-  process.env.SUPABASE_ANON_KEY ||
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqaXZrZW1ham90YWZqdnRhbG9sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcwODYwOTEsImV4cCI6MjEwMjY2MjA5MX0.sEKH6GNVOle5TY8TtLlJFa_v8Di0_9-ITui9LTi8wQE";
+  process.env.SUPABASE_PUBLISHABLE_KEY ||
+  process.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+  process.env.SUPABASE_ANON_KEY;
+if (!SUPABASE_ANON_KEY) {
+  throw new Error("Missing VITE_SUPABASE_PUBLISHABLE_KEY (set it in .env) for generate-post-html.");
+}
 const SITE_URL = (process.env.SITE_URL || "https://artistradr.com").replace(/\/$/, "");
 
 function escapeHtml(str = "") {
@@ -83,9 +89,10 @@ function absoluteUrl(maybeRelative) {
 async function fetchPublishedPosts() {
   const url = `${SUPABASE_URL}/rest/v1/posts?status=eq.published&select=*`;
   const res = await fetch(url, {
+    // New publishable keys (sb_publishable_...) are not JWTs and go in "apikey" only.
     headers: {
       apikey: SUPABASE_ANON_KEY,
-      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      ...(SUPABASE_ANON_KEY.startsWith("eyJ") ? { Authorization: `Bearer ${SUPABASE_ANON_KEY}` } : {}),
     },
   });
   if (!res.ok) {

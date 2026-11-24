@@ -242,7 +242,7 @@ Things to check when we resume, in this order:
 Order matters. Deactivating the legacy keys breaks anything still using them, including the public site if its browser key is the old `anon` JWT.
 
 1. Supabase dashboard, Settings, API Keys: create the new keys (a **publishable** key and a **secret** key). Legacy keys keep working until step 7.
-2. Check the browser key: `VITE_SUPABASE_PUBLISHABLE_KEY` in `.env`. If it starts with `eyJ` it is the legacy anon key; replace it with the new `sb_publishable_...` key and rebuild and upload both the public site and Studio. If it already starts with `sb_publishable_`, nothing to do.
+2. **Checked 2026-11-24: `.env` still has the legacy anon key (`eyJ...`).** Replace it with the `sb_publishable_...` key, rebuild and upload BOTH the public site (`npm run build`, which also needs the new key for `scripts/generate-post-html.mjs`, now read from `.env`) and Studio. Already-uploaded builds contain the old key and stop working when the legacy keys are turned off. Check the browser key: `VITE_SUPABASE_PUBLISHABLE_KEY` in `.env`. If it starts with `eyJ` it is the legacy anon key; replace it with the new `sb_publishable_...` key and rebuild and upload both the public site and Studio. If it already starts with `sb_publishable_`, nothing to do.
 3. Supabase, Edge Functions, Secrets: add `STUDIO_SECRET_KEY` = the new secret key (typed in the dashboard, never in chat).
 4. Pull the repo and redeploy `studio-spotify` and `studio-instagram` (they prefer `STUDIO_SECRET_KEY`, fall back to the legacy key). Check first line and `grep -c STUDIO_SECRET_KEY` before each deploy.
 5. Test: Playlists page loads and search works; Discovery page loads.

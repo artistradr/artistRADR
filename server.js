@@ -112,9 +112,10 @@ async function fetchPostBySlug(slug) {
     `${SUPABASE_URL}/rest/v1/posts` +
     `?slug=eq.${encodeURIComponent(slug)}&status=eq.published&select=*&limit=1`;
   const res = await fetch(url, {
+    // New publishable keys (sb_publishable_...) are not JWTs and go in "apikey" only.
     headers: {
       apikey: SUPABASE_ANON_KEY,
-      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      ...(SUPABASE_ANON_KEY.startsWith("eyJ") ? { Authorization: `Bearer ${SUPABASE_ANON_KEY}` } : {}),
     },
   });
   if (!res.ok) return null;
