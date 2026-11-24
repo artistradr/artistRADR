@@ -10,7 +10,7 @@ export default function StudioHome() {
       <h1 className="rs-h1">RADR Studio</h1>
       <p className="rs-sub">
         Discover. Spotlight. Amplify. Your workspace for finding new music, curating playlists,
-        creating content and publishing it, with you approving every public change.
+        creating artwork and reviewing submissions, with you approving every public change.
       </p>
 
       <div className="rs-flow">

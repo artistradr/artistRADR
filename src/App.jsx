@@ -112,7 +112,6 @@ function StudioRoutes() {
         <Route path="instagram/callback" element={<StudioInstagramCallback />} />
         <Route path="create" element={<ModulePage id="studio" />} />
         <Route path="artwork/top10" element={<Top10Generator />} />
-        <Route path="publishing" element={<ModulePage id="publishing" />} />
         <Route path="submissions" element={<SubmissionsPage />} />
         <Route path="ai" element={<ModulePage id="ai" />} />
       </Route>

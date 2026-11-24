@@ -7,7 +7,7 @@ Compact summary of everything built and decided so far. Paste this into a new ch
 
 ## What this is
 
-Artist RADR (artistradr.com) is an independent music discovery and editorial platform with a focus on emerging African artists. It is separate from Free Republick. We are adding **RADR Studio**, a staff-only workspace for discovery, playlist curation, content creation and publishing. The editor stays in control: nothing goes live without approval.
+Artist RADR (artistradr.com) is an independent music discovery and editorial platform with a focus on emerging African artists. It is separate from Free Republick. We are adding **RADR Studio**, a staff-only workspace for discovery, playlist curation, content creation. Staff post to social manually. The editor stays in control: nothing goes live without approval.
 
 **First milestone:** Discovery → editorial selection → playlist draft → approved Spotify sync. **Reached and working** (2026-11-23).
 
@@ -236,7 +236,11 @@ Routes in Studio mode: `/studio` (overview), `/studio/discovery`, `/studio/playl
 - The "Originals" placeholder is replaced by "Submissions" at /studio/submissions (src/studio/pages/SubmissionsPage.jsx). It reuses the Magazine admin's useSubmissions hook and SubmissionsTab, so playlist_submissions approve/reject (and the Resend emails) work the same. /admin still works.
 - Top 10 Generator: Save to library is live (bucket studio-artwork, table top10_artworks, migration 20261124220000 applied to project rjivkemajotafjvtalol).
 
-## Buffer removed from the plans (2026-11-24)
-- Decision: staff post manually for now. Buffer is out of scope.
-- The Buffer code (Studio panel and `studio-buffer` function) was removed and never deployed. No BUFFER_API_KEY is needed.
-- Left in the database, unused and empty: table `buffer_posts` and public bucket `studio-public` (migration 20261124230000, already applied, kept in the repo so history matches). Drop later if wanted.
+## Publishing and Buffer removed (2026-11-24)
+- Decision: staff post manually. Buffer and the Publishing module are out of scope. The Publishing item and `/studio/publishing` route are removed.
+- Buffer code (Studio panel and `studio-buffer` function) was removed and never deployed. No BUFFER_API_KEY is needed.
+- Left in the database, unused and empty: table `buffer_posts` and public bucket `studio-public` (migration 20261124230000, already applied, kept so history matches). Drop later if wanted.
+
+## Studio layout (2026-11-24)
+Sidebar and Overview cards come from `src/studio/modules.js`. Current order:
+Overview, Discovery (live), Playlists (live), Studio (planned), Top 10 Generator (live, /studio/artwork/top10), Submissions (live, /studio/submissions, replaces Originals), Magazine (live, opens /admin), RADR AI (planned).

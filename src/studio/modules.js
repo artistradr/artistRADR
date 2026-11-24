@@ -2,7 +2,6 @@
 import Explore from "@mui/icons-material/Explore";
 import QueueMusic from "@mui/icons-material/QueueMusic";
 import Palette from "@mui/icons-material/Palette";
-import Send from "@mui/icons-material/Send";
 import Inbox from "@mui/icons-material/Inbox";
 import Article from "@mui/icons-material/Article";
 import AutoAwesome from "@mui/icons-material/AutoAwesome";
@@ -78,22 +77,6 @@ export const MODULES = [
     description:
       "Load 10 tracks from a RADR playlist, edit the title line and date, swap covers, approve, then download the 1080x1350 image.",
     features: [],
-  },
-  {
-    id: "publishing",
-    label: "Publishing",
-    path: "/studio/publishing",
-    Icon: Send,
-    status: "planned",
-    phase: "Phase 5",
-    tagline: "Approved artwork and captions, posted manually by staff for now.",
-    description:
-      "A place for approved artwork and captions. Staff post to each platform by hand and record where and when.",
-    features: [
-      "Approved artwork ready to download",
-      "Copy-ready captions and hashtags",
-      "Mark as posted by staff, with channel and date",
-    ],
   },
   {
     id: "submissions",
