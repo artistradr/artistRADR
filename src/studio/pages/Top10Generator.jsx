@@ -128,6 +128,7 @@ export default function Top10Generator() {
   const [approved, setApproved] = useState(false);
   const [preset, setPreset] = useState("THIS WEEK");
   const [headerLabel, setHeaderLabel] = useState("ARTIST RADR");
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -235,6 +236,40 @@ export default function Top10Generator() {
     } catch { setMsg("That JSON could not be read."); }
   };
 
+  const blobOf = (ref) => new Promise((res) => ref.current.toBlob(res, "image/png"));
+
+  // Only runs after Approve. Stores both PNGs privately and logs one row.
+  const saveToLibrary = async () => {
+    if (!approved) return;
+    setSaving(true); setMsg("");
+    try {
+      const [dark, light] = await Promise.all([blobOf(canvasRef), blobOf(lightRef)]);
+      if (!dark || !light) throw new Error("A cover image blocked the export. Upload that cover instead of using a URL.");
+      const { data: u } = await supabase.auth.getUser();
+      const stamp = Date.now();
+      const darkPath = `top10/${stamp}-dark.png`, lightPath = `top10/${stamp}-light.png`;
+      const up1 = await supabase.storage.from("studio-artwork").upload(darkPath, dark, { contentType: "image/png" });
+      if (up1.error) throw up1.error;
+      const up2 = await supabase.storage.from("studio-artwork").upload(lightPath, light, { contentType: "image/png" });
+      if (up2.error) throw up2.error;
+      const { error } = await supabase.from("top10_artworks").insert({
+        playlist_id: playlistId || null,
+        header_label: headerLabel,
+        title_line: titleLine,
+        date_label: date,
+        tracks: tracks.map(({ title, artist, cover }) => ({ title, artist, cover })),
+        dark_path: darkPath,
+        light_path: lightPath,
+        approved_by: u?.user?.id ?? null,
+      });
+      if (error) throw error;
+      setMsg("Saved to library.");
+    } catch (e) {
+      setMsg(`Could not save: ${e.message || e}`);
+    }
+    setSaving(false);
+  };
+
   const download = (ref, suffix) => {
     try {
       ref.current.toBlob((b) => {
@@ -309,6 +344,9 @@ export default function Top10Generator() {
             </button>
             <button type="button" className="rs-signout" onClick={() => download(canvasRef, "dark")} disabled={!approved}>Download Dark</button>
             <button type="button" className="rs-signout" onClick={() => download(lightRef, "light")} disabled={!approved}>Download Light</button>
+            <button type="button" className="rs-signout" onClick={saveToLibrary} disabled={!approved || saving}>
+              {saving ? "Saving…" : "Save to library"}
+            </button>
           </div>
           {!approved && <p style={{ fontSize: 12, marginTop: 8, opacity: 0.6 }}>Approve the preview to enable download. Any edit resets approval.</p>}
           {msg && <p style={{ fontSize: 12, marginTop: 8 }}>{msg}</p>}
