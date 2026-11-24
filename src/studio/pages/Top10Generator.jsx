@@ -32,7 +32,7 @@ function bigCover(url) {
   return url ? url.replace(/ab67616d0000(4851|1e02)/, "ab67616d0000b273") : url;
 }
 
-function draw(ctx, T, titleLine, date, invert = false) {
+function draw(ctx, T, titleLine, date, invert = false, logo = null) {
   const bg = invert ? "#FFFFFF" : K, fg = invert ? "#0B0B0B" : "#fff";
   const rowBg = invert ? "#F0F0F0" : "#181818", sub = invert ? "#666666" : "#A8A8A8";
   ctx.imageSmoothingEnabled = true;
@@ -90,14 +90,20 @@ function draw(ctx, T, titleLine, date, invert = false) {
   // footer
   const fy = H - 84;
   ctx.fillStyle = O; ctx.fillRect(0, fy, W, 84);
-  ctx.fillStyle = "#fff"; ctx.fillRect(56, fy + 22, 70, 40);
-  ls(0); ctx.font = f(900, 34, "italic "); ctx.fillStyle = O; ctx.textAlign = "center"; ctx.fillText("AR", 91, fy + 55);
+  // RADR logo on a white plate, bottom left
+  ctx.fillStyle = "#fff"; ctx.fillRect(56, fy + 8, 96, 68);
+  if (logo) {
+    const lh = 52, lw = lh * (logo.width / logo.height);
+    ctx.drawImage(logo, 56 + (96 - lw) / 2, fy + 8 + (68 - lh) / 2, lw, lh);
+  }
   txt("@artistradr · artistradr.com", W / 2, fy + 51, 800, 22, "#fff", "center");
   txt("#RADRTOP10", W - 56, fy + 51, 800, 22, "#fff", "right");
 }
 
 export default function Top10Generator() {
   const canvasRef = useRef(null);
+  const lightRef = useRef(null);
+  const [logo, setLogo] = useState(null);
   const [tracks, setTracks] = useState(blank);
   const [titleLine, setTitleLine] = useState("THIS WEEK");
   const [date, setDate] = useState(todayLabel());
@@ -109,7 +115,6 @@ export default function Top10Generator() {
   const [loading, setLoading] = useState(false);
   const [approved, setApproved] = useState(false);
   const [preset, setPreset] = useState("THIS WEEK");
-  const [invert, setInvert] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -132,9 +137,13 @@ export default function Top10Generator() {
   }, []);
 
   useEffect(() => {
-    const c = canvasRef.current;
-    if (c && fontsReady) draw(c.getContext("2d"), tracks, titleLine, date, invert);
-  }, [tracks, titleLine, date, fontsReady, invert]);
+    if (!fontsReady) return;
+    const dark = canvasRef.current, light = lightRef.current;
+    if (dark) draw(dark.getContext("2d"), tracks, titleLine, date, false, logo);
+    if (light) draw(light.getContext("2d"), tracks, titleLine, date, true, logo);
+  }, [tracks, titleLine, date, fontsReady, logo]);
+
+  useEffect(() => { loadImg("/radr-logo.png").then(setLogo); }, []);
 
   const edit = (fn) => { setApproved(false); fn(); };
   const patch = (i, p) => edit(() => setTracks((t) => t.map((x, n) => (n === i ? { ...x, ...p } : x))));
@@ -212,13 +221,13 @@ export default function Top10Generator() {
     } catch { setMsg("That JSON could not be read."); }
   };
 
-  const download = () => {
+  const download = (ref, suffix) => {
     try {
-      canvasRef.current.toBlob((b) => {
+      ref.current.toBlob((b) => {
         if (!b) { setMsg("A cover image blocked the export. Upload that cover instead of using a URL."); return; }
         const a = document.createElement("a");
         a.href = URL.createObjectURL(b);
-        a.download = `radr-top10${invert ? "-light" : ""}-${Date.now()}.png`;
+        a.download = `radr-top10-${suffix}-${Date.now()}.png`;
         a.click();
       }, "image/png");
     } catch { setMsg("A cover image blocked the export. Upload that cover instead of using a URL."); }
@@ -249,9 +258,6 @@ export default function Top10Generator() {
               {loading ? "Creating…" : "Create Top 10"}
             </button>
             <button type="button" className="rs-signout" onClick={clearAll} disabled={loading}>Clear</button>
-            <button type="button" className="rs-signout" onClick={() => { setApproved(false); setInvert((v) => !v); }}>
-              {invert ? "Style: Light" : "Style: Dark"}
-            </button>
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
@@ -278,12 +284,16 @@ export default function Top10Generator() {
         </div>
 
         <div>
+          <p style={{ fontSize: 12, margin: "0 0 6px", opacity: 0.6 }}>Dark</p>
           <canvas ref={canvasRef} width={W} height={H} style={{ width: "100%", height: "auto", border: "1px solid #444" }} />
-          <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+          <p style={{ fontSize: 12, margin: "14px 0 6px", opacity: 0.6 }}>Light</p>
+          <canvas ref={lightRef} width={W} height={H} style={{ width: "100%", height: "auto", border: "1px solid #444" }} />
+          <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
             <button type="button" className="rs-signout" onClick={() => setApproved(true)} disabled={approved}>
               {approved ? "Approved ✓" : "Approve"}
             </button>
-            <button type="button" className="rs-signout" onClick={download} disabled={!approved}>Download PNG</button>
+            <button type="button" className="rs-signout" onClick={() => download(canvasRef, "dark")} disabled={!approved}>Download Dark</button>
+            <button type="button" className="rs-signout" onClick={() => download(lightRef, "light")} disabled={!approved}>Download Light</button>
           </div>
           {!approved && <p style={{ fontSize: 12, marginTop: 8, opacity: 0.6 }}>Approve the preview to enable download. Any edit resets approval.</p>}
           {msg && <p style={{ fontSize: 12, marginTop: 8 }}>{msg}</p>}
