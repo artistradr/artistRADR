@@ -4,6 +4,8 @@ import { useSupabaseAuth } from "../../context/SupabaseAuthContext";
 
 const F = { d: "var(--font-display)", b: "var(--font-body)" };
 
+const IS_STUDIO = import.meta.env.VITE_APP_MODE === "studio";
+
 export default function AdminLogin() {
   const { login } = useSupabaseAuth();
   const navigate = useNavigate();
@@ -17,7 +19,8 @@ export default function AdminLogin() {
     setError(""); setLoading(true);
     try {
       await login(email, password);
-      navigate("/admin");
+      // Studio build lands in RADR Studio; the public site keeps going to the old admin.
+      navigate(IS_STUDIO ? "/studio" : "/admin");
     } catch {
       setError("Invalid email or password.");
     }

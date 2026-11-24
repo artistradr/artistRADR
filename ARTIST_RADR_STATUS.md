@@ -196,11 +196,9 @@ Routes in Studio mode: `/studio` (overview), `/studio/discovery`, `/studio/playl
 
 **Next, in order:**
 1. **Instagram discovery** (backend done, UI next): connect, watchlist, snapshots, rank by engagement and growth, trending audio, match songs on Spotify, feed candidates. Other sources (Audiomack, YouTube, Last.fm, blog feeds) can follow.
-2. Make login land on `/studio` instead of `/admin` (needs `AdminLogin.jsx`).
-3. Mark Discovery as built in `modules.js` (paste the file to get it done).
-4. Rotate the exposed Supabase service-role key.
-5. Decide Apple Music approach.
-6. Phase 4: Studio modules (artwork, spotlights).
+2. Rotate the exposed Supabase service-role key.
+3. Decide Apple Music approach.
+4. Phase 4: Studio modules (artwork, spotlights).
 
 ---
 
@@ -209,7 +207,7 @@ Routes in Studio mode: `/studio` (overview), `/studio/discovery`, `/studio/playl
 - Use `127.0.0.1`, not `localhost`, for Studio locally (Spotify redirect rule). It is a separate origin, so sign in again.
 - Vite reads env files only at startup. Restart the dev server after editing them.
 - A Spotify login code works once. The callback page guards against React StrictMode running twice.
-- Studio login goes to `/admin/login` and lands on `/admin`. Use the "← RADR Studio" button or go to `/studio`.
+- Studio login goes to `/admin/login` and now lands on `/studio` (Studio build only; the public site still lands on `/admin`).
 - Never paste secrets into chat or commit them. The Spotify Client ID is public; the Client Secret is not.
 - supabase-js hides error bodies from Edge Functions in `error.context`; the Studio components read it to show plain-English messages.
 - If Spotify shows `needs_reconnect`, disconnect and connect again on the Playlists page.

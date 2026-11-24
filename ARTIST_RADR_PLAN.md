@@ -84,7 +84,7 @@
 - [x] Create `studio` subdomain in cPanel, SSL, `.htaccess` for React Router (2026-11-23)
 - [x] Add `https://studio.artistradr.com` to Supabase Auth redirect URLs
 - [x] First production build and upload of `dist-studio/`. Live and confirmed working
-- [ ] Make login land on `/studio` (needs `AdminLogin.jsx`)
+- [x] Make login land on `/studio` (`AdminLogin.jsx`, Studio build only)
 - [ ] Optional: match Studio accent to `var(--color-red)`
 
 ### Phase 2 — Playlists (Spotify)
