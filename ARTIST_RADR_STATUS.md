@@ -231,3 +231,7 @@ Routes in Studio mode: `/studio` (overview), `/studio/discovery`, `/studio/playl
 - Loads tracks from radr_playlists via the studio-spotify edge function (playlist_tracks). Design C locked. Approve gates Download PNG.
 - Added @fontsource/montserrat to package.json: run npm install before testing.
 - Not done yet: Save to library (needs a storage bucket + table), Friday auto-run, monthly/random title presets.
+
+## Submissions in Studio (2026-11-24)
+- The "Originals" placeholder is replaced by "Submissions" at /studio/submissions (src/studio/pages/SubmissionsPage.jsx). It reuses the Magazine admin's useSubmissions hook and SubmissionsTab, so playlist_submissions approve/reject (and the Resend emails) work the same. /admin still works.
+- Top 10 Generator: Save to library is live (bucket studio-artwork, table top10_artworks, migration 20261124220000 applied to project rjivkemajotafjvtalol).

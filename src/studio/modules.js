@@ -3,7 +3,7 @@ import Explore from "@mui/icons-material/Explore";
 import QueueMusic from "@mui/icons-material/QueueMusic";
 import Palette from "@mui/icons-material/Palette";
 import Send from "@mui/icons-material/Send";
-import Mic from "@mui/icons-material/Mic";
+import Inbox from "@mui/icons-material/Inbox";
 import Article from "@mui/icons-material/Article";
 import AutoAwesome from "@mui/icons-material/AutoAwesome";
 import Dashboard from "@mui/icons-material/Dashboard";
@@ -97,21 +97,16 @@ export const MODULES = [
     ],
   },
   {
-    id: "originals",
-    label: "Originals",
-    path: "/studio/originals",
-    Icon: Mic,
-    status: "planned",
-    phase: "Phase 8",
-    tagline: "Interviews, sessions and podcast episodes.",
+    id: "submissions",
+    label: "Submissions",
+    path: "/studio/submissions",
+    Icon: Inbox,
+    status: "live",
+    phase: "Existing",
+    tagline: "Review playlist submissions, then approve or reject them.",
     description:
-      "A home for RADR Interviews, RADR Sessions and the RADR Podcast, with episode pages on artistradr.com.",
-    features: [
-      "Series and episode records",
-      "Video and audio references, cover art, transcripts",
-      "Guest and contributor profiles",
-      "Draft, review, scheduled and published states",
-    ],
+      "The playlist submissions from the Magazine admin, now inside Studio. Approving or rejecting emails the submitter their outcome.",
+    features: [],
   },
   {
     id: "magazine",
