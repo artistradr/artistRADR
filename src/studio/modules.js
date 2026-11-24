@@ -15,7 +15,7 @@ export const MODULES = [
     label: "Discovery",
     path: "/studio/discovery",
     Icon: Explore,
-    status: "planned",
+    status: "live",
     phase: "Phase 3",
     tagline: "Find emerging artists and promising tracks, early.",
     description:

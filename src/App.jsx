@@ -33,6 +33,7 @@ import ModulePage from "./studio/ModulePage";
 import PlaylistsPage from "./studio/pages/PlaylistsPage";
 import DiscoveryPage from "./studio/pages/DiscoveryPage";
 import StudioSpotifyCallback from "./studio/StudioSpotifyCallback";
+import StudioInstagramCallback from "./studio/StudioInstagramCallback";
 
 // ── Build mode ──────────────────────────────────────────────────────────
 // "web"    -> artistradr.com          (public site + magazine + admin)
@@ -106,6 +107,7 @@ function StudioRoutes() {
         <Route path="discovery" element={<DiscoveryPage />} />
         <Route path="playlists" element={<PlaylistsPage />} />
         <Route path="spotify/callback" element={<StudioSpotifyCallback />} />
+        <Route path="instagram/callback" element={<StudioInstagramCallback />} />
         <Route path="create" element={<ModulePage id="studio" />} />
         <Route path="publishing" element={<ModulePage id="publishing" />} />
         <Route path="originals" element={<ModulePage id="originals" />} />

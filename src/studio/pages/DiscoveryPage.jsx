@@ -7,6 +7,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "../../supabaseClient";
 import SpotifySearch, { formatRelease } from "./SpotifySearch";
+import InstagramPanel from "./InstagramPanel";
 import "./playlists.css";
 
 const fmtTime = (iso) => (iso ? new Date(iso).toLocaleString() : "");
@@ -471,6 +472,8 @@ export default function DiscoveryPage() {
           </ul>
         )}
       </div>
+
+      <InstagramPanel />
 
       <div className="rs-panel">
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
