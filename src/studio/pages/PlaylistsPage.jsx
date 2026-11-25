@@ -10,6 +10,7 @@ import {
 import PlaylistTracks from "./PlaylistTracks";
 import PlaylistDraft from "./PlaylistDraft";
 import ActivityLog from "./ActivityLog";
+import ActiveCampaigns from "./ActiveCampaigns";
 import "./playlists.css";
 
 const fmt = (iso) => (iso ? new Date(iso).toLocaleString() : "Never");
@@ -23,6 +24,7 @@ export default function PlaylistsPage() {
   const [openId, setOpenId] = useState(null); // playlist whose draft editor is open
   const [liveId, setLiveId] = useState(null); // playlist whose live Spotify tracks are showing
   const [showLog, setShowLog] = useState(false); // activity log panel
+  const [draftKey, setDraftKey] = useState(0); // bumps when a campaign adds a song, so open drafts reload
 
   const load = useCallback(async () => {
     setError("");
@@ -150,6 +152,10 @@ export default function PlaylistsPage() {
         )}
       </div>
 
+      {spotifyReady && (
+        <ActiveCampaigns supabase={supabase} playlists={playlists} onChanged={() => setDraftKey((k) => k + 1)} />
+      )}
+
       <div className="rs-panel">
         <h2>RADR playlists</h2>
         {loading ? (
@@ -191,7 +197,7 @@ export default function PlaylistsPage() {
 
                 {openId === p.id && (
                   <div style={{ padding: "8px 16px 16px" }}>
-                    <PlaylistDraft supabase={supabase} playlistId={p.id} />
+                    <PlaylistDraft key={`${p.id}-${draftKey}`} supabase={supabase} playlistId={p.id} />
 
                     <hr style={{ margin: "16px 0", opacity: 0.2 }} />
 

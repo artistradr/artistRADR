@@ -84,7 +84,6 @@ Only deploy if both checks pass. `--no-verify-jwt` is required (the function doe
 | `.env` | `VITE_STUDIO_URL` | Where the Profile "Open RADR Studio" button points (`http://127.0.0.1:5174` locally; set the studio URL for production builds of the public site) |
 | `.env.studio` | `VITE_APP_MODE=studio` | Turns on Studio mode |
 | `.env.studio` | `VITE_STUDIO_SPOTIFY_CLIENT_ID` | Public Client ID of the Studio Spotify app |
-| `.env.studio` | `VITE_STUDIO_META_APP_ID` | Public App ID of the Meta app radr Studio (`1182413560930197`). Optional `VITE_STUDIO_META_CONFIG_ID` if Meta requires a configuration |
 
 ---
 
@@ -100,7 +99,6 @@ Only deploy if both checks pass. `--no-verify-jwt` is required (the function doe
 ### Tables
 - **Existing:** `posts` (26 rows), `playlist_submissions`, `profiles` (3 rows), `campaigns`.
 - **Playlists foundation** (all with staff-only RLS): `connected_accounts`, `connected_account_secrets` (no policies: service role only), `radr_playlists`, `tracks`, `track_platform_matches`, `playlist_drafts`, `playlist_draft_items`, `playlist_sync_jobs`, `activity_logs`.
-- **Instagram discovery** (staff-only RLS, migration `20261124033929_studio_instagram_discovery_foundation.sql`, applied remotely, file in repo): `discovery_ig_accounts` (watchlist: username, ig_user_id, followers, media count, active flag, last checked, last error) and `discovery_ig_snapshots` (account, observed_at, followers, media count, posts jsonb). Snapshots are written only by the Edge Function. `connected_accounts.provider` now also allows `instagram`.
 - **Discovery** (staff-only RLS): `discovery_sources` (name, kind, url, active flag) and `discovery_candidates` (artist, title, link, note, `spotify_track` jsonb, `signals` jsonb reserved for later, status `new`/`saved`/`accepted`/`rejected`, accepted playlist and track).
 - **Seeded playlists:** New Music Friday, RADR Discoveries, RADR Spotlight.
 - **Draft rules:** one open draft per playlist (unique index). Status flow `draft` → `approved` → `applied`, or `cancelled` (discarded). `ready` is still allowed; the UI shows it as "draft". A database trigger returns an approved draft to `draft` on any item change, so any edit cancels the approval. `playlist_draft_items` is unique on (draft, track). Item `source` is `existing`, `discovery` or `manual`. Tracks are canonical rows in `tracks`, linked to Spotify by `track_platform_matches`.
@@ -121,9 +119,7 @@ Only deploy if both checks pass. `--no-verify-jwt` is required (the function doe
 - `20261123032434_studio_draft_seed_and_reorder.sql`
 - `20261123034348_studio_approval_flow.sql`
 - `20261123090115_studio_discovery_foundation.sql`
-- `20261124033929_studio_instagram_discovery_foundation.sql`
 - `20261124215423_studio_top10_artworks.sql`
-- `20261124220354_studio_buffer.sql` (unused, see Buffer note below)
 
 The remote also has 22 older August/September migrations that exist only there. Do not run `supabase db push`. Apply changes through the Supabase connector or SQL, then save a file with the version Supabase recorded.
 
@@ -131,7 +127,6 @@ The remote also has 22 older August/September migrations that exist only there. 
 | Function | Purpose | JWT check |
 |---|---|---|
 | `follow-on-spotify` | Public artist flow: follows RADR accounts for visitors (older Spotify app) | off |
-| `studio-instagram` (v1 deployed 2026-11-24, source in repo) | Staff-only. Actions: `status`, `connect` (Facebook login code, stores a non-expiring Page token server-side), `disconnect`, `lookup`, `add_account`, `remove_account`, `snapshot`. Uses Business Discovery on Graph API v27.0 | off (does its own staff check) |
 | `studio-spotify` (v12 deployed, matches repo) | Studio, staff-only. Actions: `connect`, `disconnect`, `playlist_tracks`, `search` (returns `release_date`, optional `year_from`/`year_to`), `write_test`, `preview`, `sync`. Shared `getAccessToken` refreshes tokens | off (does its own staff check) |
 
 Responses: `409 {needs_reconnect: true}` when the Spotify login is gone or expired; `502 {spotify_status}` when Spotify itself errors.
@@ -139,7 +134,6 @@ Responses: `409 {needs_reconnect: true}` when the Spotify login is gone or expir
 ### Secrets
 - Public flow: `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET`, `SPOTIFY_REDIRECT_URI`
 - Studio: `STUDIO_SPOTIFY_CLIENT_ID`, `STUDIO_SPOTIFY_CLIENT_SECRET`
-- Instagram (Meta app **radr Studio**, App ID `1182413560930197`): `META_APP_ID`, `META_APP_SECRET`
 
 ---
 
@@ -153,7 +147,6 @@ Responses: `409 {needs_reconnect: true}` when the Spotify login is gone or expir
 ### Provider limits (verified Nov 2026)
 - Spotify Development Mode: Premium owner, 5 users, restricted endpoints after the Feb 2026 migration. Editorial playlists likely unreadable; new-releases and popularity data removed. Search max 10 results.
 - Apple Music web API: create and add only; no remove or reorder.
-- Instagram (checked Nov 2026): official Business Discovery returns followers and per-post likes, comments and views for other **Business or Creator** accounts only, as point-in-time counts (growth needs our own snapshots). Reels show an audio type (`MUSIC` or `ORIGINAL_SOUND`) but no track title. Meta's Audio API can list trending music and sounds. Needs a Meta developer app and a Facebook Page linked to an Instagram professional account. Scraping is not an option.
 
 ---
 
@@ -178,10 +171,6 @@ src/studio/pages/playlists.css           page styles
 src/pages/Admin/AdminDashboard/components/DashboardHeader.jsx   "← RADR Studio" button
 src/pages/Auth/Profile.jsx               "Open RADR Studio" button (staff)
 supabase/migrations/                     eight migrations listed above
-supabase/functions/studio-instagram/index.ts   Instagram function source (deployed v1, in repo)
-src/studio/instagram.js                  Instagram connect helpers (browser side, no secrets)
-src/studio/StudioInstagramCallback.jsx   finishes the Facebook login (route /studio/instagram/callback)
-src/studio/pages/InstagramPanel.jsx      Instagram panel on Discovery: connect, watchlist, snapshots
 supabase/functions/studio-spotify/index.ts   function source (matches deployed v12)
 ```
 
@@ -195,11 +184,11 @@ Routes in Studio mode: `/studio` (overview), `/studio/discovery`, `/studio/playl
 
 **Done and working:** Studio shell and deployment to `studio.artistradr.com`, staff-only security, Spotify connection and token refresh, Spotify search with release dates and a release-period filter, draft editor with numbered tracks, review → approve → sync (tested, including refusal after an outside edit), activity log, Discovery (candidates, review, accept into draft, sources).
 
-**Instagram discovery, 2026-11-24 (PARKED):** Meta app created and Business Discovery verified in the Graph API Explorer (Development mode, no App Review). Database tables, the `studio-instagram` function, and the Studio panel (Connect, watchlist, snapshots) are built and pushed (commit `0586ca0`). **Blocked:** Facebook says radr Studio "isn't using a secure connection" when logging in, so Connect Instagram does not work yet. Meta only accepts https redirect URIs, so test only on `https://studio.artistradr.com`. Checklist to resume: plan section 6.
+**Instagram discovery: dropped 2026-11-25.** The Meta Connect step was blocked and the feature is out of scope. Code, function source, tables and panel are removed (see the cleanup note at the end).
 
 **Next, in order:**
-1. **Instagram discovery** (backend done, UI next): connect, watchlist, snapshots, rank by engagement and growth, trending audio, match songs on Spotify, feed candidates. Other sources (Audiomack, YouTube, Last.fm, blog feeds) can follow.
-2. Rotate the exposed Supabase service-role key.
+1. **Friday auto-draft** (needs the artwork library, now built).
+2. Finish rotating the exposed Supabase service-role key.
 3. Decide Apple Music approach.
 4. Phase 4: Studio modules (artwork, spotlights).
 
@@ -216,18 +205,16 @@ Routes in Studio mode: `/studio` (overview), `/studio/discovery`, `/studio/playl
 - If Spotify shows `needs_reconnect`, disconnect and connect again on the Playlists page.
 - Anything applied to the remote database must also be saved as a file in `supabase/migrations/`, named with the version Supabase recorded.
 - Browsers rename repeated downloads (`index (1).ts`). Always check a file's first line and a `grep` before copying or deploying it.
-- Meta only accepts https OAuth redirect URIs: Instagram Connect cannot be tested on `http://127.0.0.1`.
-- Meta tokens and the app secret never go in chat or the repo. Instagram reads only Business and Creator accounts; likes can be hidden by the account.
 - **Studio mode is set only in `.env.studio`.** Never put `VITE_APP_MODE=studio` in `.env`: it forces Studio mode on `npm run dev` and `npm run build` (public site redirects to the login). `npm run dev:studio` / `build:studio` set the mode themselves. Check a public build: postbuild prints "Wrote N static post page(s)" and `/admin/login` lands on `/admin`.
 - Vite reads env only at startup, and moves to the next port if one is busy: stop old servers (`pkill -f vite`) before checking.
 - Browser Supabase key is the `sb_publishable_...` key in `.env` and `.env.studio` (never the old `eyJ...` anon key, which is now rejected).
-- Open security item: a real legacy `service_role` key exists in git history (`scripts/env.migration.example`, first commit). Rotation is in progress: both sites and both functions now use the new keys and pass live checks; the remaining step is deactivating the legacy keys (plan section 7, step 7). `studio-spotify` and `studio-instagram` now read `STUDIO_SECRET_KEY` first and fall back to `SUPABASE_SERVICE_ROLE_KEY`.
+- Open security item: a real legacy `service_role` key exists in git history (`scripts/env.migration.example`, first commit). Rotation is in progress: both sites and both functions now use the new keys and pass live checks; the remaining step is deactivating the legacy keys (plan section 7, step 7). `studio-spotify` now reads `STUDIO_SECRET_KEY` first and falls back to `SUPABASE_SERVICE_ROLE_KEY`.
 
 ---
 
 ## Paste-ready kickoff for Claude Code
 
-> Read `ARTIST_RADR_STATUS.md` and `ARTIST_RADR_PLAN.md` in the repo root. We are on branch `feature/studio` in `~/artist-radr`. Studio is live at studio.artistradr.com. Do not change existing public-site behaviour, and do not run destructive migrations or external account actions without asking. Spotify sync, Discovery and the activity log are built and working. Continue with Discovery sources (Instagram via the official API, once the Meta app exists) and the remaining items in the plan. Every new table needs staff-only RLS using `public.radr_is_staff()`, and tokens must stay server-side. Never deploy an Edge Function without checking the file's first line and contents first. Show a change preview and require approval before any live playlist change. Add named paths to `git add`, never `git add -A`.
+> Read `ARTIST_RADR_STATUS.md` and `ARTIST_RADR_PLAN.md` in the repo root. We are on branch `feature/studio` in `~/artist-radr`. Studio is live at studio.artistradr.com. Do not change existing public-site behaviour, and do not run destructive migrations or external account actions without asking. Spotify sync, Discovery and the activity log are built and working. Continue with the remaining items in the plan. Every new table needs staff-only RLS using `public.radr_is_staff()`, and tokens must stay server-side. Never deploy an Edge Function without checking the file's first line and contents first. Show a change preview and require approval before any live playlist change. Add named paths to `git add`, never `git add -A`.
 
 ## Top 10 Generator (2026-11-24)
 - Added Studio page /studio/artwork/top10 (src/studio/pages/Top10Generator.jsx), menu item "Top 10 Generator" in modules.js.
@@ -242,7 +229,7 @@ Routes in Studio mode: `/studio` (overview), `/studio/discovery`, `/studio/playl
 ## Publishing and Buffer removed (2026-11-24)
 - Decision: staff post manually. Buffer and the Publishing module are out of scope. The Publishing item and `/studio/publishing` route are removed.
 - Buffer code (Studio panel and `studio-buffer` function) was removed and never deployed. No BUFFER_API_KEY is needed.
-- Left in the database, unused and empty: table `buffer_posts` and public bucket `studio-public` (migration 20261124220354, already applied, kept so history matches). Drop later if wanted.
+- Cleaned up 2026-11-25: table `buffer_posts` dropped (migration 20261125063410). The empty public bucket `studio-public` could not be removed with SQL; delete it in Supabase, Storage.
 
 ## Studio layout (2026-11-24)
 Sidebar and Overview cards come from `src/studio/modules.js`. Current order:
@@ -263,3 +250,16 @@ Overview, Discovery (live), Playlists (live), Studio (planned), Top 10 Generator
 - In the Studio build `/admin`, `/admin/new` and `/admin/edit/:id` redirect to the new addresses. `/admin/login` stays. The public site (artistradr.com) keeps its own `/admin` unchanged.
 - Playlist submissions are no longer shown inside the Magazine page in Studio; they are the Submissions item.
 - Not yet run or tested. Test: list, New Post, save a draft, edit, publish, pin a featured post, delete a test post.
+
+## Campaigns for approved submissions (2026-11-25)
+- Approving a submission now sets a **campaign length in days** (box next to Approve, default 14; submissions approved from an old screen get 14). Columns on `playlist_submissions`: `campaign_days`, `campaign_started_at`, `campaign_ends_at`, `track_id`. New status `resolved`.
+- **Countdown start:** the first time a playlist draft containing the song is applied (synced live), a trigger sets `campaign_started_at` and `campaign_ends_at`. All RADR playlists are treated as public. Changing the days after the start moves the end date.
+- **Active campaigns** panel on the Playlists page, above the playlist list: countdown, change days, and "Add to playlist" (pick any RADR playlist; first time you pick the Spotify track, after that it is reused). It only adds to the draft; sync still needs review and approval. Component `src/studio/pages/ActiveCampaigns.jsx`.
+- **Resolve:** when time is up the status becomes `resolved` (no email is sent; only approved and rejected send email). It runs hourly through pg_cron (`studio-resolve-campaigns`) and also whenever the Playlists or Submissions page loads. The song is not removed from the playlist automatically.
+- SQL: `studio_add_submission_to_draft`, `studio_resolve_expired_campaigns`, triggers `studio_submission_campaign_defaults` and `studio_start_campaigns_on_apply`. Migrations `20261125063359_studio_campaigns.sql` and `20261125063403_studio_campaign_cron.sql`.
+- Not yet run or tested in the app.
+
+## Instagram and Buffer cleanup (2026-11-25)
+- Removed code: `InstagramPanel.jsx`, `instagram.js`, `StudioInstagramCallback.jsx`, the `/studio/instagram/callback` route and the `supabase/functions/studio-instagram` source.
+- Dropped empty tables `discovery_ig_accounts`, `discovery_ig_snapshots`, `buffer_posts` (migration `20261125063410_studio_cleanup_buffer_instagram.sql`). Old migration files stay in the repo so history matches the remote.
+- Still to do by hand: delete the deployed function (`supabase functions delete studio-instagram`), delete the Supabase secrets `META_APP_ID` and `META_APP_SECRET`, delete the empty `studio-public` bucket in Storage, remove `VITE_STUDIO_META_APP_ID` from `.env.studio`, and delete or archive the Meta app "radr Studio".

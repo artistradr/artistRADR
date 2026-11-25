@@ -37,7 +37,6 @@ import ArtworkLibrary from "./studio/pages/ArtworkLibrary";
 import SubmissionsPage from "./studio/pages/SubmissionsPage";
 import { MagazineList, MagazineEditor } from "./studio/pages/MagazinePages";
 import StudioSpotifyCallback from "./studio/StudioSpotifyCallback";
-import StudioInstagramCallback from "./studio/StudioInstagramCallback";
 
 // ── Build mode ──────────────────────────────────────────────────────────
 // "web"    -> artistradr.com          (public site + magazine + admin)
@@ -117,7 +116,6 @@ function StudioRoutes() {
         <Route path="discovery" element={<DiscoveryPage />} />
         <Route path="playlists" element={<PlaylistsPage />} />
         <Route path="spotify/callback" element={<StudioSpotifyCallback />} />
-        <Route path="instagram/callback" element={<StudioInstagramCallback />} />
         <Route path="create" element={<ModulePage id="studio" />} />
         <Route path="artwork/top10" element={<Top10Generator />} />
         <Route path="artwork/library" element={<ArtworkLibrary />} />

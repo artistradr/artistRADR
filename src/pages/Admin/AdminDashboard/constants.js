@@ -23,12 +23,14 @@ export const SUB_STATUSES = [
   { value: "open", label: "Open" },
   { value: "approved", label: "Approved" },
   { value: "rejected", label: "Rejected" },
+  { value: "resolved", label: "Resolved" },
 ];
 
 export const STATUS_COLOR = {
   open: "#D94F2B",
   approved: "#22c55e",
   rejected: "#ff6b6b",
+  resolved: "#8a8a8a",
 };
 
 // Duration options offered when pinning a post to a featured slot.

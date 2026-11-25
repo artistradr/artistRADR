@@ -21,16 +21,16 @@ export default function useSubmissions() {
   // (on_submission_status_notify) which emails the submitter their outcome
   // via Resend. Setting it back to "open" does NOT re-fire that email —
   // it's a plain status revert for correcting a mis-click.
-  const updateSubmissionStatus = async (id, status) => {
+  const updateSubmissionStatus = async (id, status, extra = {}) => {
     setUpdatingStatus(id);
-    const { error } = await supabase.from("playlist_submissions").update({ status }).eq("id", id);
+    const { data: updated, error } = await supabase.from("playlist_submissions").update({ status, ...extra }).eq("id", id).select().single();
     if (error) {
       console.error(error);
       window.alert("Couldn't update status — check console for details.");
       setUpdatingStatus(null);
       return;
     }
-    setSubs((p) => p.map((x) => (x.id === id ? { ...x, status } : x)));
+    setSubs((p) => p.map((x) => (x.id === id ? { ...x, ...(updated || { status }) } : x)));
     setUpdatingStatus(null);
   };
 
@@ -47,10 +47,11 @@ export default function useSubmissions() {
   const openCount = subs.filter((s) => s.status === "open").length;
   const approvedCount = subs.filter((s) => s.status === "approved").length;
   const rejectedCount = subs.filter((s) => s.status === "rejected").length;
+  const resolvedCount = subs.filter((s) => s.status === "resolved").length;
 
   return {
     subs, loadingSubs, subFilter, setSubFilter, deleting, updatingStatus, expanded, setExpanded,
-    filteredSubs, openCount, approvedCount, rejectedCount,
+    filteredSubs, openCount, approvedCount, rejectedCount, resolvedCount,
     fetchSubmissions, updateSubmissionStatus, deleteSubmission,
   };
 }

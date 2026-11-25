@@ -12,6 +12,18 @@ export function fmtDate(ts) {
   return ts ? new Date(ts).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—";
 }
 
+// Short campaign text for an approved or resolved submission.
+export function campaignText(sub) {
+  if (sub.status === "resolved") return "Campaign finished";
+  if (sub.status !== "approved" || !sub.campaign_days) return "";
+  if (!sub.campaign_started_at) return `${sub.campaign_days}-day campaign · not live yet`;
+  const ms = new Date(sub.campaign_ends_at) - Date.now();
+  if (ms <= 0) return `${sub.campaign_days}-day campaign · ended`;
+  const days = Math.floor(ms / 86400000);
+  const hours = Math.floor((ms % 86400000) / 3600000);
+  return `${sub.campaign_days}-day campaign · ${days}d ${hours}h left`;
+}
+
 export function fmtDateTime(ts) {
   return ts ? new Date(ts).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "—";
 }

@@ -1,6 +1,6 @@
 # Artist RADR — Plan & TODO
 
-**Last updated:** 2026-11-25 (legacy keys off; public site rebuild and upload to verify)
+**Last updated:** 2026-11-25 (campaigns added; Buffer and Instagram removed; legacy keys off; public site rebuild and upload to verify)
 **Companion file:** `ARTIST_RADR_STATUS.md` (current state, commands, env, handoff)
 **Product brief:** the original "Artist RADR — Product Vision & Development Brief" still applies, with the changes recorded in section 1.
 
@@ -13,7 +13,7 @@
 | 0 | Audit (code + Supabase) | Mostly done |
 | 1 | Studio app shell on `studio.artistradr.com` | **Done. Live since 2026-11-23.** Login still lands on `/admin` |
 | 2 | Playlists (Spotify first) | **Done for Spotify.** Search with release dates, draft editor, review, approve, sync, conflict detection and activity log all working. Apple Music undecided |
-| 3 | Discovery | **In progress.** Manual candidates, review and accept-into-draft built. Instagram: backend and Studio panel built and pushed, but **the Facebook login step is blocked (parked 2026-11-24)** |
+| 3 | Discovery | **Done for now.** Manual candidates, review and accept-into-draft. Instagram dropped 2026-11-25 |
 | 4 | RADR Studio modules (artwork, spotlights) | Not started |
 | 5 | ~~Publishing~~ | **Removed 2026-11-24** (Buffer and the Publishing module). Staff post to social by hand outside Studio |
 | 6 | RADR AI | Not started |
@@ -60,7 +60,7 @@
 - Manual "add a track I found" is a first-class feature (built for Spotify search; Discovery will feed the same draft function with `source = 'discovery'`).
 - Evaluate other lawful sources: Apple Music charts, Audiomack, YouTube, Last.fm, music blog feeds.
 - Never claim growth data a source does not provide.
-- **Instagram (checked Nov 2026):** the official Business Discovery API returns followers, post counts, and per-post likes, comments and views for other **Business or Creator** accounts only (not personal accounts). It gives point-in-time counts, so "growing" needs repeated snapshots we store ourselves. Reels carry an audio type (`MUSIC` or `ORIGINAL_SOUND`) but no track title. Meta's Audio API can list trending music and sounds, but it is built for attaching audio to Reels. Needs a Meta developer app and a Facebook Page linked to an Instagram professional account. Scraping Instagram is not an option (terms of use).
+- Instagram was evaluated in Nov 2026 (official API reads Business and Creator accounts only) and dropped on 2026-11-25.
 
 ---
 
@@ -117,12 +117,13 @@
 - [x] Write test panel removed from the Playlists page (the `write_test` action stays in the function, staff-only)
 - [x] Activity log view (panel on the Playlists page, `ActivityLog.jsx`). Optional: own page and filters by playlist
 - [ ] Match by ISRC, artist, duration; manual review of uncertain matches (needed for Discovery and Apple Music)
+- [x] Submission campaigns: approve with days, countdown from first live add, Active campaigns panel, auto-resolve (2026-11-25, untested)
 - [ ] Apple Music: decision on approach, then MusicKit connection and matching
 
 ### Phase 3 — Discovery
 - [x] Source management table and UI (add, disable, categorise): `discovery_sources`, Sources panel
 - [x] Manual candidate entry (Spotify search or by hand, with a later "Match on Spotify" step)
-- [ ] **Instagram source (in progress):** see section 6
+- [x] ~~Instagram source~~ dropped 2026-11-25 (see section 6)
 - [ ] Evaluate and add other non-Spotify sources (Audiomack, YouTube, Last.fm, blog feeds)
 - [x] Candidate review list with status filter and accept / reject / save (`DiscoveryPage.jsx`)
 - [ ] Candidate filters by source and playlist, duplicate check against existing playlists
@@ -170,7 +171,7 @@ Buffer and the Publishing module are out of scope. Staff post manually. If posti
 
 | Item | Detail | Action |
 |---|---|---|
-| **Service-role key in git history** | A real **legacy JWT** `service_role` key (expires 2036) is in `scripts/env.migration.example` (first commit `f33388e`) and in a local `scripts/.env.migration.save`. The repo is private. | **In progress 2026-11-24.** Steps 1 to 5 done. Legacy keys are now rejected (401 seen 2026-11-24). Still to verify: the public site rebuilt with the new key AND in public mode is uploaded and working (see section 7 notes). Then cleanup steps 6, 8, 9. Only `studio-spotify` and `studio-instagram` use it; the older functions and the database triggers do not. |
+| **Service-role key in git history** | A real **legacy JWT** `service_role` key (expires 2036) is in `scripts/env.migration.example` (first commit `f33388e`) and in a local `scripts/.env.migration.save`. The repo is private. | **In progress 2026-11-24.** Steps 1 to 5 done. Legacy keys are now rejected (401 seen 2026-11-24). Still to verify: the public site rebuilt with the new key AND in public mode is uploaded and working (see section 7 notes). Then cleanup steps 6, 8, 9. Only `studio-spotify` uses it; the older functions and the database triggers do not. |
 | **Sync edge cases partly tested** | One real sync succeeded and conflict detection is confirmed. Remove plus reorder and blocked cases (local files, unmatched tracks) are not yet exercised. | Test on a throwaway playlist before relying on it for live RADR playlists. |
 | Wrong file in git history | Commit `61322dc` contains a Free Republick function (`r2-video`). Setting names only, no secrets. | Check history before ever making the repo public. |
 | Remote-only old migrations | 22 August/September migrations exist on the remote but not as repo files. `supabase db push` would complain. | Avoid `db push`. Optionally pull them later with `supabase db pull`. |
@@ -194,46 +195,14 @@ Buffer and the Publishing module are out of scope. Staff post manually. If posti
 3. Podcast hosting and RSS provider.
 4. Final accent colour (`--rs-accent`) for Studio.
 5. ~~When to rotate the exposed service-role key.~~ In progress, see section 7.
-6. Which Instagram accounts to watch first (artists, labels, blogs)? Business and Creator accounts only.
 
 **Resolved:** which test playlist to use for the first write check (a private throwaway on `admin@artistradr.com`, done 2026-11-23).
 
 ---
 
-## 6. Instagram discovery (Phase 3, in progress)
+## 6. Instagram discovery (dropped 2026-11-25)
 
-**Goal:** find emerging African artists gaining traction on Instagram and feed them to Discovery as candidates. Staff still review and accept every one.
-
-**Done (2026-11-24)**
-- Instagram account `artistradr` is a professional account linked to the Artistradr Facebook Page.
-- Meta app **radr Studio** (App ID `1182413560930197`, Business type, Instagram API with Facebook login, Unpublished). App ID and secret stored as Supabase secrets `META_APP_ID` and `META_APP_SECRET`.
-- Permissions granted on the test token: `instagram_basic`, `instagram_manage_insights`, `pages_read_engagement`, `pages_show_list`, `business_management`.
-- **Verified in Graph API Explorer, Development mode, no App Review:** Business Discovery returned followers, post count and the last 5 posts (likes, comments, type, date, link) for a public business account. Some posts have no `like_count` (account hides likes), so likes are optional.
-- Migration `studio_instagram_discovery_foundation` applied: tables `discovery_ig_accounts` (watchlist) and `discovery_ig_snapshots`, both staff-only RLS, and `instagram` allowed as a `connected_accounts` provider. Migration version `20261124033929`; file still to be saved in the repo.
-- Edge Function `studio-instagram` v1 deployed (JWT check off, does its own staff check). Actions: `status`, `connect`, `disconnect`, `lookup`, `add_account`, `remove_account`, `snapshot`. Source in `supabase/functions/studio-instagram/index.ts` (still to be saved in the repo).
-
-**Built and pushed (commit `0586ca0` on `feature/studio`, 2026-11-24)**
-- Function and migration saved in the repo (`supabase/functions/studio-instagram/index.ts`, `supabase/migrations/20261124033929_studio_instagram_discovery_foundation.sql`).
-- Studio: `src/studio/instagram.js` (Connect helpers), `src/studio/StudioInstagramCallback.jsx` (route `/studio/instagram/callback`), `src/studio/pages/InstagramPanel.jsx` (connect, watchlist, check account, refresh, remove, recent posts), wired into `DiscoveryPage.jsx` and `App.jsx`. Discovery marked live in `modules.js`.
-- `.env.studio` needs `VITE_STUDIO_META_APP_ID=1182413560930197` (public). A `VITE_STUDIO_META_CONFIG_ID` is only needed if Meta asks for a Facebook Login for Business configuration.
-
-**BLOCKED (parked 2026-11-24): Connect Instagram**
-Facebook shows: *"Facebook has detected that radr Studio isn't using a secure connection to transfer information. Until radr Studio updates its security settings, you won't be able to use Facebook to log in to it."*
-Meta only accepts **https** redirect URIs, so the Connect flow cannot be tested locally on `http://127.0.0.1`; it must be tested on `https://studio.artistradr.com`.
-Things to check when we resume, in this order:
-1. Meta app dashboard, Facebook Login for Business, Settings: `https://studio.artistradr.com/studio/instagram/callback` is saved exactly (no trailing slash, no spaces) and the page says it saved. Do not add the `http://127.0.0.1` one.
-2. Same page: **Client OAuth Login** and **Web OAuth Login** are on; **Enforce HTTPS** is on; **Login with the JavaScript SDK** can stay off.
-3. App settings, Basic: add `studio.artistradr.com` under **App domains** (and `artistradr.com` if asked).
-4. Confirm the live Studio build actually contains the new code and `VITE_STUDIO_META_APP_ID` (the Instagram panel shows and the Connect button is enabled).
-5. If Meta asks for a configuration ID, create one under Facebook Login for Business, Configurations, and set `VITE_STUDIO_META_CONFIG_ID`.
-6. Fallback that avoids the login screen: a one-off server-side connection using a long-lived token created in the Graph API Explorer (never pasted in chat; set as a Supabase secret).
-
-**Still to do after Connect works**
-4. Scheduled snapshots (`pg_cron` calling the function) so growth can be calculated from our own history. Growth only shows once there are at least two snapshots.
-5. Ranking by engagement and growth, with observation dates shown.
-6. Trending audio (Meta Audio API), match songs on Spotify, create candidates with `signals` filled in.
-
-**Limits to remember:** Business and Creator accounts only; point-in-time counts; reels give audio type but no track title; no scraping. Development mode works for people with a role on the app; check whether Advanced access or App Review is needed before wider use.
+The Meta Connect step stayed blocked and the feature was dropped. Code and tables are removed. Other discovery sources (Audiomack, YouTube, Last.fm, blog feeds) can be evaluated later.
 
 ---
 
@@ -244,7 +213,7 @@ Order matters. Deactivating the legacy keys breaks anything still using them, in
 1. **Done.** Supabase, Settings, API Keys: new publishable and secret keys created. Legacy keys keep working until step 7.
 2. **Done 2026-11-24.** `VITE_SUPABASE_PUBLISHABLE_KEY` in `.env` (and `.env.studio` if present) now holds the `sb_publishable_...` key. Public site (`npm run build`) and Studio (`npm run build:studio`) rebuilt and uploaded; live checks passed.
 3. **Done.** `STUDIO_SECRET_KEY` function secret added (new secret key, never in chat).
-4. **Done.** `studio-spotify` and `studio-instagram` redeployed (they prefer `STUDIO_SECRET_KEY`).
+4. **Done.** `studio-spotify` redeployed (prefers `STUDIO_SECRET_KEY`). `studio-instagram` was removed.
 5. **Done.** Tested: public site posts, admin and Studio login, Playlists and Discovery.
    **Found 2026-11-24:** `.env` still held the legacy anon key and also `VITE_APP_MODE=studio`, so a public build from it was a Studio build with the old key. Fix: `.env` gets the `sb_publishable_...` key and no `VITE_APP_MODE` line. Rebuild with `npm run build` (postbuild must print "Wrote N static post page(s)", not a 401), upload, test in a private window.
 6. Replace the key in any local `.env.migration` used by the one-off scripts, and delete `scripts/.env.migration.save`.

@@ -1,5 +1,5 @@
 import { F, STATUS_COLOR } from "../constants";
-import { fmtDate } from "../utils";
+import { fmtDate, campaignText } from "../utils";
 import SubActions from "./SubActions";
 
 export default function SubmissionRow({ sub, isLast, expanded, setExpanded, isUpdating, deleting, updateSubmissionStatus, deleteSubmission }) {
@@ -22,6 +22,7 @@ export default function SubmissionRow({ sub, isLast, expanded, setExpanded, isUp
             </div>
             <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" }}>
               <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.3)" }}>{fmtDate(sub.submitted_at)}</span>
+              {campaignText(sub) && <span style={{ fontSize: "11px", color: "#22c55e" }}>{campaignText(sub)}</span>}
               {p.genre && <span style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "1px", textTransform: "uppercase", padding: "2px 8px", borderRadius: "100px", background: "rgba(77,217,208,0.1)", color: "var(--color-cyan)", border: "0.5px solid rgba(77,217,208,0.2)" }}>{p.genre}</span>}
             </div>
           </div>
@@ -42,6 +43,7 @@ export default function SubmissionRow({ sub, isLast, expanded, setExpanded, isUp
               </div>
               <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
                 <span style={{ fontSize: "10.5px", color: "rgba(255,255,255,0.3)" }}>{fmtDate(sub.submitted_at)}</span>
+                {campaignText(sub) && <span style={{ fontSize: "10.5px", color: "#22c55e" }}>{campaignText(sub)}</span>}
                 {p.genre && <span style={{ fontSize: "9.5px", fontWeight: 600, letterSpacing: "0.5px", textTransform: "uppercase", padding: "2px 7px", borderRadius: "100px", background: "rgba(77,217,208,0.1)", color: "var(--color-cyan)", border: "0.5px solid rgba(77,217,208,0.2)" }}>{p.genre}</span>}
                 <span style={{ fontSize: "9.5px", fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase", padding: "2px 8px", borderRadius: "100px", background: `${statusColor}1a`, color: statusColor, border: `0.5px solid ${statusColor}40` }}>
                   {sub.status}
