@@ -1,6 +1,6 @@
 # Artist RADR — Plan & TODO
 
-**Last updated:** 2026-11-24 (legacy keys off; public site rebuild and upload to verify)
+**Last updated:** 2026-11-25 (legacy keys off; public site rebuild and upload to verify)
 **Companion file:** `ARTIST_RADR_STATUS.md` (current state, commands, env, handoff)
 **Product brief:** the original "Artist RADR — Product Vision & Development Brief" still applies, with the changes recorded in section 1.
 
@@ -137,6 +137,7 @@
 - [ ] Caption drafting
 - [ ] Draft → review → approved states
 - [x] Top 10 Generator (dark and light, Save to library after Approve) built 2026-11-24
+- [ ] Test Save to library end to end (no saved rows yet)
 - [ ] Library view of saved Top 10s, with download and copy-ready caption
 
 ### Phase 5 — Removed (2026-11-24)
@@ -246,8 +247,7 @@ Order matters. Deactivating the legacy keys breaks anything still using them, in
 4. **Done.** `studio-spotify` and `studio-instagram` redeployed (they prefer `STUDIO_SECRET_KEY`).
 5. **Done.** Tested: public site posts, admin and Studio login, Playlists and Discovery.
    **Found 2026-11-24:** `.env` still held the legacy anon key and also `VITE_APP_MODE=studio`, so a public build from it was a Studio build with the old key. Fix: `.env` gets the `sb_publishable_...` key and no `VITE_APP_MODE` line. Rebuild with `npm run build` (postbuild must print "Wrote N static post page(s)", not a 401), upload, test in a private window.
-7. Legacy keys deactivated (Settings, API Keys, Legacy tab). Re-enable there if a site breaks while fixing.
 6. Replace the key in any local `.env.migration` used by the one-off scripts, and delete `scripts/.env.migration.save`.
-7. Deactivate the legacy keys (Settings, API Keys, Legacy tab). Retest the public site, Studio login, Playlists and Discovery.
+7. **Done 2026-11-24.** Legacy keys deactivated (Settings, API Keys, Legacy tab); re-enable there if a site breaks. Still retest the public site, Studio login, Playlists and Discovery.
 8. Later: move to JWT signing keys, then revoke the legacy JWT secret (the leaked key is a JWT signed by it). Check the effect on logged-in users first.
 9. Remove the key text from `scripts/env.migration.example` (replace with a placeholder) and commit. It stays in git history, which is harmless once the key is dead.

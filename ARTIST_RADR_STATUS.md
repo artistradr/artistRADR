@@ -1,6 +1,6 @@
 # Artist RADR — Project Status & Handoff
 
-**As of:** 2026-11-24 (morning)
+**As of:** 2026-11-25
 Compact summary of everything built and decided so far. Paste this into a new chat or Claude Code to restore context. The roadmap and full TODO are in `ARTIST_RADR_PLAN.md`.
 
 ---
@@ -100,7 +100,7 @@ Only deploy if both checks pass. `--no-verify-jwt` is required (the function doe
 ### Tables
 - **Existing:** `posts` (26 rows), `playlist_submissions`, `profiles` (3 rows), `campaigns`.
 - **Playlists foundation** (all with staff-only RLS): `connected_accounts`, `connected_account_secrets` (no policies: service role only), `radr_playlists`, `tracks`, `track_platform_matches`, `playlist_drafts`, `playlist_draft_items`, `playlist_sync_jobs`, `activity_logs`.
-- **Instagram discovery** (staff-only RLS, migration `20261124033929_studio_instagram_discovery_foundation.sql`, applied remotely, file to be saved in repo): `discovery_ig_accounts` (watchlist: username, ig_user_id, followers, media count, active flag, last checked, last error) and `discovery_ig_snapshots` (account, observed_at, followers, media count, posts jsonb). Snapshots are written only by the Edge Function. `connected_accounts.provider` now also allows `instagram`.
+- **Instagram discovery** (staff-only RLS, migration `20261124033929_studio_instagram_discovery_foundation.sql`, applied remotely, file in repo): `discovery_ig_accounts` (watchlist: username, ig_user_id, followers, media count, active flag, last checked, last error) and `discovery_ig_snapshots` (account, observed_at, followers, media count, posts jsonb). Snapshots are written only by the Edge Function. `connected_accounts.provider` now also allows `instagram`.
 - **Discovery** (staff-only RLS): `discovery_sources` (name, kind, url, active flag) and `discovery_candidates` (artist, title, link, note, `spotify_track` jsonb, `signals` jsonb reserved for later, status `new`/`saved`/`accepted`/`rejected`, accepted playlist and track).
 - **Seeded playlists:** New Music Friday, RADR Discoveries, RADR Spotlight.
 - **Draft rules:** one open draft per playlist (unique index). Status flow `draft` → `approved` → `applied`, or `cancelled` (discarded). `ready` is still allowed; the UI shows it as "draft". A database trigger returns an approved draft to `draft` on any item change, so any edit cancels the approval. `playlist_draft_items` is unique on (draft, track). Item `source` is `existing`, `discovery` or `manual`. Tracks are canonical rows in `tracks`, linked to Spotify by `track_platform_matches`.
@@ -121,6 +121,9 @@ Only deploy if both checks pass. `--no-verify-jwt` is required (the function doe
 - `20261123032434_studio_draft_seed_and_reorder.sql`
 - `20261123034348_studio_approval_flow.sql`
 - `20261123090115_studio_discovery_foundation.sql`
+- `20261124033929_studio_instagram_discovery_foundation.sql`
+- `20261124215423_studio_top10_artworks.sql`
+- `20261124220354_studio_buffer.sql` (unused, see Buffer note below)
 
 The remote also has 22 older August/September migrations that exist only there. Do not run `supabase db push`. Apply changes through the Supabase connector or SQL, then save a file with the version Supabase recorded.
 
@@ -128,7 +131,7 @@ The remote also has 22 older August/September migrations that exist only there. 
 | Function | Purpose | JWT check |
 |---|---|---|
 | `follow-on-spotify` | Public artist flow: follows RADR accounts for visitors (older Spotify app) | off |
-| `studio-instagram` (v1 deployed 2026-11-24, source to be saved in repo) | Staff-only. Actions: `status`, `connect` (Facebook login code, stores a non-expiring Page token server-side), `disconnect`, `lookup`, `add_account`, `remove_account`, `snapshot`. Uses Business Discovery on Graph API v27.0 | off (does its own staff check) |
+| `studio-instagram` (v1 deployed 2026-11-24, source in repo) | Staff-only. Actions: `status`, `connect` (Facebook login code, stores a non-expiring Page token server-side), `disconnect`, `lookup`, `add_account`, `remove_account`, `snapshot`. Uses Business Discovery on Graph API v27.0 | off (does its own staff check) |
 | `studio-spotify` (v12 deployed, matches repo) | Studio, staff-only. Actions: `connect`, `disconnect`, `playlist_tracks`, `search` (returns `release_date`, optional `year_from`/`year_to`), `write_test`, `preview`, `sync`. Shared `getAccessToken` refreshes tokens | off (does its own staff check) |
 
 Responses: `409 {needs_reconnect: true}` when the Spotify login is gone or expired; `502 {spotify_status}` when Spotify itself errors.
@@ -174,12 +177,12 @@ src/studio/pages/ActivityLog.jsx         activity log list (reads activity_logs)
 src/studio/pages/playlists.css           page styles
 src/pages/Admin/AdminDashboard/components/DashboardHeader.jsx   "← RADR Studio" button
 src/pages/Auth/Profile.jsx               "Open RADR Studio" button (staff)
-supabase/migrations/                     five migrations listed above, plus `20261124033929_studio_instagram_discovery_foundation.sql`
+supabase/migrations/                     eight migrations listed above
 supabase/functions/studio-instagram/index.ts   Instagram function source (deployed v1, in repo)
 src/studio/instagram.js                  Instagram connect helpers (browser side, no secrets)
 src/studio/StudioInstagramCallback.jsx   finishes the Facebook login (route /studio/instagram/callback)
 src/studio/pages/InstagramPanel.jsx      Instagram panel on Discovery: connect, watchlist, snapshots
-supabase/functions/studio-spotify/index.ts   function source (matches deployed v11)
+supabase/functions/studio-spotify/index.ts   function source (matches deployed v12)
 ```
 
 `WriteTestPanel.jsx` was removed from the Playlists page and the repo. The `write_test` action stays in the function (staff-only, harmless).
@@ -234,13 +237,18 @@ Routes in Studio mode: `/studio` (overview), `/studio/discovery`, `/studio/playl
 
 ## Submissions in Studio (2026-11-24)
 - The "Originals" placeholder is replaced by "Submissions" at /studio/submissions (src/studio/pages/SubmissionsPage.jsx). It reuses the Magazine admin's useSubmissions hook and SubmissionsTab, so playlist_submissions approve/reject (and the Resend emails) work the same. /admin still works.
-- Top 10 Generator: Save to library is live (bucket studio-artwork, table top10_artworks, migration 20261124220000 applied to project rjivkemajotafjvtalol).
+- Top 10 Generator: Save to library is live (bucket studio-artwork, table top10_artworks, migration 20261124215423 applied to project rjivkemajotafjvtalol).
 
 ## Publishing and Buffer removed (2026-11-24)
 - Decision: staff post manually. Buffer and the Publishing module are out of scope. The Publishing item and `/studio/publishing` route are removed.
 - Buffer code (Studio panel and `studio-buffer` function) was removed and never deployed. No BUFFER_API_KEY is needed.
-- Left in the database, unused and empty: table `buffer_posts` and public bucket `studio-public` (migration 20261124230000, already applied, kept so history matches). Drop later if wanted.
+- Left in the database, unused and empty: table `buffer_posts` and public bucket `studio-public` (migration 20261124220354, already applied, kept so history matches). Drop later if wanted.
 
 ## Studio layout (2026-11-24)
 Sidebar and Overview cards come from `src/studio/modules.js`. Current order:
 Overview, Discovery (live), Playlists (live), Studio (planned), Top 10 Generator (live, /studio/artwork/top10), Submissions (live, /studio/submissions, replaces Originals), Magazine (live, opens /admin), RADR AI (planned).
+
+## Open checks (2026-11-25)
+- Not yet tested by a human: Save to library (`top10_artworks` has 0 rows) and Submissions approve/reject (`playlist_submissions` has 0 rows; make a test submission first, approval sends an email).
+- Supabase advisor warnings, left as is: `is_radr_staff()` callable by anon (RLS policies may rely on it, so do not revoke without checking), `pg_net` in `public`, leaked-password protection off. `set_user_role` checks staff inside the function.
+- Key rotation: steps 6 and 9 in the plan still open.
