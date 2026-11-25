@@ -7,6 +7,7 @@ import Article from "@mui/icons-material/Article";
 import AutoAwesome from "@mui/icons-material/AutoAwesome";
 import Dashboard from "@mui/icons-material/Dashboard";
 import EmojiEvents from "@mui/icons-material/EmojiEvents";
+import PhotoLibrary from "@mui/icons-material/PhotoLibrary";
 
 // status: "live" | "next" | "planned"
 export const MODULES = [
@@ -76,6 +77,18 @@ export const MODULES = [
     tagline: "Weekly, monthly and random Top 10 artwork from your playlists.",
     description:
       "Load 10 tracks from a RADR playlist, edit the title line and date, swap covers, approve, then download the 1080x1350 image.",
+    features: [],
+  },
+  {
+    id: "library",
+    label: "Artwork library",
+    path: "/studio/artwork/library",
+    Icon: PhotoLibrary,
+    status: "live",
+    phase: "Artwork",
+    tagline: "Saved Top 10 artwork, ready to download and post.",
+    description:
+      "Every approved Top 10 you saved, with dark and light downloads and a copy-ready caption. Staff post by hand.",
     features: [],
   },
   {

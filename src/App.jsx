@@ -33,6 +33,7 @@ import ModulePage from "./studio/ModulePage";
 import PlaylistsPage from "./studio/pages/PlaylistsPage";
 import DiscoveryPage from "./studio/pages/DiscoveryPage";
 import Top10Generator from "./studio/pages/Top10Generator";
+import ArtworkLibrary from "./studio/pages/ArtworkLibrary";
 import SubmissionsPage from "./studio/pages/SubmissionsPage";
 import StudioSpotifyCallback from "./studio/StudioSpotifyCallback";
 import StudioInstagramCallback from "./studio/StudioInstagramCallback";
@@ -112,6 +113,7 @@ function StudioRoutes() {
         <Route path="instagram/callback" element={<StudioInstagramCallback />} />
         <Route path="create" element={<ModulePage id="studio" />} />
         <Route path="artwork/top10" element={<Top10Generator />} />
+        <Route path="artwork/library" element={<ArtworkLibrary />} />
         <Route path="submissions" element={<SubmissionsPage />} />
         <Route path="ai" element={<ModulePage id="ai" />} />
       </Route>

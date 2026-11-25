@@ -246,9 +246,13 @@ Routes in Studio mode: `/studio` (overview), `/studio/discovery`, `/studio/playl
 
 ## Studio layout (2026-11-24)
 Sidebar and Overview cards come from `src/studio/modules.js`. Current order:
-Overview, Discovery (live), Playlists (live), Studio (planned), Top 10 Generator (live, /studio/artwork/top10), Submissions (live, /studio/submissions, replaces Originals), Magazine (live, opens /admin), RADR AI (planned).
+Overview, Discovery (live), Playlists (live), Studio (planned), Top 10 Generator (live, /studio/artwork/top10), Artwork library (live, /studio/artwork/library, added 2026-11-25), Submissions (live, /studio/submissions, replaces Originals), Magazine (live, opens /admin), RADR AI (planned).
 
 ## Open checks (2026-11-25)
 - Not yet tested by a human: Save to library (`top10_artworks` has 0 rows) and Submissions approve/reject (`playlist_submissions` has 0 rows; make a test submission first, approval sends an email).
 - Supabase advisor warnings, left as is: `is_radr_staff()` callable by anon (RLS policies may rely on it, so do not revoke without checking), `pg_net` in `public`, leaked-password protection off. `set_user_role` checks staff inside the function.
 - Key rotation: steps 6 and 9 in the plan still open.
+
+## Artwork library (2026-11-25)
+- New page `src/studio/pages/ArtworkLibrary.jsx` at `/studio/artwork/library`. Lists `top10_artworks` (Approved / Archived), previews both images through 1-hour signed URLs from the private `studio-artwork` bucket, downloads dark and light, copies a caption built from the saved header, title line, date and tracks (ends with #RADRTOP10), and archives or restores a row. No new database change.
+- Not yet run or tested.

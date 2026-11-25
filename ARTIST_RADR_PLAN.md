@@ -138,7 +138,7 @@
 - [ ] Draft → review → approved states
 - [x] Top 10 Generator (dark and light, Save to library after Approve) built 2026-11-24
 - [ ] Test Save to library end to end (no saved rows yet)
-- [ ] Library view of saved Top 10s, with download and copy-ready caption
+- [x] Library view of saved Top 10s, with download and copy-ready caption (`/studio/artwork/library`, built 2026-11-25, untested)
 
 ### Phase 5 — Removed (2026-11-24)
 Buffer and the Publishing module are out of scope. Staff post manually. If posting needs tracking later, add it to the artwork library in Phase 4.
