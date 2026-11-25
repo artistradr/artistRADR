@@ -1,6 +1,6 @@
 # Artist RADR — Plan & TODO
 
-**Last updated:** 2026-11-25 (campaigns added; Buffer and Instagram removed; legacy keys off; public site rebuild and upload to verify)
+**Last updated:** 2026-11-25 (artist campaigns locked against user removal; campaigns added; Buffer and Instagram removed; legacy keys off; public site rebuild and upload to verify)
 **Companion file:** `ARTIST_RADR_STATUS.md` (current state, commands, env, handoff)
 **Product brief:** the original "Artist RADR — Product Vision & Development Brief" still applies, with the changes recorded in section 1.
 
@@ -118,6 +118,9 @@
 - [x] Activity log view (panel on the Playlists page, `ActivityLog.jsx`). Optional: own page and filters by playlist
 - [ ] Match by ISRC, artist, duration; manual review of uncertain matches (needed for Discovery and Apple Music)
 - [x] Submission campaigns: approve with days, countdown from first live add, Active campaigns panel, auto-resolve (2026-11-25, untested)
+- [x] Artist campaigns: users cannot remove or delete sent campaigns; Edit budget, History and Remove buttons dropped; goal wording "Curated + algorithmic" (2026-11-25, branch `fix/campaign-dashboard-no-remove`, untested, not merged)
+- [ ] Merge `fix/campaign-dashboard-no-remove` into `feature/studio` after a test as an artist
+- [ ] Studio campaigns tab for artist campaigns: staff approve, set duration, separate from Submissions (decided 2026-11-25, not built)
 - [ ] Apple Music: decision on approach, then MusicKit connection and matching
 
 ### Phase 3 — Discovery

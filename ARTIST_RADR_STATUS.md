@@ -263,3 +263,13 @@ Overview, Discovery (live), Playlists (live), Studio (planned), Top 10 Generator
 - Removed code: `InstagramPanel.jsx`, `instagram.js`, `StudioInstagramCallback.jsx`, the `/studio/instagram/callback` route and the `supabase/functions/studio-instagram` source.
 - Dropped empty tables `discovery_ig_accounts`, `discovery_ig_snapshots`, `buffer_posts` (migration `20261125063410_studio_cleanup_buffer_instagram.sql`). Old migration files stay in the repo so history matches the remote.
 - Still to do by hand: delete the deployed function (`supabase functions delete studio-instagram`), delete the Supabase secrets `META_APP_ID` and `META_APP_SECRET`, delete the empty `studio-public` bucket in Storage, remove `VITE_STUDIO_META_APP_ID` from `.env.studio`, and delete or archive the Meta app "radr Studio".
+
+## Artist campaigns: no user remove (2026-11-25)
+- Artists can no longer delete or remove a campaign once it is sent. Sending = submitting, so every artist campaign is covered; only RADR staff can remove one.
+- Database (applied to project rjivkemajotafjvtalol, file `supabase/migrations/20261125200000_campaigns_no_user_remove.sql`): dropped policy "Users can delete their own campaigns" on `campaigns`; `studio_campaign_guard_update()` now rejects a non-staff change to status `removed`. Pause and resume of active/paused campaigns still works for the artist.
+- Dashboard (`src/pages/campaigns`): removed the Remove campaign, Edit budget and View history buttons and the remove handler. Pause/Resume shows only for active or paused campaigns.
+- Wording: campaign goal "Editorial + algorithmic playlist placement" is now "Curated + algorithmic playlist placement" (existing rows keep the old text).
+- Code is on branch `fix/campaign-dashboard-no-remove` (off `feature/studio`), pushed, not merged. Not linted, built or tested (no package installs in that session).
+- Test: sign in as an artist, open /campaigns, open a campaign: no Remove, Edit budget or History; a direct delete or `status: 'removed'` update from the client should fail.
+- Known gap: the new migration file is in the repo and live in Supabase, but the earlier guard triggers on `campaigns` were never saved as migration files; add them if the schema is rebuilt from the repo.
+
