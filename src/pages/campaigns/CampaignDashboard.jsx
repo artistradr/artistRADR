@@ -142,23 +142,6 @@ function CampaignDashboard() {
     );
   }
 
-  async function handleRemove() {
-    if (!selected) return;
-    // Soft delete: keeps billing/history records intact instead of a hard DELETE.
-    const { error: updateError } = await supabase
-      .from("campaigns")
-      .update({ status: "removed" })
-      .eq("id", selected.id)
-      .eq("user_id", user.id);
-
-    if (updateError) {
-      setError(updateError.message);
-      return;
-    }
-    setCampaigns((prev) => prev.filter((c) => c.id !== selected.id));
-    setSelectedId(null);
-  }
-
   const showingDetail = creating || !!selected;
 
   return (
@@ -599,7 +582,7 @@ function CampaignDashboard() {
             {creating ? (
               <NewCampaignPanel onCancel={handleBack} onCreate={handleCreate} />
             ) : selected ? (
-              <CampaignDetailPanel campaign={selected} onPause={handlePause} onRemove={handleRemove} />
+              <CampaignDetailPanel campaign={selected} onPause={handlePause} />
             ) : loading ? (
               <div className="campaign-status-banner">Loading your campaigns…</div>
             ) : (

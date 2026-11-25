@@ -4,7 +4,7 @@ import { PLATFORM_META } from "./CampaignList";
 const F = { d: "var(--font-display)", b: "var(--font-body)" };
 
 const GOAL_PRESETS = [
-  "Editorial + algorithmic playlist placement",
+  "Curated + algorithmic playlist placement",
   "UGC creator matching + Shorts placement",
   "Trending sound placement",
   "Radio & editorial pitching",

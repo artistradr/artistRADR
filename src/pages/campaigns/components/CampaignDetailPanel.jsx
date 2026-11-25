@@ -15,21 +15,6 @@ const ACTION_ICONS = {
       <rect x="6" y="4" width="4" height="16" rx="1" /><rect x="14" y="4" width="4" height="16" rx="1" />
     </svg>
   ),
-  edit: (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D94F2B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 20h9" /><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4L16.5 3.5z" />
-    </svg>
-  ),
-  history: (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D94F2B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M3 3v5h5" /><path d="M3.05 13a9 9 0 106.36-11.36" /><path d="M12 7v5l4 2" />
-    </svg>
-  ),
-  remove: (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D94F2B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" />
-    </svg>
-  ),
 };
 
 const CHEVRON = (
@@ -38,7 +23,7 @@ const CHEVRON = (
   </svg>
 );
 
-function CampaignDetailPanel({ campaign, onPause, onRemove }) {
+function CampaignDetailPanel({ campaign, onPause }) {
   const platform = PLATFORM_META[campaign.platform];
   const Logo = platform?.Logo;
   const pct = campaign.budget > 0 ? Math.min(100, Math.round((campaign.spent / campaign.budget) * 100)) : 0;
@@ -81,6 +66,7 @@ function CampaignDetailPanel({ campaign, onPause, onRemove }) {
       </div>
 
       <div className="campaign-detail-actions">
+        {(campaign.status === "active" || campaign.status === "paused") && (
         <button type="button" className="campaign-detail-action" onClick={onPause}>
           <span className="campaign-detail-action-left">
             {ACTION_ICONS.pause}
@@ -88,27 +74,7 @@ function CampaignDetailPanel({ campaign, onPause, onRemove }) {
           </span>
           {CHEVRON}
         </button>
-        <button type="button" className="campaign-detail-action">
-          <span className="campaign-detail-action-left">
-            {ACTION_ICONS.edit}
-            Edit budget
-          </span>
-          {CHEVRON}
-        </button>
-        <button type="button" className="campaign-detail-action">
-          <span className="campaign-detail-action-left">
-            {ACTION_ICONS.history}
-            View history
-          </span>
-          {CHEVRON}
-        </button>
-        <button type="button" className="campaign-detail-action campaign-detail-action--danger" onClick={onRemove}>
-          <span className="campaign-detail-action-left">
-            {ACTION_ICONS.remove}
-            Remove campaign
-          </span>
-          {CHEVRON}
-        </button>
+        )}
       </div>
     </div>
   );
