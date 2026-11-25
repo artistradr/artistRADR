@@ -1,3 +1,4 @@
+import { ADMIN_BASE } from "../../adminBase";
 import { F } from "../constants";
 import NavLink from "./NavLink";
 
@@ -24,8 +25,8 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen, openCount, handle
           <span style={{ fontStyle: "italic", color: "var(--color-red)" }}>Artist</span> RADR
         </div>
         <nav style={{ flex: 1 }}>
-          <NavLink to="/admin" label="Dashboard" icon="⊞" active={true} onClick={() => setSidebarOpen(false)} />
-          <NavLink to="/admin/new" label="New Post" icon="+" active={false} onClick={() => setSidebarOpen(false)} />
+          <NavLink to={ADMIN_BASE} label="Dashboard" icon="⊞" active={true} onClick={() => setSidebarOpen(false)} />
+          <NavLink to={`${ADMIN_BASE}/new`} label="New Post" icon="+" active={false} onClick={() => setSidebarOpen(false)} />
           <NavLink to="/" label="View Site" icon="↗" active={false} onClick={() => setSidebarOpen(false)} />
         </nav>
         <div style={{ marginBottom: "12px" }}>

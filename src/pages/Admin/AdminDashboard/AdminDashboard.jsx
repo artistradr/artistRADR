@@ -12,7 +12,7 @@ import TabBar from "./components/TabBar";
 import PostsTab from "./components/PostsTab";
 import SubmissionsTab from "./components/SubmissionsTab";
 
-export default function AdminDashboard() {
+export default function AdminDashboard({ embedded = false }) {
   const { userRole, loading, roleLoading } = useSupabaseAuth();
   const navigate = useNavigate();
   const [tab, setTab] = useState("posts"); // "posts" | "submissions"
@@ -29,7 +29,7 @@ export default function AdminDashboard() {
     if (loading || roleLoading) return;
     if (userRole !== "radrStaff") { navigate("/"); return; }
     postsState.fetchPosts();
-    subsState.fetchSubmissions();
+    if (!embedded) subsState.fetchSubmissions();
   }, [userRole, loading, roleLoading]);
 
   const handleLogout = async () => {
@@ -38,12 +38,12 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div style={{ fontFamily: F.b, background: "#0E0E0E", minHeight: "100vh", color: "white" }}>
+    <div style={embedded ? { fontFamily: F.b, color: "white" } : { fontFamily: F.b, background: "#0E0E0E", minHeight: "100vh", color: "white" }}>
       <AdminStyles />
-      <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} openCount={subsState.openCount} handleLogout={handleLogout} />
+      {!embedded && <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} openCount={subsState.openCount} handleLogout={handleLogout} />}
 
       <div style={{ display: "flex" }}>
-        <main className="adm-main" style={{ marginLeft: "240px", flex: 1, padding: "40px", minWidth: 0 }}>
+        <main className={embedded ? undefined : "adm-main"} style={embedded ? { flex: 1, minWidth: 0 } : { marginLeft: "240px", flex: 1, padding: "40px", minWidth: 0 }}>
           <div style={{ maxWidth: "1180px", margin: "0 auto" }}>
             <DashboardHeader
               posts={postsState.posts}
@@ -51,8 +51,9 @@ export default function AdminDashboard() {
               openCount={subsState.openCount}
               approvedCount={subsState.approvedCount}
               rejectedCount={subsState.rejectedCount}
+              embedded={embedded}
             />
-            <TabBar tab={tab} setTab={setTab} openCount={subsState.openCount} />
+            {!embedded && <TabBar tab={tab} setTab={setTab} openCount={subsState.openCount} />}
 
             {tab === "posts" && (
               <PostsTab

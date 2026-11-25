@@ -18,7 +18,7 @@
 | 5 | ~~Publishing~~ | **Removed 2026-11-24** (Buffer and the Publishing module). Staff post to social by hand outside Studio |
 | 6 | RADR AI | Not started |
 | 7 | Friday automation | Not started |
-| 8 | Magazine & RADR Originals | Not started (existing posts admin stays live) |
+| 8 | Magazine & RADR Originals | Posts admin moved into Studio at `/studio/magazine` (2026-11-25, untested). Editor upgrades and Originals not started |
 
 ---
 

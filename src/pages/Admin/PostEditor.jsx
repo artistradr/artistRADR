@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { supabase } from "../../supabaseClient";
 import { useSupabaseAuth } from "../../context/SupabaseAuthContext";
+import { ADMIN_BASE } from "./adminBase";
 
 const F = { d: "var(--font-display)", b: "var(--font-body)" };
 
@@ -254,7 +255,7 @@ function normalizeToWp(html) {
   return container.innerHTML.trim();
 }
 
-export default function PostEditor() {
+export default function PostEditor({ embedded = false }) {
   const { id } = useParams(); // undefined = new post
   const { user, userRole, loading, roleLoading } = useSupabaseAuth();
   const navigate = useNavigate();
@@ -603,7 +604,7 @@ export default function PostEditor() {
       }
       clearDraft();
       setHasUnsavedChanges(false);
-      navigate("/admin");
+      navigate(ADMIN_BASE);
     } catch (e) {
       setError("Failed to save: " + e.message);
     }
@@ -611,7 +612,7 @@ export default function PostEditor() {
   };
 
   return (
-    <div style={{ fontFamily: F.b, background: "#0E0E0E", minHeight: "100vh", color: "white" }}>
+    <div style={embedded ? { fontFamily: F.b, color: "white" } : { fontFamily: F.b, background: "#0E0E0E", minHeight: "100vh", color: "white" }}>
       <style>{`
         .pe-hamburger { display:none; }
         .pe-overlay { display:none; pointer-events: none; }
@@ -649,6 +650,7 @@ export default function PostEditor() {
         }
       `}</style>
 
+      {!embedded && (<>
       <button
         className="pe-hamburger"
         onClick={() => setSidebarOpen(true)}
@@ -659,17 +661,19 @@ export default function PostEditor() {
       </button>
 
       <div className={`pe-overlay${sidebarOpen ? " open" : ""}`} onClick={() => setSidebarOpen(false)} />
+      </>)}
 
       <div style={{ display: "flex" }}>
 
+        {!embedded && (
         <aside className={`pe-sidebar${sidebarOpen ? " open" : ""}`} style={{ width: "240px", background: "#161616", height: "100vh", padding: "32px 20px", position: "fixed", top: 0, left: 0, zIndex: 65, borderRight: "0.5px solid rgba(255,255,255,0.07)", display: "flex", flexDirection: "column", overflowY: "auto" }}>
           <div style={{ fontFamily: F.d, fontSize: "1.3rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "2px", marginBottom: "40px" }}>
             <span style={{ fontStyle: "italic", color: "var(--color-red)" }}>Artist</span> RADR
           </div>
           <nav style={{ flex: 1 }}>
             {[
-              { label: "Dashboard", icon: "⊞", to: "/admin" },
-              { label: "New Post",  icon: "+", to: "/admin/new" },
+              { label: "Dashboard", icon: "⊞", to: ADMIN_BASE },
+              { label: "New Post",  icon: "+", to: `${ADMIN_BASE}/new` },
               { label: "View Site", icon: "↗", to: "/" },
             ].map(({ label, icon, to }) => (
               <button
@@ -693,10 +697,11 @@ export default function PostEditor() {
             ))}
           </nav>
         </aside>
+        )}
 
-        <main className="pe-main" style={{ marginLeft: "240px", flex: 1, padding: "40px", maxWidth: "900px", minWidth: 0 }}>
+        <main className={embedded ? "pe-main-embedded" : "pe-main"} style={embedded ? { flex: 1, maxWidth: "900px", minWidth: 0 } : { marginLeft: "240px", flex: 1, padding: "40px", maxWidth: "900px", minWidth: 0 }}>
           <div style={{ marginBottom: "32px" }}>
-            <div style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "2px", textTransform: "uppercase", color: "var(--color-red)", marginBottom: "6px" }}>Admin</div>
+            <div style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "2px", textTransform: "uppercase", color: "var(--color-red)", marginBottom: "6px" }}>{embedded ? "Magazine" : "Admin"}</div>
             <h1 style={{ fontFamily: F.d, fontSize: "2rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "1px", margin: 0 }}>
               {isEdit ? "Edit Post" : "New Post"}
             </h1>

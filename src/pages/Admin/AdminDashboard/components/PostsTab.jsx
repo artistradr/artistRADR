@@ -1,3 +1,4 @@
+import { ADMIN_BASE } from "../../adminBase";
 import { Link } from "react-router-dom";
 import { POST_CATEGORIES } from "../constants";
 import { fmtDate } from "../utils";
@@ -47,7 +48,7 @@ export default function PostsTab({ posts, filteredPosts, loadingPosts, postFilte
           <div style={{ padding: "60px", textAlign: "center", color: "rgba(255,255,255,0.3)", fontSize: "14px" }}>Loading posts…</div>
         ) : filteredPosts.length === 0 ? (
           <div style={{ padding: "60px", textAlign: "center", color: "rgba(255,255,255,0.3)", fontSize: "14px" }}>
-            No posts found. <Link to="/admin/new" style={{ color: "var(--color-red)" }}>Create one →</Link>
+            No posts found. <Link to={`${ADMIN_BASE}/new`} style={{ color: "var(--color-red)" }}>Create one →</Link>
           </div>
         ) : (
           filteredPosts.map((post, i) => (

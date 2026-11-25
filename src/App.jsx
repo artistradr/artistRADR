@@ -1,6 +1,6 @@
 // src/App.jsx
 import { useEffect } from "react";
-import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation, useParams } from "react-router-dom";
 import { ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 import theme from "assets/theme";
@@ -35,6 +35,7 @@ import DiscoveryPage from "./studio/pages/DiscoveryPage";
 import Top10Generator from "./studio/pages/Top10Generator";
 import ArtworkLibrary from "./studio/pages/ArtworkLibrary";
 import SubmissionsPage from "./studio/pages/SubmissionsPage";
+import { MagazineList, MagazineEditor } from "./studio/pages/MagazinePages";
 import StudioSpotifyCallback from "./studio/StudioSpotifyCallback";
 import StudioInstagramCallback from "./studio/StudioInstagramCallback";
 
@@ -75,6 +76,11 @@ function AdminRoute({ children }) {
   return children;
 }
 
+function LegacyEditRedirect() {
+  const { id } = useParams();
+  return <Navigate to={`/studio/magazine/edit/${id}`} replace />;
+}
+
 function PrivateRoute({ children }) {
   const { user, loading } = useSupabaseAuth();
   if (loading) return null;
@@ -100,9 +106,10 @@ function StudioRoutes() {
     <Routes>
       {/* ── Existing admin (Magazine): unchanged, full-page ── */}
       <Route path="/admin/login" element={<AdminLogin />} />
-      <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
-      <Route path="/admin/new" element={<AdminRoute><PostEditor /></AdminRoute>} />
-      <Route path="/admin/edit/:id" element={<AdminRoute><PostEditor /></AdminRoute>} />
+      {/* Old Magazine admin addresses now land in Studio */}
+      <Route path="/admin" element={<Navigate to="/studio/magazine" replace />} />
+      <Route path="/admin/new" element={<Navigate to="/studio/magazine/new" replace />} />
+      <Route path="/admin/edit/:id" element={<LegacyEditRedirect />} />
 
       {/* ── Studio shell ── */}
       <Route path="/studio" element={<AdminRoute><StudioLayout /></AdminRoute>}>
@@ -115,6 +122,9 @@ function StudioRoutes() {
         <Route path="artwork/top10" element={<Top10Generator />} />
         <Route path="artwork/library" element={<ArtworkLibrary />} />
         <Route path="submissions" element={<SubmissionsPage />} />
+        <Route path="magazine" element={<MagazineList />} />
+        <Route path="magazine/new" element={<MagazineEditor />} />
+        <Route path="magazine/edit/:id" element={<MagazineEditor />} />
         <Route path="ai" element={<ModulePage id="ai" />} />
       </Route>
 

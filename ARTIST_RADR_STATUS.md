@@ -246,7 +246,7 @@ Routes in Studio mode: `/studio` (overview), `/studio/discovery`, `/studio/playl
 
 ## Studio layout (2026-11-24)
 Sidebar and Overview cards come from `src/studio/modules.js`. Current order:
-Overview, Discovery (live), Playlists (live), Studio (planned), Top 10 Generator (live, /studio/artwork/top10), Artwork library (live, /studio/artwork/library, added 2026-11-25), Submissions (live, /studio/submissions, replaces Originals), Magazine (live, opens /admin), RADR AI (planned).
+Overview, Discovery (live), Playlists (live), Studio (planned), Top 10 Generator (live, /studio/artwork/top10), Artwork library (live, /studio/artwork/library, added 2026-11-25), Submissions (live, /studio/submissions, replaces Originals), Magazine (live, /studio/magazine), RADR AI (planned).
 
 ## Open checks (2026-11-25)
 - Not yet tested by a human: Save to library (`top10_artworks` has 0 rows) and Submissions approve/reject (`playlist_submissions` has 0 rows; make a test submission first, approval sends an email).
@@ -256,3 +256,10 @@ Overview, Discovery (live), Playlists (live), Studio (planned), Top 10 Generator
 ## Artwork library (2026-11-25)
 - New page `src/studio/pages/ArtworkLibrary.jsx` at `/studio/artwork/library`. Lists `top10_artworks` (Approved / Archived), previews both images through 1-hour signed URLs from the private `studio-artwork` bucket, downloads dark and light, copies a caption built from the saved header, title line, date and tracks (ends with #RADRTOP10), and archives or restores a row. No new database change.
 - Not yet run or tested.
+
+## Magazine moved into Studio (2026-11-25)
+- In the Studio build, blog posts live at `/studio/magazine` (list, stats, publish, feature, delete), `/studio/magazine/new` and `/studio/magazine/edit/:id`. They render inside the Studio sidebar, without the old admin sidebar. Wrappers: `src/studio/pages/MagazinePages.jsx`.
+- `AdminDashboard` and `PostEditor` take an `embedded` prop. `src/pages/Admin/adminBase.js` exports `ADMIN_BASE` (`/studio/magazine` in Studio mode, `/admin` on the public site), used by every post link and redirect.
+- In the Studio build `/admin`, `/admin/new` and `/admin/edit/:id` redirect to the new addresses. `/admin/login` stays. The public site (artistradr.com) keeps its own `/admin` unchanged.
+- Playlist submissions are no longer shown inside the Magazine page in Studio; they are the Submissions item.
+- Not yet run or tested. Test: list, New Post, save a draft, edit, publish, pin a featured post, delete a test post.

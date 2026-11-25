@@ -106,12 +106,12 @@ export const MODULES = [
   {
     id: "magazine",
     label: "Magazine",
-    path: "/admin",
+    path: "/studio/magazine",
     Icon: Article,
     status: "live",
     phase: "Existing",
-    tagline: "Your current post editor and submissions dashboard.",
-    description: "Opens the existing admin: posts, editor and submissions.",
+    tagline: "Blog posts: write, edit, publish and feature.",
+    description: "Your blog posts and the post editor, now inside Studio. The public site keeps its own /admin.",
     features: [],
   },
   {

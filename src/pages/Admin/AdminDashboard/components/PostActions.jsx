@@ -1,3 +1,4 @@
+import { ADMIN_BASE } from "../../adminBase";
 import { Link } from "react-router-dom";
 import { F } from "../constants";
 
@@ -11,7 +12,7 @@ export default function PostActions({ post, deleting, togglePublish, deletePost,
   return (
     <div style={{ display: "flex", gap: "8px", flexShrink: 0, ...(stacked ? { width: "100%" } : {}) }}>
       <Link
-        to={`/admin/edit/${post.id}`}
+        to={`${ADMIN_BASE}/edit/${post.id}`}
         style={{ flex: stacked ? 1 : "0 0 auto", textAlign: "center", padding: "9px 14px", borderRadius: "8px", background: "rgba(255,255,255,0.06)", border: "0.5px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)", fontFamily: F.b, fontSize: "12.5px", fontWeight: 600, textDecoration: "none" }}
       >
         Edit
