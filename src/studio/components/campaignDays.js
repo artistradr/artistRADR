@@ -4,6 +4,8 @@ const DEFAULT_DAYS = 14;
 
 export function approvalDays(campaign, now = new Date()) {
   if (campaign.campaign_days) return campaign.campaign_days;
+  // Daily plans and Supercharge: the days the artist paid for.
+  if (campaign.plan_days) return campaign.plan_days;
   if (campaign.package === "presave" && campaign.release_date) {
     const [y, m, d] = campaign.release_date.split("-").map(Number);
     const today = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());

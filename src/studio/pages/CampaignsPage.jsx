@@ -4,12 +4,14 @@
 // separate from Submissions: a submission is a track sent for playlist consideration; a
 // campaign is a paid promotion an artist started. New campaigns arrive as "pending".
 // Approving one starts its duration clock; the hourly job completes it when time is up.
+// A campaign can only be approved once it has a paid payment.
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "../../supabaseClient";
 import CampaignPackageFacts from "../components/CampaignPackageFacts";
 import CampaignPlaylists from "../components/CampaignPlaylists";
 import { approvalDays } from "../components/campaignDays";
+import { usePaidCampaigns } from "../components/usePaidCampaigns";
 import "./playlists.css";
 import "./campaigns.css";
 
@@ -34,8 +36,14 @@ const TABS = [
   { id: "all", label: "All" },
 ];
 
+// Whole dollars show without cents; daily plans like $20.93 keep theirs.
 const money = (n) =>
-  Number(n || 0).toLocaleString(undefined, { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+  Number(n || 0).toLocaleString(undefined, {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  });
 
 const day = (iso) =>
   iso ? new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) : "—";
@@ -106,6 +114,9 @@ export default function CampaignsPage() {
   const [days, setDays] = useState({}); // campaign id -> days text
   const [notes, setNotes] = useState({}); // campaign id -> rejection note
   const [spent, setSpent] = useState({}); // campaign id -> spent text
+  const { paid, reloadPaid } = usePaidCampaigns();
+  // Unknown (null) when payments couldn't be read: then nothing is labelled or blocked.
+  const isUnpaid = (c) => c.status === "pending" && paid !== null && !paid.has(c.id);
 
   const load = useCallback(async () => {
     setError("");
@@ -118,7 +129,8 @@ export default function CampaignsPage() {
     if (err) setError(err.message);
     else setRows(data ?? []);
     setLoading(false);
-  }, []);
+    reloadPaid();
+  }, [reloadPaid]);
 
   useEffect(() => {
     load();
@@ -137,17 +149,18 @@ export default function CampaignsPage() {
   const items = useMemo(() => rows.map((c) => ({ c, d: describe(c, now) })), [rows, now]);
 
   const counts = useMemo(() => {
-    const n = { review: 0, running: 0, paused: 0, completed: 0, closed: 0, all: items.length, soon: 0, budget: 0, spent: 0 };
+    const n = { review: 0, running: 0, paused: 0, completed: 0, closed: 0, all: items.length, soon: 0, budget: 0, spent: 0, unpaid: 0 };
     items.forEach(({ c, d }) => {
       n[d.tab] += 1;
       if (d.endingSoon) n.soon += 1;
+      if (d.tab === "review" && paid !== null && !paid.has(c.id)) n.unpaid += 1;
       if (d.tab === "running" || d.tab === "paused") {
         n.budget += Number(c.budget || 0);
         n.spent += Number(c.spent || 0);
       }
     });
     return n;
-  }, [items]);
+  }, [items, paid]);
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -184,6 +197,10 @@ export default function CampaignsPage() {
   };
 
   const approve = async (c) => {
+    if (isUnpaid(c)) {
+      setError("This campaign hasn't been paid yet, so it can't be approved.");
+      return;
+    }
     const n = parseDays(c, approvalDays(c));
     if (n === null) return;
     const ok = await run(c, { campaign_days: n, status: "active" }, `Approved. "${c.name}" is running for ${n} days.`);
@@ -224,7 +241,12 @@ export default function CampaignsPage() {
       </div>
 
       <div className="rc-kpis">
-        <Kpi label="Needs review" value={counts.review} hint="Waiting for approval" tone={counts.review ? "warn" : ""} />
+        <Kpi
+          label="Needs review"
+          value={counts.review}
+          hint={counts.unpaid ? `${counts.unpaid} unpaid, can't be approved yet` : "Waiting for approval"}
+          tone={counts.review ? "warn" : ""}
+        />
         <Kpi label="Running" value={counts.running} hint={counts.soon ? `${counts.soon} ending within 3 days` : "On schedule"} tone="live" />
         <Kpi label="Active budget" value={money(counts.budget)} hint={`${money(counts.spent)} spent`} />
         <Kpi label="Completed" value={counts.completed} hint={`${counts.paused} paused`} />
@@ -288,6 +310,7 @@ export default function CampaignsPage() {
           const open = openId === c.id;
           const isBusy = busy === c.id;
           const live = c.status === "active" || c.status === "paused";
+          const unpaid = isUnpaid(c);
           return (
             <div key={c.id} className={`rc-item${open ? " open" : ""}`}>
               <button
@@ -306,7 +329,7 @@ export default function CampaignsPage() {
                   <span className="rc-bar"><i style={{ width: `${d.pct}%` }} className={d.endingSoon ? "soon" : ""} /></span>
                   <small>{d.progressText}</small>
                 </span>
-                <span><span className={`rs-chip ${d.tone}`}>{d.label}</span></span>
+                <span><span className={`rs-chip ${d.tone}`}>{unpaid ? "Unpaid" : d.label}</span></span>
                 <span className="rc-caret">{open ? "−" : "+"}</span>
               </button>
 
@@ -319,6 +342,9 @@ export default function CampaignsPage() {
                       <dd>{c.contact_email ? <a href={`mailto:${c.contact_email}`}>{c.contact_email}</a> : "—"}</dd>
                     </div>
                     <div><dt>Goal</dt><dd>{c.goal || "—"}</dd></div>
+                    {paid !== null && (
+                      <div><dt>Payment</dt><dd>{paid.has(c.id) ? "Paid" : "Not paid"}</dd></div>
+                    )}
                     <CampaignPackageFacts campaign={c} now={now} />
                     <div><dt>Submitted</dt><dd>{day(c.created_at)}</dd></div>
                     <div>
@@ -337,6 +363,12 @@ export default function CampaignsPage() {
                   </dl>
 
                   {c.status !== "removed" && <CampaignPlaylists campaign={c} />}
+                  {c.status !== "removed" && c.extra_track && (
+                    <p className="rs-sub">
+                      This campaign has a second song. Attach playlists for both songs here; the song check above only
+                      looks for the first one.
+                    </p>
+                  )}
 
                   {c.status === "pending" && (
                     <div className="rc-actions">
@@ -348,8 +380,8 @@ export default function CampaignsPage() {
                           onChange={(e) => setDays((v) => ({ ...v, [c.id]: e.target.value }))}
                         />
                       </label>
-                      <button type="button" className="rs-btn primary" disabled={isBusy} onClick={() => approve(c)}>
-                        {isBusy ? "Saving…" : "Approve and start"}
+                      <button type="button" className="rs-btn primary" disabled={isBusy || unpaid} onClick={() => approve(c)}>
+                        {isBusy ? "Saving…" : unpaid ? "Waiting for payment" : "Approve and start"}
                       </button>
                       <label className="rc-field grow">
                         <span>Rejection note (optional, internal)</span>
