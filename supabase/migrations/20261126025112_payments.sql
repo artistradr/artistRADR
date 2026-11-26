@@ -1,6 +1,5 @@
 -- Payment records for the artist Billing page (/campaigns/billing).
--- NOT YET APPLIED to the remote project. After applying, rename this file to
--- the version Supabase records.
+-- Applied to the remote project on 2026-11-26.
 -- Artists can only read their own rows. Staff can read, add and update.
 -- There is no delete policy: correct a payment by changing its status.
 

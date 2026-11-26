@@ -1,6 +1,5 @@
 -- The Spotify track an artist picked for a campaign (artwork and details).
--- NOT YET APPLIED to the remote project. After applying, rename this file to
--- the version Supabase records.
+-- Applied to the remote project on 2026-11-26.
 -- The value comes from the browser, so treat it as artist-supplied: the app
 -- builds Spotify links from the id and only shows images from Spotify's host.
 

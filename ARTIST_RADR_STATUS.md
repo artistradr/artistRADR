@@ -300,3 +300,10 @@ Overview, Discovery (live), Playlists (live), Studio (planned), Top 10 Generator
   If the function is live without the column, sending a campaign with a picked song fails.
 - Not tested against real Spotify or Supabase. Studio's Campaigns tab does not show the artwork yet.
 - Open issue: `studio_campaign_guard_update` does not stop an artist changing `name`, `platform`, `goal` or `budget` on their own campaign through the API.
+
+## Supabase applied (2026-11-26)
+- Applied: `payments`, `campaigns_spotify_track`, `campaigns_lock_artist_fields`. Deployed `spotify-track-search` (v1). This replaces the earlier "not applied" and "not yet live" notes, and closes the open issue about artists editing campaign fields.
+- Rolled-back database test passed: artists cannot edit locked fields, remove or self-approve campaigns, or add payments; staff can approve, edit and add payments; artists can pause and resume.
+- Function logs show successful (200) searches, and one campaign is saved with a Spotify track.
+- The database also has `campaigns_release_day_reserve` (20261126072323), not applied from this branch; its file was not found on GitHub when checked.
+- Staff still have no screen for recording payments. Studio's Campaigns tab does not show artwork.
