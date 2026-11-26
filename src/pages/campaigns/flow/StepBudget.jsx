@@ -33,6 +33,7 @@ function StepBudget({ draft, update }) {
           inputMode="decimal"
           min={MIN_BUDGET}
           step="any"
+          placeholder="0"
           value={draft.budget}
           onChange={(e) => update({ budget: e.target.value })}
         />

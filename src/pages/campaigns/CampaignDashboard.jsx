@@ -61,37 +61,39 @@ function CampaignDashboard() {
           <Breadcrumbs items={[{ label: "Home", path: "/" }, { label: "Campaigns", path: "/campaigns" }]} />
         </div>
 
-        {/* The new campaign flow takes the full width, like a checkout page. */}
-        {creating ? (
-          <div className="campaign-flow-shell">
-            <NewCampaignFlow onExit={showList} onCreate={createCampaign} onView={showCampaign} />
-          </div>
-        ) : (
-          <div className="campaign-shell">
-            <div className="campaign-main">
-              {selected ? (
-                <button type="button" className="campaign-back-link" onClick={showList}>
-                  ← All Campaigns
-                </button>
-              ) : (
-                <div className="campaign-header-row">
-                  <div>
-                    <div className="campaign-kicker">Campaign Dashboard</div>
-                    <h1 className="campaign-title">Your Campaigns</h1>
-                  </div>
-                  <button type="button" className="campaign-new-btn" onClick={startCampaign}>
-                    + New Campaign
+        <div className="campaign-shell">
+          <div className="campaign-main">
+            {creating ? (
+              <>
+                <div className="campaign-kicker">Campaign Dashboard</div>
+                <h1 className="campaign-title campaign-title--spaced">New Campaign</h1>
+                <NewCampaignFlow onExit={showList} onCreate={createCampaign} onView={showCampaign} />
+              </>
+            ) : (
+              <>
+                {selected ? (
+                  <button type="button" className="campaign-back-link" onClick={showList}>
+                    ← All Campaigns
                   </button>
-                </div>
-              )}
-
-              {error && <div className="campaign-error-banner">{error}</div>}
-              {content}
-            </div>
-
-            <AccountSidebar activeKey="campaigns" onStartCampaign={startCampaign} />
+                ) : (
+                  <div className="campaign-header-row">
+                    <div>
+                      <div className="campaign-kicker">Campaign Dashboard</div>
+                      <h1 className="campaign-title">Your Campaigns</h1>
+                    </div>
+                    <button type="button" className="campaign-new-btn" onClick={startCampaign}>
+                      + New Campaign
+                    </button>
+                  </div>
+                )}
+                {error && <div className="campaign-error-banner">{error}</div>}
+                {content}
+              </>
+            )}
           </div>
-        )}
+
+          <AccountSidebar activeKey="campaigns" onStartCampaign={startCampaign} />
+        </div>
 
         <Footer />
       </div>

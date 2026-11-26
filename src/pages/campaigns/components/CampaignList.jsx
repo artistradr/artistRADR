@@ -1,4 +1,5 @@
 import { SpotifyLogo, AppleMusicLogo, YoutubeLogo, TikTokLogo } from "components/PlatformLogos";
+import { safeArtwork } from "../spotifyTrack";
 
 const F = { d: "var(--font-display)", b: "var(--font-body)" };
 
@@ -42,7 +43,11 @@ function CampaignList({ campaigns, selectedId, onSelect }) {
             className={`campaign-list-row${isSelected ? " campaign-list-row--active" : ""}`}
           >
             <div className="campaign-list-row-icon">
-              {Logo ? <Logo size={22} /> : null}
+              {safeArtwork(campaign.track) ? (
+                <img className="campaign-artwork" src={safeArtwork(campaign.track)} alt="" />
+              ) : (
+                Logo && <Logo size={22} />
+              )}
             </div>
 
             <div className="campaign-list-row-main">

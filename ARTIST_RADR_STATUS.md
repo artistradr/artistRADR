@@ -291,3 +291,12 @@ Overview, Discovery (live), Playlists (live), Studio (planned), Top 10 Generator
 - Checkout-style flow: Track, Goal, Budget, Review, with a live summary and a success screen. Saves the same fields as before. No online payment.
 - `src/pages/campaigns/`: `CampaignDashboard.jsx`, `useCampaigns.js`, `rowToCampaign.js`, `flow/`, `styles/`. `NewCampaignPanel.jsx` removed. Keep these files at 300 lines or fewer.
 - Studio's `CampaignsPage.jsx` was not changed.
+
+## Campaign flow: layout and Spotify track search (2026-11-26)
+- On `feature/campaign-flow`. The flow uses the account page layout with the sidebar. No amounts show until a budget is chosen.
+- Artists search a song or paste a Spotify track link, then pick it. Artwork and details show in the flow, campaign list and campaign detail. Typing a name without picking still works.
+- **Not yet live:** apply `supabase/migrations/20261126030000_campaigns_spotify_track.sql` FIRST, then deploy `spotify-track-search`:
+  `supabase functions deploy spotify-track-search --no-verify-jwt --use-api`
+  If the function is live without the column, sending a campaign with a picked song fails.
+- Not tested against real Spotify or Supabase. Studio's Campaigns tab does not show the artwork yet.
+- Open issue: `studio_campaign_guard_update` does not stop an artist changing `name`, `platform`, `goal` or `budget` on their own campaign through the API.

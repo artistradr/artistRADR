@@ -4,7 +4,6 @@
   border-radius: 20px;
   border: 0.5px solid rgba(0,0,0,0.06);
   padding: 36px;
-  max-width: 640px;
 }
 .campaign-detail-icon {
   width: 72px;
@@ -101,3 +100,5 @@
 .campaign-detail-action--danger {
   color: #D94F2B;
 }
+.campaign-detail-art { width: 120px; height: 120px; border-radius: 12px; object-fit: cover; margin-bottom: 20px; }
+.campaign-detail-sub a { color: #D94F2B; font-weight: 600; }

@@ -1,0 +1,31 @@
+/* New campaign flow: Spotify search results and the picked track */
+.flow-results {
+  list-style: none; margin-top: 14px; border: 1px solid rgba(0,0,0,0.1);
+  border-radius: 12px; max-height: 360px; overflow-y: auto;
+}
+.flow-results li + li { border-top: 1px solid rgba(0,0,0,0.06); }
+.flow-results button {
+  display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 14px;
+  background: white; border: none; text-align: left; cursor: pointer; font-family: var(--font-body);
+}
+.flow-results button:hover, .flow-results button:focus-visible { background: rgba(217,79,43,0.05); }
+.flow-results img, .flow-results .flow-art-empty { width: 48px; height: 48px; border-radius: 6px; flex-shrink: 0; }
+.flow-art-empty { display: block; background: #ecebe7; }
+.flow-result-text { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.flow-result-pick { font-size: 12.5px; font-weight: 700; color: #D94F2B; }
+.flow-selected {
+  display: flex; gap: 18px; padding: 16px; border: 1px solid #D94F2B;
+  border-radius: 14px; background: rgba(217,79,43,0.04);
+}
+.flow-selected img, .flow-selected .flow-art-empty {
+  width: 120px; height: 120px; border-radius: 8px; object-fit: cover; flex-shrink: 0;
+}
+.flow-selected-name { font-family: var(--font-display); font-size: 20px; font-weight: 800; color: #111; }
+.flow-selected-artist { font-size: 14px; font-weight: 600; color: #444; margin-top: 2px; }
+.flow-selected-links { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 12px; }
+.flow-selected-links a { font-size: 13px; font-weight: 600; color: #111; }
+
+@media (max-width: 620px) {
+  .flow-selected { gap: 12px; padding: 12px; }
+  .flow-selected img, .flow-selected .flow-art-empty { width: 80px; height: 80px; }
+}

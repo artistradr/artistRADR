@@ -11,6 +11,7 @@ export function rowToCampaign(row) {
   return {
     id: row.id,
     name: row.name,
+    track: row.spotify_track ?? null,
     platform: row.platform,
     status: row.status,
     budget: Number(row.budget),

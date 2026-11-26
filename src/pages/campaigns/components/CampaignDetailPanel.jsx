@@ -1,4 +1,5 @@
 import { PLATFORM_META } from "./CampaignList";
+import { artistNames, safeArtwork, spotifyUrl } from "../spotifyTrack";
 
 const F = { d: "var(--font-display)", b: "var(--font-body)" };
 
@@ -26,16 +27,31 @@ const CHEVRON = (
 function CampaignDetailPanel({ campaign, onPause }) {
   const platform = PLATFORM_META[campaign.platform];
   const Logo = platform?.Logo;
+  const art = safeArtwork(campaign.track);
+  const link = spotifyUrl(campaign.track);
   const pct = campaign.budget > 0 ? Math.min(100, Math.round((campaign.spent / campaign.budget) * 100)) : 0;
 
   return (
     <div className="campaign-detail-panel">
-      <div className="campaign-detail-icon" style={{ background: platform?.color ?? "#D94F2B" }}>
-        {Logo ? <Logo size={40} color="#fff" /> : null}
-      </div>
+      {art ? (
+        <img className="campaign-detail-art" src={art} alt={`Artwork for ${campaign.name}`} />
+      ) : (
+        <div className="campaign-detail-icon" style={{ background: platform?.color ?? "#D94F2B" }}>
+          {Logo ? <Logo size={40} color="#fff" /> : null}
+        </div>
+      )}
 
       <div className="campaign-detail-name">{campaign.name}</div>
-      <div className="campaign-detail-sub">{platform?.label ?? campaign.platform} Campaign</div>
+      <div className="campaign-detail-sub">
+        {artistNames(campaign.track) && `${artistNames(campaign.track)} · `}
+        {platform?.label ?? campaign.platform} Campaign
+        {link && (
+          <>
+            {" · "}
+            <a href={link} target="_blank" rel="noopener noreferrer">Open on Spotify</a>
+          </>
+        )}
+      </div>
 
       <div className="campaign-detail-spend">${campaign.spent.toFixed(2)} <span>/ ${campaign.budget.toFixed(2)}</span></div>
       <div className="campaign-detail-progress">
@@ -47,6 +63,12 @@ function CampaignDetailPanel({ campaign, onPause }) {
           <span>Status</span>
           <span className="campaign-detail-row-value">{STATUS_LABEL[campaign.status] ?? campaign.status}</span>
         </div>
+        {campaign.track?.release_date && (
+          <div className="campaign-detail-row">
+            <span>Release date</span>
+            <span className="campaign-detail-row-value">{campaign.track.release_date}</span>
+          </div>
+        )}
         <div className="campaign-detail-row">
           <span>Goal</span>
           <span className="campaign-detail-row-value">{campaign.goal}</span>

@@ -1,4 +1,6 @@
 // Options and rules for the new campaign flow.
+import { looksLikeLink } from "../spotifyTrack";
+
 export const STEPS = ["Track", "Goal", "Budget", "Review"];
 
 export const GOALS = [
@@ -11,7 +13,12 @@ export const GOALS = [
 export const BUDGET_PRESETS = [25, 50, 100, 250];
 export const MIN_BUDGET = 10;
 
-export const INITIAL_DRAFT = { name: "", platform: "spotify", goal: GOALS[0].value, budget: "50" };
+export const INITIAL_DRAFT = { name: "", track: null, platform: "spotify", goal: GOALS[0].value, budget: "" };
+
+export function hasBudget(draft) {
+  const budget = Number(draft.budget);
+  return Number.isFinite(budget) && budget >= MIN_BUDGET;
+}
 
 export function money(amount) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(Number(amount) || 0);
@@ -19,10 +26,12 @@ export function money(amount) {
 
 // Returns a message for the first problem on a step, or "" when it is fine.
 export function stepError(step, draft) {
-  if (step === 0 && !draft.name.trim()) return "Enter your track name.";
-  if (step === 2) {
-    const budget = Number(draft.budget);
-    if (!Number.isFinite(budget) || budget < MIN_BUDGET) return `The minimum budget is ${money(MIN_BUDGET)}.`;
+  if (step === 0) {
+    if (!draft.name.trim()) return "Search for your song, or type its name.";
+    if (!draft.track && looksLikeLink(draft.name)) return "Pick your song from the results, or type its name.";
+  }
+  if (step === 2 && !hasBudget(draft)) {
+    return draft.budget === "" ? "Choose a budget." : `The minimum budget is ${money(MIN_BUDGET)}.`;
   }
   return "";
 }

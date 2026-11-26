@@ -40,6 +40,7 @@ export function useCampaigns(userId) {
         budget: draft.budget,
         goal: draft.goal,
         status: "pending",
+        ...(draft.track && { spotify_track: draft.track }),
       })
       .select()
       .single();

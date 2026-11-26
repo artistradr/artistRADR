@@ -10,6 +10,7 @@ import OrderSummary from "./OrderSummary";
 import FlowSuccess from "./FlowSuccess";
 import "./flow.css";
 import "./fields.css";
+import "./track.css";
 
 const STEP_VIEWS = [StepTrack, StepGoal, StepBudget, StepReview];
 
