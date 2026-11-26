@@ -22,7 +22,7 @@ Artist RADR (artistradr.com) is an independent music discovery and editorial pla
 | Repo | `github.com/artistradr/artistRADR` (private) |
 | Local folder | `~/artist-radr` |
 | `main` | At `a27fc15` (checked 2026-11-26). Its history already contains `feature/studio`, `studio-campaigns-tab`, `fix/campaign-dashboard-no-remove` and `feature/billing` (`feature/billing` points at the same commit as `main`). Whether `main` is what is live on artistradr.com was not checked |
-| Current work | `feature/campaign-flow` = `main` plus the campaign work (flow, packages, Studio Campaigns tab, campaign playlists, Campaign playlists page, preview redesign, migration files, docs). Merging it into `main` is a clean fast-forward. A pull request from it into `main` was started on 2026-11-26; confirm on GitHub whether it was submitted and merged. Not deployed |
+| Current work | `feature/campaign-flow` = `main` plus the campaign work (flow, packages, Studio Campaigns tab, campaign playlists, Campaign playlists page, preview redesign, Paystack checkout with USD→NGN conversion, unpaid/delete, migration files, docs). Merging it into `main` should be a clean fast-forward (re-check with `git log main..feature/campaign-flow`). A pull request from it into `main` was started on 2026-11-26; confirm on GitHub whether it was submitted and merged. Not deployed |
 | Older branches | `feature/studio`, `studio-campaigns-tab`, `fix/campaign-dashboard-no-remove`, `feature/billing` are all already inside `main`. `spotify-promo-setup` (`a0f9581`) not checked |
 | Rollback tag | `live-before-studio` |
 | Studio commits pushed | `88fa3ed` (Spotify, draft editor, approval and sync), `0f717ba` (Discovery, activity log), `61322dc` (release dates, test panel removed), `0004d37` (restored correct `studio-spotify`), `0586ca0` (Instagram function, migration, watchlist panel). Run `git log -1 --oneline` for the latest |
@@ -78,7 +78,7 @@ head -1 supabase/functions/studio-spotify/index.ts     # must be: // supabase/fu
 grep -c "release_date" supabase/functions/studio-spotify/index.ts   # must be above 0
 supabase functions deploy studio-spotify --no-verify-jwt --use-api
 ```
-Only deploy if both checks pass. `--no-verify-jwt` is required (the function does its own staff check). To read what is deployed: `supabase functions download studio-spotify --use-api`.
+Only deploy if both checks pass. `--no-verify-jwt` is required (the function does its own staff check). To read what is deployed: `supabase functions download studio-spotify --use-api`. The same pattern applies to `paystack` (first line must be `// supabase/functions/paystack/index.ts`, and `grep -c usdRate` must be above 0).
 
 ### Env files (all gitignored)
 | File | Variable | Purpose |
@@ -116,8 +116,8 @@ Only deploy if both checks pass. `--no-verify-jwt` is required (the function doe
 | `studio_discard_draft(draft_id)` | Discard an open draft. Spotify is not changed |
 | `studio_accept_candidate(candidate_id, playlist_id)` | Add a matched candidate to the playlist's draft as `discovery`, mark accepted, log `discovery.accepted`. Needs a Spotify match. Never touches Spotify |
 
-### Migrations (in `supabase/migrations/`, versions match the remote)
-Checked 2026-11-26: the repo has 24 migration files, from `20261123023154_radr_playlists_foundation.sql` to `20261126084037_campaign_playlists_drop_redundant_index.sql`, and every one matches a version and name on the remote. This covers the Studio, discovery, campaign, payments, packages and campaign playlists migrations. The seven campaign files that were missing are saved, and `campaigns_no_user_remove` is now `20261125200403` (the old `20261125200000` file is deleted).
+### Migrations (in `supabase/migrations/`)
+Checked 2026-11-26: the repo has 24 migration files, from `20261123023154_radr_playlists_foundation.sql` to `20261126084037_campaign_playlists_drop_redundant_index.sql`. The remote has **25** from `20261123` on: the extra one is **`20261126142533_payments_fx_fields`** (adds `price_usd` and `fx_rate` to `payments`), applied through the Supabase connector. **Its SQL file is not in the repo yet.** Save it as `supabase/migrations/20261126142533_payments_fx_fields.sql` (get the SQL from Supabase, or write `alter table public.payments add column if not exists ...` for the two columns) so the repo matches the remote.
 
 The remote also has 22 older August/September migrations (`20260818225122_initial_schema` to `20260907193853_backfill_unstructured_editor_content`, including `create_campaigns_table`) that exist only there. Do not run `supabase db push`. Apply changes through the Supabase connector or SQL, then save a file with the version Supabase recorded.
 
@@ -128,12 +128,14 @@ The remote also has 22 older August/September migrations (`20260818225122_initia
 | `studio-spotify` (v12 deployed, matches repo) | Studio, staff-only. Actions: `connect`, `disconnect`, `playlist_tracks`, `search` (returns `release_date`, optional `year_from`/`year_to`), `write_test`, `preview`, `sync`. Shared `getAccessToken` refreshes tokens | off (does its own staff check) |
 | `spotify-track-search` (v1) | Artist-side song search / pasted Spotify track link in the campaign flow | off |
 | `campaign-playlist-lookup` | Studio, staff-only. Looks up a pasted Spotify playlist link: title, cover, whether the campaign's song is in it | see function source |
+| `paystack` (v4 deployed, source saved in repo 2026-11-26) | Artist payments. Actions `init` (USD price → NGN, creates pending payment, returns Paystack checkout link), `verify` (checks a returned reference with Paystack), `delete` (removes an unpaid pending campaign); also receives the Paystack webhook (`charge.success`, signature checked) | off (webhook has no session; user actions check the session token themselves) |
 
 Responses: `409 {needs_reconnect: true}` when the Spotify login is gone or expired; `502 {spotify_status}` when Spotify itself errors.
 
 ### Secrets
 - Public flow: `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET`, `SPOTIFY_REDIRECT_URI`
 - Studio: `STUDIO_SPOTIFY_CLIENT_ID`, `STUDIO_SPOTIFY_CLIENT_SECRET`
+- Payments (`paystack` function): `PAYSTACK_SECRET_KEY` (required; **not confirmed set**, 2026-11-26), `PAYSTACK_CURRENCY` (optional, default `NGN`; `USD` means no conversion), `USD_NGN_RATE` (optional fallback rate; pattern `USD_<CURRENCY>_RATE`), `FX_MARGIN_PERCENT` (optional, 0 to 20, default 0). The function also reads `STUDIO_SECRET_KEY`.
 
 ---
 
@@ -170,8 +172,9 @@ src/studio/pages/ActivityLog.jsx         activity log list (reads activity_logs)
 src/studio/pages/playlists.css           page styles
 src/pages/Admin/AdminDashboard/components/DashboardHeader.jsx   "← RADR Studio" button
 src/pages/Auth/Profile.jsx               "Open RADR Studio" button (staff)
-supabase/migrations/                     24 migrations from 20261123 on (see Migrations above)
+supabase/migrations/                     24 files from 20261123 on; remote has 25 (see Migrations above)
 supabase/functions/studio-spotify/index.ts   function source (matches deployed v12)
+supabase/functions/paystack/index.ts         function source (matches deployed v4)
 ```
 
 `WriteTestPanel.jsx` was removed from the Playlists page and the repo. The `write_test` action stays in the function (staff-only, harmless).
@@ -184,23 +187,24 @@ Routes in Studio mode: `/studio` (overview), `/studio/discovery`, `/studio/playl
 
 **Done and working:** Studio shell and deployment to `studio.artistradr.com`, staff-only security, Spotify connection and token refresh, Spotify search with release dates and a release-period filter, draft editor with numbered tracks, review → approve → sync (tested, including refusal after an outside edit), activity log, Discovery (candidates, review, accept into draft, sources).
 
-**Built on `feature/campaign-flow`, run locally and reported working by the editor (2026-11-26), not merged into `main` or deployed:** artist account area and Billing page (no online payment), checkout-style new campaign flow with Spotify song search, campaign packages (Starter, Basic, Supercharge, Pre-save), redesigned artist campaign preview, Studio's "Playlists for the artist" attach screen, and Studio's Campaign playlists page (a campaign-by-campaign view and an all-playlists view; Partner curators is a placeholder). Database changes for all of these are live in Supabase and all their migration files are in the repo; the website and Studio builds are not live.
+**Built on `feature/campaign-flow`, run locally and reported working by the editor (2026-11-26) except the payment work, not merged into `main` or deployed:** artist account area and Billing page, checkout-style new campaign flow with Spotify song search, campaign packages (Starter, Basic, Supercharge, Pre-save), redesigned artist campaign preview, Studio's "Playlists for the artist" attach screen, Studio's Campaign playlists page (a campaign-by-campaign view and an all-playlists view; Partner curators is a placeholder), and **Paystack checkout with USD→NGN conversion, an Unpaid label and deleting unpaid campaigns (see "Payments" below; no test payment made yet)**. Database changes for all of these are live in Supabase, and the `paystack` function (v4) is live; the website and Studio builds are not live.
 
-**Checks run 2026-11-26 (editor's Mac):** `npm run build:studio` passes. `npm run build` passes (the first attempt failed only because a `# comment` was pasted after the command). `npx eslint src` ran fine per the editor. `npm run lint` (`eslint .`) reports 541 problems, but the config only ignores `dist`, so it also lints the minified `dist-studio/` bundle and the Node scripts; fix the ignore list (see Gotchas) before trusting that number. The preview changes of 2026-11-26 (below) were pushed after these checks and are not yet re-checked.
+**Checks run 2026-11-26 (editor's Mac):** `npm run build:studio` passes. `npm run build` passes (the first attempt failed only because a `# comment` was pasted after the command). `npx eslint src` ran fine per the editor. `npm run lint` (`eslint .`) reports 541 problems, but the config only ignores `dist`, so it also lints the minified `dist-studio/` bundle and the Node scripts; fix the ignore list (see Gotchas) before trusting that number. The preview changes and the payment work of 2026-11-26 were pushed after these checks and are not yet re-checked.
 
 **Instagram discovery: dropped 2026-11-25.** The Meta Connect step was blocked and the feature is out of scope. Code, function source, tables and panel are removed (see the cleanup note at the end).
 
 **Next, in order (updated 2026-11-26):**
 1. ~~Test the campaign work locally~~ Done 2026-11-26 (reported working by the editor: Campaign playlists page and attach flow).
-2. ~~Save the missing migration files~~ Done 2026-11-26 (see Migrations).
-3. ~~Work out which branch contains which~~ Done 2026-11-26: `main` already contains the other branches; `feature/campaign-flow` fast-forwards into it.
-4. **Re-run `git pull`, `npx eslint src`, `npm run build` and `npm run build:studio`** after the 2026-11-26 preview changes, check the new tracker, Renew button and compact playlists in `npm run dev`, then submit and merge the pull request into `main`, rebuild and upload both sites. Deploy `campaign-playlist-lookup` if the live copy differs.
-5. **Payments:** choose a provider, build a staff screen to record payments.
-6. **Partner curators** (list, approval, partner playlists on campaigns, earnings) once payments exist.
-7. **Friday auto-draft** (needs the artwork library, now built).
-8. Finish rotating the exposed Supabase service-role key (plan section 7, steps 6 and 9).
-9. Decide Apple Music approach.
-10. Phase 4: Studio modules (artwork, spotlights).
+2. ~~Save the missing migration files~~ Done 2026-11-26, except `20261126142533_payments_fx_fields` (see Migrations).
+3. ~~Work out which branch contains which~~ Done 2026-11-26.
+4. **Test a Paystack payment end to end** (steps under "Payments"): confirm `PAYSTACK_SECRET_KEY` is set in Supabase function secrets, pay a test campaign, check Billing shows Paid, create and delete a throwaway campaign. Decide on a rate margin (2 to 3 percent suggested) and set a `USD_NGN_RATE` fallback. Confirm the webhook URL in the Paystack dashboard.
+5. **Re-run `git pull`, `npx eslint src`, `npm run build` and `npm run build:studio`**, check the tracker, Renew button, compact playlists, Unpaid labels and Delete in `npm run dev`, then submit and merge the pull request into `main`, rebuild and upload both sites. Deploy `campaign-playlist-lookup` if the live copy differs.
+6. **Require a package for every new campaign; show paid or unpaid in Studio; block staff approval of unpaid campaigns; staff screen to record payments.**
+7. **Partner curators** (list, approval, partner playlists on campaigns, earnings) once payments exist.
+8. **Friday auto-draft** (needs the artwork library, now built).
+9. Finish rotating the exposed Supabase service-role key (plan section 7, steps 6 and 9).
+10. Decide Apple Music approach.
+11. Phase 4: Studio modules (artwork, spotlights).
 
 ---
 
@@ -210,7 +214,7 @@ Routes in Studio mode: `/studio` (overview), `/studio/discovery`, `/studio/playl
 - Vite reads env files only at startup. Restart the dev server after editing them.
 - A Spotify login code works once. The callback page guards against React StrictMode running twice.
 - Studio login goes to `/admin/login` and now lands on `/studio` (Studio build only; the public site still lands on `/admin`).
-- Never paste secrets into chat or commit them. The Spotify Client ID is public; the Client Secret is not.
+- Never paste secrets into chat or commit them. The Spotify Client ID is public; the Client Secret is not. **Paystack test keys were pasted into a chat on 2026-11-26: regenerate the test secret key, and always regenerate before going live. Keep Paystack keys only in Supabase function secrets (secret key) and, if ever needed in the browser, a public key in an env file; never in the repo.**
 - supabase-js hides error bodies from Edge Functions in `error.context`; the Studio components read it to show plain-English messages.
 - If Spotify shows `needs_reconnect`, disconnect and connect again on the Playlists page.
 - Anything applied to the remote database must also be saved as a file in `supabase/migrations/`, named with the version Supabase recorded.
@@ -278,7 +282,7 @@ Update 2026-11-26: on `feature/campaign-flow` the Studio and RADR AI placeholder
 - Still to do by hand: delete the deployed function (`supabase functions delete studio-instagram`), delete the Supabase secrets `META_APP_ID` and `META_APP_SECRET`, delete the empty `studio-public` bucket in Storage, remove `VITE_STUDIO_META_APP_ID` from `.env.studio`, and delete or archive the Meta app "radr Studio".
 
 ## Artist campaigns: no user remove (2026-11-25)
-- Artists can no longer delete or remove a campaign once it is sent. Sending = submitting, so every artist campaign is covered; only RADR staff can remove one.
+- Artists can no longer delete or remove a campaign once it is sent. Sending = submitting, so every artist campaign is covered; only RADR staff can remove one. **Exception added 2026-11-26:** an artist can delete a campaign that is still unpaid and pending, through the `paystack` function (see "Payments").
 - Database (applied to project rjivkemajotafjvtalol, file `supabase/migrations/20261125200403_campaigns_no_user_remove.sql`, renamed 2026-11-26 to match the remote version): dropped policy "Users can delete their own campaigns" on `campaigns`; `studio_campaign_guard_update()` now rejects a non-staff change to status `removed`. The database still lets an artist pause and resume an active campaign, but the artist screen no longer has that button (removed 2026-11-26, see the preview update below).
 - Dashboard (`src/pages/campaigns`): removed the Remove campaign, Edit budget and View history buttons and the remove handler.
 - Wording: campaign goal "Editorial + algorithmic playlist placement" is now "Curated + algorithmic playlist placement" (existing rows keep the old text).
@@ -291,7 +295,7 @@ Update 2026-11-26: on `feature/campaign-flow` the Studio and RADR AI placeholder
 - Branch `feature/billing`, now inside `main`. Syntax checked and Billing/Profile previewed with stand-in data; full lint and build were not run on it alone.
 - Profile staff card now has one button, "Open RADR Studio". "Go to Admin" is gone; the public `/admin` route still exists.
 - Account sidebar: Profile, My Campaigns, Billing. Dashboard and Settings removed; unused `CampaignSidebar.jsx` deleted.
-- New `/campaigns/billing` page: budget totals, campaign billing, payment history. No online payment (no provider connected).
+- New `/campaigns/billing` page: budget totals, campaign billing, payment history. Online payment was added later the same day (see "Payments").
 - The `payments` migration is applied (recorded as `20261126025112_payments`, saved in the repo). Staff have no screen for recording payments yet.
 - Fixed the import casing `pages/Campaigns` to `pages/campaigns`. `App.jsx` also imports `pages/home/Home` while the file is `home.jsx` (matters on case-sensitive systems).
 - `studio-campaigns-tab` (commit `52f450f`, Studio Campaigns tab) was merged into this branch on 2026-11-26.
@@ -301,7 +305,7 @@ Update 2026-11-26: on `feature/campaign-flow` the Studio and RADR AI placeholder
 
 ## New campaign flow redesign (2026-11-26)
 - Branch `feature/campaign-flow`, off `main`. Previewed with stand-in data; full lint and build not run at that time.
-- Checkout-style flow: Track, Goal, Package, Review, with a live summary and a success screen. Saves the same fields as before. No online payment.
+- Checkout-style flow: Track, Goal, Package, Review, with a live summary and a success screen. Saves the same fields as before. Payment is taken at the end (see "Payments").
 - `src/pages/campaigns/`: `CampaignDashboard.jsx`, `useCampaigns.js`, `rowToCampaign.js`, `flow/`, `styles/`. `NewCampaignPanel.jsx` removed. Keep these files at 300 lines or fewer.
 - Studio's `CampaignsPage.jsx` was not changed.
 
@@ -326,7 +330,7 @@ Update 2026-11-26: on `feature/campaign-flow` the Studio and RADR AI placeholder
 - Playlist, listener and stream figures are shown as targets, not guarantees. Open: confirm which package "10K+ streams" belongs to (shown on 1 Month), and review the wording against Spotify's rules on paid services that advertise streams or guarantee placement.
 - Supabase: migration `20261126073345_campaigns_packages` applied (new `package` column, price/length check on insert, `package` locked for artists). `release_date` and `reserve_release_spots` came from `20261126072323_campaigns_release_day_reserve` (SQL file now in the repo).
 - Studio Campaigns tab shows package, release date, spot request and song; approval suggests the package length (pre-save: through release day). Live Studio keeps the 14-day default until redeployed.
-- Release-day spots are a request only; nothing holds playlist slots automatically. No payment is taken.
+- Release-day spots are a request only; nothing holds playlist slots automatically.
 - Tested: database rules (rolled back), flow and Studio page in a browser with sample data, syntax check.
 
 ### Package update (2026-11-26, replaces the package list above)
@@ -334,7 +338,7 @@ Update 2026-11-26: on `feature/campaign-flow` the Studio and RADR AI placeholder
 - Packages: Starter $25, Basic $50 (Recommended), Supercharge $100 to $999 (replaces 1 Month and Custom), Pre-save from $50. No durations are shown or chosen; staff set days at approval (14 suggested; pre-save: through release day).
 - Supercharge: slider, +$25/+$50/+$100 add-funds buttons or typed whole dollars. Target steps are in `SUPERCHARGE_TIERS` in `packages.js` ($100, 200, 300, 500, 750, 999). The numbers above $100 were proposed by Claude and need confirmation that RADR can deliver them.
 - Supabase: migration `20261126075217_campaigns_supercharge` applied.
-- Adding funds applies only before a campaign is sent. Topping up a running campaign is not built (no payments yet).
+- Adding funds applies only before a campaign is sent. Topping up a running campaign is not built.
 - Tested: database rules (rolled back), flow and Studio page in a browser with sample data, syntax check.
 - Still open: Spotify rules on paid services that advertise streams or guarantee placement.
 
@@ -393,11 +397,31 @@ Changes to the artist's campaign page (`src/pages/campaigns/`):
 - **Playlists:** attached playlists are compact rows with a 44px cover (was 132px, about 3 times smaller) and the title and "Open on Spotify" link beside it (`PlaylistCovers.jsx`, `styles/detail.css`).
 - Test: pull, run `npm run dev`, open a pending, an active and a completed campaign. Check the tracker on each, that no Pause button shows, that Renew shows only on the completed one and opens with the song filled in, and that attached playlists look right on a phone width.
 
-## Paystack checkout connected (2026-11-26, branch `feature/campaign-flow`, not deployed)
-- Cause of "campaigns send without payment": the `paystack` Edge Function was deployed but no page called it.
-- New campaigns are saved as pending, then the browser goes to Paystack checkout. If checkout can't open, the campaign stays saved with a **Pay now** retry.
-- **Pay now** also shows on unpaid pending campaigns (campaign preview and Billing). Billing verifies the returning `reference` with the server.
-- Currency is USD (function default). Whether the Paystack account accepts USD has not been confirmed.
-- Billing styles moved to `styles/billing.css`.
-- Checked: syntax and local imports only. Not built, linted or run; no test payment made yet. The older "no online payment" notes above are replaced by this section.
-- Still open: Studio does not show paid/unpaid before approval; approval does not require payment; test webhook URL to be confirmed in Paystack.
+## Payments: Paystack with USD→NGN conversion (2026-11-26, branch `feature/campaign-flow`; function v4 live; frontend not deployed)
+
+**Why:** the first version charged in USD and failed with "Currency not supported by merchant". Prices stay in USD; the server now charges the naira equivalent.
+
+**How a payment works**
+1. The artist sends a campaign (saved as pending) and the browser goes to Paystack checkout. If checkout can't open, the campaign stays saved with a **Pay now** retry (campaign preview and Billing).
+2. The browser sends only the campaign id. The `paystack` function (`init`) reads the USD price from the campaign row, fetches today's USD→NGN rate from `open.er-api.com` (free, updated daily, cached one hour per warm instance), multiplies, rounds to the nearest kobo, and creates a pending `payments` row holding the NGN `amount`, `currency`, `price_usd` and `fx_rate` (columns added by `20261126142533_payments_fx_fields`).
+3. Paystack charges the NGN amount. Afterwards `verify` (on return to `/campaigns/billing`) and the webhook (`charge.success`) both call the same `settle` step: Paystack's verify result must match the saved amount and currency exactly, or the payment is not marked paid (`mismatch`).
+4. Rate fallback: if the live rate fails, the function uses the `USD_NGN_RATE` secret; with neither, checkout stops with "try again in a few minutes" rather than guessing. `FX_MARGIN_PERCENT` (0 to 20, default 0) adds a cushion on top of the rate. `PAYSTACK_CURRENCY=USD` turns conversion off.
+5. Worked example: about ₦1,360 per $1 on 2026-11-26 (Wise and Eversend, not the function's own feed), so $25 is about ₦34,000 and $50 about ₦68,000. The function's own rate may differ by a few naira.
+
+**Unpaid and delete**
+- Labels: **Unpaid** (campaign list, campaign page, Billing) means pending with no paid payment. **Pending Review** now means paid and waiting for staff. Billing shows unfinished checkouts as "Not completed", and the Awaiting approval total counts paid campaigns only.
+- Delete appears on unpaid pending campaigns only, with a confirmation. The `delete` action checks ownership, asks Paystack about any open checkout (so a campaign paid in another tab can't be deleted), then sets status `removed` (rows are kept so payment records stay intact) and closes unfinished payment attempts.
+- Frontend commits: `e80644a` (checkout, Pay now, return check), `936acbd`, `06b593f`, `19b0a68` (Unpaid label, Delete, Billing). Function source: commit "Save deployed paystack Edge Function v4".
+
+**Status:** function v4 deployed and its source is in the repo. Frontend checked for syntax and local imports only: not built, linted or run, and **no test payment has been made**.
+
+**To test**
+```bash
+cd ~/artist-radr && git fetch origin && git switch feature/campaign-flow && git pull --ff-only origin feature/campaign-flow && npm run build && npm run dev
+```
+1. In Supabase, Edge Functions, Secrets, confirm `PAYSTACK_SECRET_KEY` exists (use the **test** secret key; checkout says payments aren't configured if it is missing).
+2. Open an unpaid campaign, click **Pay now**, pay with a Paystack test card, and check Billing shows Paid and the campaign shows Pending Review.
+3. Check the `payments` row has `price_usd`, `fx_rate`, NGN `amount` and status `paid`.
+4. Create a throwaway campaign and delete it. A paid campaign must refuse deletion.
+
+**Still open:** confirm the secret is set; margin and fallback decision; webhook URL in the Paystack dashboard; Studio does not show paid/unpaid before approval and approval does not require payment; no staff screen to record payments; every new campaign should require a package; save the `payments_fx_fields` migration file.
