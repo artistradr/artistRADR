@@ -3,6 +3,8 @@
 // Staff attach the playlists that carry a campaign's track. The artist sees each cover,
 // with a link, on their campaign preview. Paste a Spotify playlist link, check what comes
 // back, then attach it. The lookup runs in the campaign-playlist-lookup Edge Function.
+// Used in the Campaigns tab and on the Campaign playlists page. onChange (optional) runs
+// after a playlist is attached or removed.
 
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "../../supabaseClient";
@@ -40,7 +42,7 @@ function trackCheck(found, hasTrack) {
   return { tone: "", text: "Could not check whether the track is in this playlist." };
 }
 
-export default function CampaignPlaylists({ campaign }) {
+export default function CampaignPlaylists({ campaign, onChange }) {
   const track = campaign.spotify_track;
   const trackId = ID_RE.test(track?.spotify_id ?? "") ? track.spotify_id : null;
   const artists = Array.isArray(track?.artists) ? track.artists.join(", ") : "";
@@ -100,6 +102,7 @@ export default function CampaignPlaylists({ campaign }) {
     setFound(null);
     setLink("");
     await load();
+    onChange?.();
   }
 
   async function remove(row) {
@@ -107,8 +110,12 @@ export default function CampaignPlaylists({ campaign }) {
     setBusy(row.id);
     const { error: err } = await supabase.from("campaign_playlists").delete().eq("id", row.id);
     setBusy("");
-    if (err) setError(err.message);
-    else await load();
+    if (err) {
+      setError(err.message);
+      return;
+    }
+    await load();
+    onChange?.();
   }
 
   const check = found ? trackCheck(found, Boolean(trackId)) : null;

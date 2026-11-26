@@ -7,6 +7,7 @@ import Dashboard from "@mui/icons-material/Dashboard";
 import EmojiEvents from "@mui/icons-material/EmojiEvents";
 import PhotoLibrary from "@mui/icons-material/PhotoLibrary";
 import Campaign from "@mui/icons-material/Campaign";
+import PlaylistAddCheck from "@mui/icons-material/PlaylistAddCheck";
 
 // status: "live" | "next" | "planned"
 export const MODULES = [
@@ -94,6 +95,18 @@ export const MODULES = [
     tagline: "Review artist promotion campaigns and track them to the end.",
     description:
       "Campaigns artists start on the site arrive here for review. Approve one to start its duration, then follow progress until it completes.",
+    features: [],
+  },
+  {
+    id: "campaign-playlists",
+    label: "Campaign playlists",
+    path: "/studio/campaign-playlists",
+    Icon: PlaylistAddCheck,
+    status: "live",
+    phase: "Artists",
+    tagline: "Post the playlist links that carry each campaign's song.",
+    description:
+      "Pick a campaign, paste Spotify playlist links, and attach the ones that carry the song. Artists see them on their campaign preview. Partner curators will be added here later.",
     features: [],
   },
   {

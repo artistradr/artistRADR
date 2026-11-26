@@ -36,6 +36,7 @@ import Top10Generator from "./studio/pages/Top10Generator";
 import ArtworkLibrary from "./studio/pages/ArtworkLibrary";
 import SubmissionsPage from "./studio/pages/SubmissionsPage";
 import CampaignsPage from "./studio/pages/CampaignsPage";
+import CampaignPlaylistsPage from "./studio/pages/CampaignPlaylistsPage";
 import { MagazineList, MagazineEditor } from "./studio/pages/MagazinePages";
 import StudioSpotifyCallback from "./studio/StudioSpotifyCallback";
 
@@ -119,6 +120,7 @@ function StudioRoutes() {
         <Route path="artwork/library" element={<ArtworkLibrary />} />
         <Route path="submissions" element={<SubmissionsPage />} />
         <Route path="campaigns" element={<CampaignsPage />} />
+        <Route path="campaign-playlists" element={<CampaignPlaylistsPage />} />
         <Route path="magazine" element={<MagazineList />} />
         <Route path="magazine/new" element={<MagazineEditor />} />
         <Route path="magazine/edit/:id" element={<MagazineEditor />} />

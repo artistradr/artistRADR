@@ -1,0 +1,262 @@
+/* src/studio/pages/campaignPlaylistsPage.css */
+/* Uses the --rs-* variables defined on .rs-root in studio.css */
+
+.cpp-tabs {
+  margin-bottom: 14px;
+}
+
+/* By campaign / All playlists switch */
+.cpp-views {
+  display: inline-flex;
+  gap: 4px;
+  margin-bottom: 14px;
+  padding: 3px;
+  background: var(--rs-panel);
+  border: 1px solid var(--rs-border);
+  border-radius: 10px;
+}
+.cpp-view {
+  padding: 6px 14px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--rs-muted);
+  background: transparent;
+  border: 0;
+  border-radius: 7px;
+  cursor: pointer;
+}
+.cpp-view.active {
+  color: inherit;
+  background: var(--rs-panel-2);
+}
+
+/* Campaign list on the left, attach panel on the right */
+.cpp-layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 360px) 1fr;
+  gap: 18px;
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .cpp-layout {
+    grid-template-columns: 1fr;
+  }
+}
+.cpp-side {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+.cpp-filters {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.cpp-filters .rc-input {
+  flex: 1;
+  min-width: 140px;
+}
+.cpp-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--rs-muted);
+}
+.cpp-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+.cpp-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px;
+  font: inherit;
+  text-align: left;
+  color: inherit;
+  background: var(--rs-panel);
+  border: 1px solid var(--rs-border);
+  border-radius: 10px;
+  cursor: pointer;
+}
+.cpp-card:hover {
+  border-color: var(--rs-accent);
+}
+.cpp-card.active {
+  background: var(--rs-panel-2);
+  border-color: var(--rs-accent);
+}
+.cpp-art {
+  width: 48px;
+  height: 48px;
+  border-radius: 6px;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: var(--rs-panel-2);
+}
+.cpp-art-empty {
+  border: 1px dashed var(--rs-border);
+}
+.cpp-card-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.cpp-card-main strong,
+.cpp-card-main small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cpp-card-main small {
+  font-size: 12px;
+  color: var(--rs-muted);
+}
+.cpp-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 3px;
+}
+.cpp-badge {
+  font-size: 12px;
+  color: var(--rs-muted);
+}
+.cpp-badge.none {
+  color: #ffc766;
+}
+
+/* Selected campaign */
+.cpp-detail {
+  min-width: 0;
+  padding: 16px;
+  background: var(--rs-panel);
+  border: 1px solid var(--rs-border);
+  border-radius: 12px;
+}
+.cpp-detail-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+.cpp-detail-head .cpp-art {
+  width: 72px;
+  height: 72px;
+  border-radius: 8px;
+}
+.cpp-detail-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.cpp-detail-sub {
+  margin-top: 3px;
+  font-size: 13.5px;
+  color: var(--rs-muted);
+}
+.cpp-detail .cpl {
+  margin-bottom: 0;
+}
+
+/* All playlists view */
+.cpp-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.cpp-toolbar .rc-input {
+  flex: 1;
+  min-width: 220px;
+  max-width: 420px;
+}
+.cpp-count {
+  font-size: 12.5px;
+  color: var(--rs-muted);
+}
+.cpp-playlists {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.cpp-playlist {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px;
+  background: var(--rs-panel);
+  border: 1px solid var(--rs-border);
+  border-radius: 10px;
+}
+.cpp-playlist-main {
+  flex: 1;
+  min-width: 0;
+}
+.cpp-playlist-title {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  color: inherit;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+.cpp-playlist-title:hover {
+  color: var(--rs-accent);
+}
+.cpp-uses {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+.cpp-use {
+  padding: 3px 9px;
+  font: inherit;
+  font-size: 12px;
+  color: var(--rs-muted);
+  background: var(--rs-panel-2);
+  border: 1px solid var(--rs-border);
+  border-radius: 999px;
+  cursor: pointer;
+}
+.cpp-use:hover {
+  color: inherit;
+  border-color: var(--rs-accent);
+}
+.cpp-n {
+  flex-shrink: 0;
+  font-size: 12.5px;
+  color: var(--rs-muted);
+}
+
+/* Partner curators placeholder */
+.cpp-partners {
+  padding: 18px;
+  background: var(--rs-panel);
+  border: 1px dashed var(--rs-border);
+  border-radius: 12px;
+}
+.cpp-partners-text {
+  max-width: 640px;
+  margin: 10px 0 12px;
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+.cpp-planned {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--rs-muted);
+}
