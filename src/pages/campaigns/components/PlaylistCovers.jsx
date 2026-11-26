@@ -6,7 +6,7 @@ const EMPTY_TEXT = {
 const DEFAULT_EMPTY = "We're lining up playlists for your track. They'll show up here as soon as they're added.";
 
 const NOTE_ICON = (
-  <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#D94F2B" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D94F2B" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <path d="M9 18V5l12-2v13" />
     <circle cx="6" cy="18" r="3" />
     <circle cx="18" cy="16" r="3" />
@@ -38,8 +38,10 @@ function PlaylistCovers({ playlists = [], status }) {
               ) : (
                 <div className="campaign-playlist-cover campaign-playlist-cover--empty">{NOTE_ICON}</div>
               )}
-              <div className="campaign-playlist-name">{p.title || "Spotify playlist"}</div>
-              <div className="campaign-playlist-open">Open on Spotify ↗</div>
+              <div className="campaign-playlist-text">
+                <div className="campaign-playlist-name">{p.title || "Spotify playlist"}</div>
+                <div className="campaign-playlist-open">Open on Spotify ↗</div>
+              </div>
             </a>
           ))}
         </div>
