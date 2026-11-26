@@ -1,0 +1,103 @@
+/* Campaign detail panel */
+.campaign-detail-panel {
+  background: white;
+  border-radius: 20px;
+  border: 0.5px solid rgba(0,0,0,0.06);
+  padding: 36px;
+  max-width: 640px;
+}
+.campaign-detail-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+.campaign-detail-name {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 800;
+  color: #111;
+  line-height: 1.25;
+}
+.campaign-detail-sub {
+  font-size: 13px;
+  color: #999;
+  font-weight: 300;
+  margin-top: 4px;
+  margin-bottom: 20px;
+}
+.campaign-detail-spend {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 800;
+  color: #111;
+}
+.campaign-detail-spend span {
+  font-size: 14px;
+  font-weight: 500;
+  color: #aaa;
+}
+.campaign-detail-progress {
+  height: 6px;
+  border-radius: 100px;
+  background: rgba(0,0,0,0.06);
+  margin: 10px 0 24px;
+  overflow: hidden;
+}
+.campaign-detail-progress-fill {
+  height: 100%;
+  border-radius: 100px;
+  transition: width 300ms ease;
+}
+.campaign-detail-rows {
+  border-top: 0.5px solid rgba(0,0,0,0.07);
+  padding-top: 16px;
+  margin-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.campaign-detail-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: #999;
+  font-weight: 400;
+}
+.campaign-detail-row-value {
+  color: #222;
+  font-weight: 500;
+  text-align: right;
+  max-width: 60%;
+}
+.campaign-detail-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.campaign-detail-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  background: none;
+  border: none;
+  border-top: 0.5px solid rgba(0,0,0,0.06);
+  padding: 14px 2px;
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #111;
+}
+.campaign-detail-action-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.campaign-detail-action--danger {
+  color: #D94F2B;
+}

@@ -285,3 +285,9 @@ Overview, Discovery (live), Playlists (live), Studio (planned), Top 10 Generator
 
 ## Studio overview cleanup (2026-11-26)
 - On `feature/billing`: Playlists is marked live. The "Studio" and "RADR AI" modules are removed (overview cards, sidebar items, `/studio/create` and `/studio/ai` routes, and the unused `ModulePage.jsx`). Old addresses fall back to the overview. This replaces the sidebar order and file map listed earlier for these items.
+
+## New campaign flow redesign (2026-11-26)
+- Branch `feature/campaign-flow`, off `main`. Not merged. Previewed with stand-in data; full lint and build not run.
+- Checkout-style flow: Track, Goal, Budget, Review, with a live summary and a success screen. Saves the same fields as before. No online payment.
+- `src/pages/campaigns/`: `CampaignDashboard.jsx`, `useCampaigns.js`, `rowToCampaign.js`, `flow/`, `styles/`. `NewCampaignPanel.jsx` removed. Keep these files at 300 lines or fewer.
+- Studio's `CampaignsPage.jsx` was not changed.
