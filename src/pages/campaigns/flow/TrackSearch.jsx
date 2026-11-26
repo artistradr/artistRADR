@@ -27,7 +27,7 @@ function TrackSearch({ draft, update }) {
   }, [query, active]);
 
   if (draft.track) {
-    return <SelectedTrack track={draft.track} onChange={() => update({ track: null, name: "" })} />;
+    return <SelectedTrack track={draft.track} onChange={() => update({ track: null, name: "", releaseDate: "" })} />;
   }
 
   const current = result.query === query;

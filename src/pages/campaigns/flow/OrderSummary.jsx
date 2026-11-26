@@ -1,7 +1,8 @@
 import PropTypes from "prop-types";
 import { PLATFORM_META } from "../components/CampaignList";
 import { artistNames, safeArtwork } from "../spotifyTrack";
-import { hasBudget, money } from "./flowConfig";
+import { lengthLabel, packageName } from "../packages";
+import { draftDays, hasBudget, money } from "./flowConfig";
 
 // Live summary under the form. Amounts appear only once a budget is chosen.
 function OrderSummary({ draft }) {
@@ -33,9 +34,15 @@ function OrderSummary({ draft }) {
       {hasBudget(draft) && (
         <>
           <div className="flow-summary-line flow-summary-line--total">
-            <span>Monthly budget</span>
+            <span>{packageName(draft.package)} package</span>
             <strong>{money(draft.budget)}</strong>
           </div>
+          {draftDays(draft) && (
+            <div className="flow-summary-line">
+              <span>Length</span>
+              <strong>{lengthLabel(draftDays(draft))}</strong>
+            </div>
+          )}
           <div className="flow-summary-line">
             <span>Charged today</span>
             <strong>{money(0)}</strong>

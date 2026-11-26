@@ -307,3 +307,13 @@ Overview, Discovery (live), Playlists (live), Studio (planned), Top 10 Generator
 - Function logs show successful (200) searches, and one campaign is saved with a Spotify track.
 - The database also has `campaigns_release_day_reserve` (20261126072323), not applied from this branch; its file was not found on GitHub when checked.
 - Staff still have no screen for recording payments. Studio's Campaigns tab does not show artwork.
+
+## Campaign packages (2026-11-26, branch `feature/campaign-flow`, not merged, not deployed)
+
+- Budget step is now packages: 1 Week $25, 2 Weeks $50 (Recommended), 1 Month $100, Custom from $50 (1 week to 2 months), Pre-save from $50 (future release date, optional release-day spot request). One price per campaign.
+- Prices, lengths and wording: `src/pages/campaigns/packages.js`. The database checks the same prices and lengths, so change both together.
+- Playlist, listener and stream figures are shown as targets, not guarantees. Open: confirm which package "10K+ streams" belongs to (shown on 1 Month), and review the wording against Spotify's rules on paid services that advertise streams or guarantee placement.
+- Supabase: migration `20261126073345_campaigns_packages` applied (new `package` column, price/length check on insert, `package` locked for artists). `release_date` and `reserve_release_spots` came from `20261126072323_campaigns_release_day_reserve`, whose SQL file is not in this repo.
+- Studio Campaigns tab shows package, release date, spot request and song; approval suggests the package length (pre-save: through release day). Live Studio keeps the 14-day default until redeployed.
+- Release-day spots are a request only; nothing holds playlist slots automatically. No payment is taken.
+- Tested: database rules (rolled back), flow and Studio page in a browser with sample data, syntax check. Not tested: full build, lint, live sign-in.

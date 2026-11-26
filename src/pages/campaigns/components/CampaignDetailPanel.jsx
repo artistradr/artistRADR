@@ -1,4 +1,5 @@
 import { PLATFORM_META } from "./CampaignList";
+import { formatPlainDate, lengthLabel, packageName } from "../packages";
 import { artistNames, safeArtwork, spotifyUrl } from "../spotifyTrack";
 
 const F = { d: "var(--font-display)", b: "var(--font-body)" };
@@ -63,10 +64,28 @@ function CampaignDetailPanel({ campaign, onPause }) {
           <span>Status</span>
           <span className="campaign-detail-row-value">{STATUS_LABEL[campaign.status] ?? campaign.status}</span>
         </div>
-        {campaign.track?.release_date && (
+        {campaign.package && (
+          <div className="campaign-detail-row">
+            <span>Package</span>
+            <span className="campaign-detail-row-value">
+              {[packageName(campaign.package), campaign.package === "custom" && lengthLabel(campaign.days)]
+                .filter(Boolean)
+                .join(" · ")}
+            </span>
+          </div>
+        )}
+        {campaign.reserveSpots && (
+          <div className="campaign-detail-row">
+            <span>Release-day spots</span>
+            <span className="campaign-detail-row-value">Requested</span>
+          </div>
+        )}
+        {(campaign.releaseDate || campaign.track?.release_date) && (
           <div className="campaign-detail-row">
             <span>Release date</span>
-            <span className="campaign-detail-row-value">{campaign.track.release_date}</span>
+            <span className="campaign-detail-row-value">
+              {campaign.releaseDate ? formatPlainDate(campaign.releaseDate) : campaign.track.release_date}
+            </span>
           </div>
         )}
         <div className="campaign-detail-row">
@@ -77,10 +96,13 @@ function CampaignDetailPanel({ campaign, onPause }) {
           <span>Started</span>
           <span className="campaign-detail-row-value">{campaign.startedOn}</span>
         </div>
-        <div className="campaign-detail-row">
-          <span>Next billing</span>
-          <span className="campaign-detail-row-value">{campaign.nextBilling}</span>
-        </div>
+        {/* Packages are paid once, so only older campaigns show a billing date. */}
+        {!campaign.package && (
+          <div className="campaign-detail-row">
+            <span>Next billing</span>
+            <span className="campaign-detail-row-value">{campaign.nextBilling}</span>
+          </div>
+        )}
         <div className="campaign-detail-row">
           <span>Payment</span>
           <span className="campaign-detail-row-value">{campaign.payment}</span>

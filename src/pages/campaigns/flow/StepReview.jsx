@@ -1,14 +1,22 @@
 import PropTypes from "prop-types";
 import { PLATFORM_META } from "../components/CampaignList";
-import { money } from "./flowConfig";
+import { DISCLAIMER, formatPlainDate, lengthLabel, packageName } from "../packages";
+import { draftDays, money } from "./flowConfig";
 
 function StepReview({ draft, onEdit, disabled }) {
   const rows = [
     { label: "Track", value: draft.name.trim(), step: 0 },
     { label: "Platform", value: PLATFORM_META[draft.platform]?.label, step: 0 },
     { label: "Goal", value: draft.goal, step: 1 },
-    { label: "Monthly budget", value: money(draft.budget), step: 2 },
+    { label: "Package", value: packageName(draft.package), step: 2 },
+    { label: "Price", value: money(draft.budget), step: 2 },
   ];
+  if (draft.package === "presave") {
+    rows.push({ label: "Release date", value: formatPlainDate(draft.releaseDate), step: 2 });
+    rows.push({ label: "Release-day spots", value: draft.reserve ? "Requested" : "Not requested", step: 2 });
+  } else {
+    rows.push({ label: "Length", value: lengthLabel(draftDays(draft)), step: 2 });
+  }
 
   return (
     <>
@@ -26,7 +34,7 @@ function StepReview({ draft, onEdit, disabled }) {
           </div>
         ))}
       </dl>
-      <div className="flow-note">Once sent, only RADR staff can remove a campaign.</div>
+      <div className="flow-note">{DISCLAIMER} Once sent, only RADR staff can remove a campaign.</div>
     </>
   );
 }

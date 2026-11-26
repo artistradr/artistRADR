@@ -10,6 +10,7 @@ import AccountSidebar from "components/AccountSidebar";
 import { supabase } from "../../supabaseClient";
 import { useSupabaseAuth } from "context/SupabaseAuthContext";
 import { PLATFORM_META } from "./components/CampaignList";
+import { packageName } from "./packages";
 
 const CAMPAIGN_STATUS = {
   active: { label: "Active", color: "#1DB954", bg: "rgba(29,185,84,0.1)" },
@@ -65,9 +66,7 @@ function Billing() {
   const [campaignError, setCampaignError] = useState("");
   const [paymentError, setPaymentError] = useState("");
 
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
+  useEffect(() => window.scrollTo(0, 0), []);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -76,7 +75,7 @@ function Billing() {
     Promise.all([
       supabase
         .from("campaigns")
-        .select("id, name, platform, status, budget, spent, next_billing, payment_method")
+        .select("id, name, platform, status, budget, spent, next_billing, payment_method, package")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false }),
       // Filtered by user as well as by RLS: staff can read every row.
@@ -110,7 +109,7 @@ function Billing() {
 
   const stats = [
     { label: "Total paid", value: figure(totalPaid(payments), paymentError) },
-    { label: "Active monthly budget", value: figure(money(sumBudget("active")), campaignError) },
+    { label: "Active campaign budget", value: figure(money(sumBudget("active")), campaignError) },
     { label: "Awaiting approval", value: figure(money(sumBudget("pending")), campaignError) },
   ];
 
@@ -239,13 +238,14 @@ function Billing() {
                       <div className="billing-row-name">{c.name}</div>
                       <div className="billing-row-sub">
                         {PLATFORM_META[c.platform]?.label ?? c.platform} · {money(c.spent)} spent
+                        {c.package && ` · ${packageName(c.package)} package`}
                         {c.next_billing && ` · Next billing ${shortDate(c.next_billing)}`}
                         {c.payment_method && ` · ${c.payment_method}`}
                       </div>
                     </div>
                     <div className="billing-row-meta">
                       <Pill meta={CAMPAIGN_STATUS[c.status] ?? CAMPAIGN_STATUS.pending} />
-                      <span className="billing-row-amount">{money(c.budget)}/mo</span>
+                      <span className="billing-row-amount">{money(c.budget)}</span>
                     </div>
                   </div>
                 ))

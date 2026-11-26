@@ -7,7 +7,7 @@ function FlowSuccess({ campaign, onView, onDone }) {
       <div className="flow-success-mark">✓</div>
       <h2 className="flow-title">Sent for review</h2>
       <p className="flow-sub">
-        <strong>{campaign.name}</strong> ({money(campaign.budget)} / month) is waiting for RADR approval.
+        <strong>{campaign.name}</strong> ({money(campaign.budget)}) is waiting for RADR approval.
         You can follow its status on your Campaigns page.
       </p>
       <div className="flow-actions">

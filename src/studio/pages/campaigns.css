@@ -245,6 +245,15 @@ input[type="search"].rc-input {
 .rc-facts a {
   color: var(--rs-accent);
 }
+.rc-facts .rc-song {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.rc-song img {
+  border-radius: 6px;
+  flex-shrink: 0;
+}
 .rc-actions {
   display: flex;
   align-items: flex-end;

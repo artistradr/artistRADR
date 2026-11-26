@@ -1,7 +1,8 @@
 // Options and rules for the new campaign flow.
 import { looksLikeLink } from "../spotifyTrack";
+import { CUSTOM_MIN, findPackage, isFutureDate } from "../packages";
 
-export const STEPS = ["Track", "Goal", "Budget", "Review"];
+export const STEPS = ["Track", "Goal", "Package", "Review"];
 
 export const GOALS = [
   { value: "Curated + algorithmic playlist placement", hint: "Get your track into playlists" },
@@ -10,14 +11,21 @@ export const GOALS = [
   { value: "Radio & editorial pitching", hint: "Pitch your track to radio and editors" },
 ];
 
-export const BUDGET_PRESETS = [25, 50, 100, 250];
-export const MIN_BUDGET = 10;
+export const INITIAL_DRAFT = {
+  name: "", track: null, platform: "spotify", goal: GOALS[0].value,
+  package: "", budget: "", customDays: 30, releaseDate: "", reserve: true,
+};
 
-export const INITIAL_DRAFT = { name: "", track: null, platform: "spotify", goal: GOALS[0].value, budget: "" };
-
+// True once a package is chosen and has a valid price.
 export function hasBudget(draft) {
   const budget = Number(draft.budget);
-  return Number.isFinite(budget) && budget >= MIN_BUDGET;
+  if (findPackage(draft.package)) return budget === findPackage(draft.package).price;
+  return Boolean(draft.package) && Number.isFinite(budget) && budget >= CUSTOM_MIN;
+}
+
+export function draftDays(draft) {
+  if (draft.package === "custom") return draft.customDays;
+  return findPackage(draft.package)?.days ?? null;
 }
 
 export function money(amount) {
@@ -30,8 +38,10 @@ export function stepError(step, draft) {
     if (!draft.name.trim()) return "Search for your song, or type its name.";
     if (!draft.track && looksLikeLink(draft.name)) return "Pick your song from the results, or type its name.";
   }
-  if (step === 2 && !hasBudget(draft)) {
-    return draft.budget === "" ? "Choose a budget." : `The minimum budget is ${money(MIN_BUDGET)}.`;
+  if (step === 2) {
+    if (!draft.package) return "Choose a package.";
+    if (!hasBudget(draft)) return `Enter a budget of at least ${money(CUSTOM_MIN)}.`;
+    if (draft.package === "presave" && !isFutureDate(draft.releaseDate)) return "Choose a release date after today.";
   }
   return "";
 }

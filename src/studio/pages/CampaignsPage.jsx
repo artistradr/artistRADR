@@ -7,6 +7,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "../../supabaseClient";
+import CampaignPackageFacts from "../components/CampaignPackageFacts";
+import { approvalDays } from "../components/campaignDays";
 import "./playlists.css";
 import "./campaigns.css";
 
@@ -181,7 +183,7 @@ export default function CampaignsPage() {
   };
 
   const approve = async (c) => {
-    const n = parseDays(c, 14);
+    const n = parseDays(c, approvalDays(c));
     if (n === null) return;
     const ok = await run(c, { campaign_days: n, status: "active" }, `Approved. "${c.name}" is running for ${n} days.`);
     if (ok) setTab("running");
@@ -316,10 +318,17 @@ export default function CampaignsPage() {
                       <dd>{c.contact_email ? <a href={`mailto:${c.contact_email}`}>{c.contact_email}</a> : "—"}</dd>
                     </div>
                     <div><dt>Goal</dt><dd>{c.goal || "—"}</dd></div>
+                    <CampaignPackageFacts campaign={c} now={now} />
                     <div><dt>Submitted</dt><dd>{day(c.created_at)}</dd></div>
                     <div>
                       <dt>Duration</dt>
-                      <dd>{c.campaign_days ? `${c.campaign_days} days (${day(c.campaign_started_at)} → ${day(c.campaign_ends_at)})` : "Set when approved"}</dd>
+                      <dd>
+                        {!c.campaign_days
+                          ? "Set when approved"
+                          : c.campaign_started_at
+                            ? `${c.campaign_days} days (${day(c.campaign_started_at)} → ${day(c.campaign_ends_at)})`
+                            : `${c.campaign_days} days, starts when approved`}
+                      </dd>
                     </div>
                     <div><dt>Spent</dt><dd>{money(c.spent)} of {money(c.budget)}</dd></div>
                     {c.reviewed_at && <div><dt>Reviewed</dt><dd>{day(c.reviewed_at)}</dd></div>}
@@ -332,7 +341,7 @@ export default function CampaignsPage() {
                         <span>Run for (days)</span>
                         <input
                           className="rc-input" type="number" min={1} max={365}
-                          value={days[c.id] ?? 14}
+                          value={days[c.id] ?? approvalDays(c)}
                           onChange={(e) => setDays((v) => ({ ...v, [c.id]: e.target.value }))}
                         />
                       </label>

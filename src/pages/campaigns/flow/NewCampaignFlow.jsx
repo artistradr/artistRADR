@@ -1,6 +1,6 @@
 import { useState } from "react";
 import PropTypes from "prop-types";
-import { INITIAL_DRAFT, STEPS, stepError } from "./flowConfig";
+import { INITIAL_DRAFT, STEPS, draftDays, stepError } from "./flowConfig";
 import Stepper from "./Stepper";
 import StepTrack from "./StepTrack";
 import StepGoal from "./StepGoal";
@@ -11,6 +11,7 @@ import FlowSuccess from "./FlowSuccess";
 import "./flow.css";
 import "./fields.css";
 import "./track.css";
+import "./packages.css";
 
 const STEP_VIEWS = [StepTrack, StepGoal, StepBudget, StepReview];
 
@@ -47,7 +48,7 @@ function NewCampaignFlow({ onExit, onCreate, onView }) {
       return;
     }
     setSubmitting(true);
-    const result = await onCreate({ ...draft, name: draft.name.trim(), budget: Number(draft.budget) });
+    const result = await onCreate({ ...draft, name: draft.name.trim(), budget: Number(draft.budget), days: draftDays(draft) });
     setSubmitting(false);
     if (result.error) setError(result.error);
     else setSent(result.campaign);
