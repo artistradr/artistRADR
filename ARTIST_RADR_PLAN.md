@@ -19,7 +19,7 @@
 | 6 | RADR AI | Not started |
 | 7 | Friday automation | Not started |
 | 8 | Magazine & RADR Originals | Posts admin moved into Studio at `/studio/magazine` (2026-11-25, untested). Editor upgrades and Originals not started |
-| 9 | Artist campaigns and billing | **Built; run locally and reported working (2026-11-26). Preview changes of the same day not yet re-checked. Not merged into `main` or deployed.** Account area, Billing page, campaign flow, packages, Studio Campaigns tab, campaign playlists, Campaign playlists page, preview redesign with Renew. No online payments yet |
+| 9 | Artist campaigns and billing | **Built; run locally and reported working (2026-11-26). Preview changes of the same day not yet re-checked. Not merged into `main` or deployed.** Account area, Billing page, campaign flow, packages, Studio Campaigns tab, campaign playlists, Campaign playlists page, preview redesign with Renew. Paystack checkout connected 2026-11-26, test payment not yet confirmed |
 | 10 | Partner curators | **Planned, not started.** Placeholder tab on the Campaign playlists page (2026-11-26) |
 
 ---
@@ -41,7 +41,7 @@
 13. **Sync is built on Spotify's `/items` endpoints**, which were verified in Development Mode on 2026-11-23.
 14. **Playlists page layout:** opening a playlist shows the draft editor (with numbered tracks). The live Spotify track list stays hidden until the "Show live tracks on Spotify" button is clicked.
 15. **Artists cannot remove or edit sent campaigns.** Only staff approve, set days, attach playlists and remove (2026-11-25/26).
-16. **No online payment yet.** Billing shows totals and history only; payments are recorded by staff once that screen exists (2026-11-26).
+16. **Artists pay on Paystack when they send a campaign, before staff review (2026-11-26).** Currency USD until changed.
 17. **Campaign playlists are attached by staff in Studio** by pasting a Spotify playlist link; artists only see cover and link (2026-11-26).
 18. **Campaign playlists have their own Studio page** (`/studio/campaign-playlists`), with RADR's own playlists first and a partner curators list added later. The Campaigns tab keeps the same attach panel (2026-11-26).
 19. **Partner curators are a future list.** Artist RADR is open to curators with active playlists earning from artist campaigns; nothing is built or stored for it yet (2026-11-26).
@@ -197,7 +197,8 @@ Still to do, in order:
 - [ ] Confirm the pull request from `feature/campaign-flow` into `main` was submitted and merged, then rebuild both sites and upload
 - [ ] Confirm the Supercharge targets above $100 (proposed by Claude, RADR must be able to deliver them) and which package "10K+ streams" belongs to
 - [ ] Review package wording against Spotify's rules on paid services that advertise streams or guarantee placement
-- [ ] Choose a payment provider; verify payments server-side before marking them paid
+- [x] Payment provider: Paystack; payments verified server-side (test payment not yet confirmed)
+- [ ] Studio: show paid or unpaid before approval
 - [ ] Studio screen for staff to record payments
 - [ ] Top-up of a running campaign (needs payments first)
 - [ ] Show song artwork in Studio's Campaigns tab

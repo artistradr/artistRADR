@@ -1,4 +1,5 @@
 import { PLATFORM_META } from "./CampaignList";
+import PayButton from "./PayButton";
 import PlaylistCovers from "./PlaylistCovers";
 import StatusTracker from "./StatusTracker";
 import { formatPlainDate, packageName } from "../packages";
@@ -91,8 +92,12 @@ function CampaignDetailPanel({ campaign, onRenew }) {
         <Row label={campaign.status === "pending" ? "Submitted" : "Started"}>{campaign.startedOn}</Row>
         {/* Packages are paid once, so only older campaigns show a billing date. */}
         {!campaign.package && <Row label="Next billing">{campaign.nextBilling}</Row>}
-        <Row label="Payment">{campaign.payment}</Row>
+        <Row label="Payment">{campaign.paid ? "Paid" : campaign.status === "pending" ? "Not paid" : campaign.payment}</Row>
       </div>
+
+      {campaign.status === "pending" && !campaign.paid && campaign.budget > 0 && (
+        <PayButton campaignId={campaign.id} />
+      )}
 
       {/* Shown only once the campaign is over. */}
       {campaign.status === "completed" && (

@@ -392,3 +392,12 @@ Changes to the artist's campaign page (`src/pages/campaigns/`):
 - **Renew campaign:** a "Renew campaign" button appears only when the campaign is Completed. It opens the new campaign flow titled "Renew Campaign" with the song, goal and platform filled in, starting at the Package step (`renewDraft` in `flow/flowConfig.js`, `renewFrom` prop on `NewCampaignFlow.jsx`). The package, price and release date are chosen again, and it is sent for review like any new campaign. A goal that is no longer in the list falls back to the first goal.
 - **Playlists:** attached playlists are compact rows with a 44px cover (was 132px, about 3 times smaller) and the title and "Open on Spotify" link beside it (`PlaylistCovers.jsx`, `styles/detail.css`).
 - Test: pull, run `npm run dev`, open a pending, an active and a completed campaign. Check the tracker on each, that no Pause button shows, that Renew shows only on the completed one and opens with the song filled in, and that attached playlists look right on a phone width.
+
+## Paystack checkout connected (2026-11-26, branch `feature/campaign-flow`, not deployed)
+- Cause of "campaigns send without payment": the `paystack` Edge Function was deployed but no page called it.
+- New campaigns are saved as pending, then the browser goes to Paystack checkout. If checkout can't open, the campaign stays saved with a **Pay now** retry.
+- **Pay now** also shows on unpaid pending campaigns (campaign preview and Billing). Billing verifies the returning `reference` with the server.
+- Currency is USD (function default). Whether the Paystack account accepts USD has not been confirmed.
+- Billing styles moved to `styles/billing.css`.
+- Checked: syntax and local imports only. Not built, linted or run; no test payment made yet. The older "no online payment" notes above are replaced by this section.
+- Still open: Studio does not show paid/unpaid before approval; approval does not require payment; test webhook URL to be confirmed in Paystack.

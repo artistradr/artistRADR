@@ -1,5 +1,5 @@
 // src/pages/campaigns/Billing.jsx
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "layouts/Navbar";
 import Footer from "layouts/Footer";
@@ -11,6 +11,9 @@ import { supabase } from "../../supabaseClient";
 import { useSupabaseAuth } from "context/SupabaseAuthContext";
 import { PLATFORM_META } from "./components/CampaignList";
 import { packageName } from "./packages";
+import PayButton from "./components/PayButton";
+import PaymentReturn from "./components/PaymentReturn";
+import "./styles/billing.css";
 
 const CAMPAIGN_STATUS = {
   active: { label: "Active", color: "#1DB954", bg: "rgba(29,185,84,0.1)" },
@@ -65,6 +68,9 @@ function Billing() {
   const [loading, setLoading] = useState(true);
   const [campaignError, setCampaignError] = useState("");
   const [paymentError, setPaymentError] = useState("");
+  // Bumped after a returning payment is checked, so the figures reload.
+  const [version, setVersion] = useState(0);
+  const reload = useCallback(() => setVersion((n) => n + 1), []);
 
   useEffect(() => window.scrollTo(0, 0), []);
 
@@ -96,13 +102,15 @@ function Billing() {
     });
 
     return () => { cancelled = true; };
-  }, [user?.id]);
+  }, [user?.id, version]);
 
   // Removed campaigns drop out of the plan list, but keep their name in history.
   const visible = campaigns.filter((c) => c.status !== "removed");
   const sumBudget = (status) =>
     visible.filter((c) => c.status === status).reduce((sum, c) => sum + Number(c.budget), 0);
   const campaignName = (id) => campaigns.find((c) => c.id === id)?.name ?? "Campaign";
+
+  const isPaid = (id) => payments.some((p) => p.campaign_id === id && p.status === "paid");
 
   // A figure that failed to load shows a dash, never a misleading zero.
   const figure = (value, failed) => (loading ? "…" : failed ? "—" : value);
@@ -121,84 +129,6 @@ function Billing() {
         path="/campaigns/billing"
       />
 
-      <style>{`
-        .billing-page { font-family: var(--font-body); background: #f7f6f3; min-height: 100vh; }
-        .billing-shell {
-          max-width: 1180px;
-          margin: 24px auto 0;
-          padding: 0 1.5rem 100px;
-          display: grid;
-          grid-template-columns: 1fr 300px;
-          gap: 48px;
-          align-items: start;
-        }
-        .billing-main { min-width: 0; }
-        .billing-kicker {
-          font-size: 10px; font-weight: 600; letter-spacing: 3px;
-          text-transform: uppercase; color: #D94F2B; margin-bottom: 8px;
-        }
-        .billing-title {
-          font-family: var(--font-display); font-size: clamp(1.6rem, 3vw, 2.2rem);
-          font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px;
-          color: #111; line-height: 1.1; margin: 0 0 24px;
-        }
-        .billing-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
-        .billing-stat, .billing-card {
-          background: white; border: 0.5px solid rgba(0,0,0,0.08); border-radius: 16px;
-        }
-        .billing-stat { padding: 20px; }
-        .billing-stat-label {
-          font-size: 11px; font-weight: 600; letter-spacing: 1px;
-          text-transform: uppercase; color: #999; margin-bottom: 8px;
-        }
-        .billing-stat-value {
-          font-family: var(--font-display); font-size: 22px; font-weight: 800;
-          color: #111; overflow-wrap: anywhere;
-        }
-        .billing-card { padding: 28px 32px; margin-bottom: 16px; }
-        .billing-card-title {
-          font-family: var(--font-display); font-size: 1rem; font-weight: 700;
-          text-transform: uppercase; letter-spacing: 1px; color: #111; margin: 0 0 12px;
-        }
-        .billing-row {
-          display: flex; align-items: center; justify-content: space-between;
-          gap: 16px; padding: 14px 0; border-top: 0.5px solid rgba(0,0,0,0.06);
-        }
-        .billing-row-main { min-width: 0; }
-        .billing-row-name { font-size: 14px; font-weight: 600; color: #111; overflow-wrap: anywhere; }
-        .billing-row-sub { font-size: 12.5px; color: #999; margin-top: 3px; overflow-wrap: anywhere; }
-        .billing-row-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0; }
-        .billing-row-amount { font-size: 14px; font-weight: 700; color: #111; }
-        .billing-pill {
-          font-size: 10.5px; font-weight: 700; text-transform: uppercase;
-          letter-spacing: 0.5px; padding: 4px 10px; border-radius: 100px;
-        }
-        .billing-empty {
-          border-top: 0.5px solid rgba(0,0,0,0.06); padding: 22px 0 4px;
-          font-size: 13.5px; color: #888; line-height: 1.6;
-        }
-        .billing-error {
-          background: #FDECE8; border: 0.5px solid rgba(217,79,43,0.25); color: #B8391C;
-          border-radius: 12px; padding: 14px 18px; font-size: 13px; margin-bottom: 16px;
-        }
-        .billing-help {
-          background: #111; border-radius: 16px; padding: 24px 32px; display: flex;
-          align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;
-        }
-        .billing-help-text { font-size: 13px; color: rgba(255,255,255,0.6); line-height: 1.6; max-width: 420px; }
-        .billing-help-link {
-          background: #D94F2B; color: white; border-radius: 10px; padding: 12px 24px;
-          font-size: 13px; font-weight: 700; text-decoration: none;
-        }
-        @media (max-width: 860px) {
-          .billing-shell { grid-template-columns: 1fr; }
-        }
-        @media (max-width: 620px) {
-          .billing-stats { grid-template-columns: 1fr; }
-          .billing-card, .billing-help { padding: 22px 20px; }
-        }
-      `}</style>
-
       <div className="billing-page">
         <Navbar routes={routes} action={{ type: "internal", route: "/campaigns", label: "Start Campaign" }} />
 
@@ -210,6 +140,8 @@ function Billing() {
           <div className="billing-main">
             <div className="billing-kicker">Account</div>
             <h1 className="billing-title">Billing</h1>
+
+            <PaymentReturn onSettled={reload} />
 
             <div className="billing-stats">
               {stats.map((s) => (
@@ -246,6 +178,9 @@ function Billing() {
                     <div className="billing-row-meta">
                       <Pill meta={CAMPAIGN_STATUS[c.status] ?? CAMPAIGN_STATUS.pending} />
                       <span className="billing-row-amount">{money(c.budget)}</span>
+                      {c.status === "pending" && !paymentError && !isPaid(c.id) && Number(c.budget) > 0 && (
+                        <PayButton campaignId={c.id} />
+                      )}
                     </div>
                   </div>
                 ))
@@ -282,7 +217,7 @@ function Billing() {
 
             <div className="billing-help">
               <div className="billing-help-text">
-                Online payment isn&apos;t available here yet. Contact us to arrange a payment or ask about a charge.
+                Payments are processed by Paystack. Contact us if you have a question about a charge.
               </div>
               <Link to="/contact-us" className="billing-help-link">Contact Us</Link>
             </div>

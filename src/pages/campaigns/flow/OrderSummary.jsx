@@ -38,12 +38,12 @@ function OrderSummary({ draft }) {
             <strong>{money(draft.budget)}</strong>
           </div>
           <div className="flow-summary-line">
-            <span>Charged today</span>
-            <strong>{money(0)}</strong>
+            <span>Due today</span>
+            <strong>{money(draft.budget)}</strong>
           </div>
         </>
       )}
-      <p className="flow-summary-muted">No payment is taken in this form.</p>
+      <p className="flow-summary-muted">You pay on Paystack&apos;s checkout page after the review step.</p>
     </aside>
   );
 }

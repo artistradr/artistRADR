@@ -12,15 +12,22 @@ export function useCampaigns(userId) {
     if (!userId) return;
     setLoading(true);
     setError(null);
-    const { data, error: fetchError } = await supabase
-      .from("campaigns")
-      .select("*, campaign_playlists(id, spotify_playlist_id, title, image_url, created_at)")
-      .eq("user_id", userId)
-      .neq("status", "removed")
-      .order("created_at", { ascending: false });
+    const [{ data, error: fetchError }, paidResult] = await Promise.all([
+      supabase
+        .from("campaigns")
+        .select("*, campaign_playlists(id, spotify_playlist_id, title, image_url, created_at)")
+        .eq("user_id", userId)
+        .neq("status", "removed")
+        .order("created_at", { ascending: false }),
+      supabase.from("payments").select("campaign_id").eq("user_id", userId).eq("status", "paid"),
+    ]);
 
     if (fetchError) setError(fetchError.message);
-    else setCampaigns((data ?? []).map(rowToCampaign));
+    else {
+      // If payments can't be read, Pay now still shows; the server refuses a second payment.
+      const paid = new Set((paidResult.data ?? []).map((p) => p.campaign_id));
+      setCampaigns((data ?? []).map((row) => ({ ...rowToCampaign(row), paid: paid.has(row.id) })));
+    }
     setLoading(false);
   }, [userId]);
 

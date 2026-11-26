@@ -1,5 +1,6 @@
 import { useState } from "react";
 import PropTypes from "prop-types";
+import { usePay } from "../usePay";
 import { INITIAL_DRAFT, STEPS, renewDraft, stepError } from "./flowConfig";
 import Stepper from "./Stepper";
 import StepTrack from "./StepTrack";
@@ -23,6 +24,7 @@ function NewCampaignFlow({ onExit, onCreate, onView, renewFrom }) {
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [sent, setSent] = useState(null);
+  const payment = usePay();
 
   const isReview = step === STEPS.length - 1;
   const StepView = STEP_VIEWS[step];
@@ -52,14 +54,21 @@ function NewCampaignFlow({ onExit, onCreate, onView, renewFrom }) {
     setSubmitting(true);
     const result = await onCreate({ ...draft, name: draft.name.trim(), budget: Number(draft.budget) });
     setSubmitting(false);
-    if (result.error) setError(result.error);
-    else setSent(result.campaign);
+    if (result.error) {
+      setError(result.error);
+      return;
+    }
+    // The campaign is saved first. If checkout can't open, the next screen offers a retry.
+    setSent(result.campaign);
+    payment.pay(result.campaign.id);
   }
 
-  if (sent) return <FlowSuccess campaign={sent} onView={() => onView(sent.id)} onDone={onExit} />;
+  if (sent) {
+    return <FlowSuccess campaign={sent} payment={payment} onView={() => onView(sent.id)} onDone={onExit} />;
+  }
 
   let submitLabel = "Continue";
-  if (isReview) submitLabel = submitting ? "Sending…" : "Send for review";
+  if (isReview) submitLabel = submitting ? "Saving…" : "Continue to payment";
 
   return (
     <div className="flow">
