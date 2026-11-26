@@ -228,4 +228,4 @@ Order matters. Deactivating the legacy keys breaks anything still using them, in
 - [ ] Apply the `payments` migration
 - [ ] Choose a payment provider; verify payments server-side before marking them paid
 - [ ] Studio screen for staff to record payments
-- [ ] Merge `studio-campaigns-tab` with `feature/billing`
+- [x] Merge `studio-campaigns-tab` with `feature/billing`

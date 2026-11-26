@@ -281,7 +281,7 @@ Overview, Discovery (live), Playlists (live), Studio (planned), Top 10 Generator
 - New `/campaigns/billing` page: budget totals, campaign billing, payment history. No online payment (no provider connected).
 - `supabase/migrations/20261126000000_payments.sql` is **not applied**. Until it is, history shows as empty. After applying, rename the file to the recorded version. Staff have no screen for recording payments yet.
 - Fixed the import casing `pages/Campaigns` to `pages/campaigns`. `App.jsx` also imports `pages/home/Home` while the file is `home.jsx` (matters on case-sensitive systems).
-- `studio-campaigns-tab` (commit `52f450f`, Studio Campaigns tab) is not in this branch. Merge it before building Studio.
+- `studio-campaigns-tab` (commit `52f450f`, Studio Campaigns tab) was merged into this branch on 2026-11-26.
 
 ## Studio overview cleanup (2026-11-26)
 - On `feature/billing`: Playlists is marked live. The "Studio" and "RADR AI" modules are removed (overview cards, sidebar items, `/studio/create` and `/studio/ai` routes, and the unused `ModulePage.jsx`). Old addresses fall back to the overview. This replaces the sidebar order and file map listed earlier for these items.
