@@ -11,20 +11,17 @@ import { supabase } from "../../supabaseClient";
 import { useSupabaseAuth } from "context/SupabaseAuthContext";
 import { PLATFORM_META } from "./components/CampaignList";
 import { packageName } from "./packages";
+import { canDelete, statusMeta } from "./campaignStatus";
+import { removeCampaign } from "./payments";
 import PayButton from "./components/PayButton";
+import DeleteCampaignButton from "./components/DeleteCampaignButton";
 import PaymentReturn from "./components/PaymentReturn";
 import "./styles/billing.css";
 
-const CAMPAIGN_STATUS = {
-  active: { label: "Active", color: "#1DB954", bg: "rgba(29,185,84,0.1)" },
-  pending: { label: "Pending Review", color: "#D9A02B", bg: "rgba(217,160,43,0.12)" },
-  completed: { label: "Completed", color: "#888", bg: "rgba(0,0,0,0.05)" },
-  paused: { label: "Paused", color: "#D94F2B", bg: "rgba(217,79,43,0.1)" },
-};
-
+// A checkout that was started but never finished is not a payment, so it isn't called "Pending".
 const PAYMENT_STATUS = {
   paid: { label: "Paid", color: "#1DB954", bg: "rgba(29,185,84,0.1)" },
-  pending: { label: "Pending", color: "#D9A02B", bg: "rgba(217,160,43,0.12)" },
+  pending: { label: "Not completed", color: "#888", bg: "rgba(0,0,0,0.05)" },
   failed: { label: "Failed", color: "#D94F2B", bg: "rgba(217,79,43,0.1)" },
   refunded: { label: "Refunded", color: "#888", bg: "rgba(0,0,0,0.05)" },
 };
@@ -68,7 +65,7 @@ function Billing() {
   const [loading, setLoading] = useState(true);
   const [campaignError, setCampaignError] = useState("");
   const [paymentError, setPaymentError] = useState("");
-  // Bumped after a returning payment is checked, so the figures reload.
+  // Bumped after a returning payment is checked or a campaign is deleted, so the figures reload.
   const [version, setVersion] = useState(0);
   const reload = useCallback(() => setVersion((n) => n + 1), []);
 
@@ -106,19 +103,29 @@ function Billing() {
 
   // Removed campaigns drop out of the plan list, but keep their name in history.
   const visible = campaigns.filter((c) => c.status !== "removed");
-  const sumBudget = (status) =>
-    visible.filter((c) => c.status === status).reduce((sum, c) => sum + Number(c.budget), 0);
   const campaignName = (id) => campaigns.find((c) => c.id === id)?.name ?? "Campaign";
 
   const isPaid = (id) => payments.some((p) => p.campaign_id === id && p.status === "paid");
+  // undefined when payments couldn't be read: then we can't say Unpaid and don't offer Delete.
+  const paidState = (id) => (paymentError ? undefined : isPaid(id));
+
+  const sumBudget = (rows) => rows.reduce((sum, c) => sum + Number(c.budget), 0);
+  const activeBudget = sumBudget(visible.filter((c) => c.status === "active"));
+  // Only paid campaigns are waiting for staff. Unpaid ones are waiting for the artist.
+  const awaitingBudget = sumBudget(visible.filter((c) => c.status === "pending" && isPaid(c.id)));
+
+  async function handleDelete(id) {
+    await removeCampaign(id);
+    reload();
+  }
 
   // A figure that failed to load shows a dash, never a misleading zero.
   const figure = (value, failed) => (loading ? "…" : failed ? "—" : value);
 
   const stats = [
     { label: "Total paid", value: figure(totalPaid(payments), paymentError) },
-    { label: "Active campaign budget", value: figure(money(sumBudget("active")), campaignError) },
-    { label: "Awaiting approval", value: figure(money(sumBudget("pending")), campaignError) },
+    { label: "Active campaign budget", value: figure(money(activeBudget), campaignError) },
+    { label: "Awaiting approval", value: figure(money(awaitingBudget), campaignError || paymentError) },
   ];
 
   return (
@@ -176,10 +183,13 @@ function Billing() {
                       </div>
                     </div>
                     <div className="billing-row-meta">
-                      <Pill meta={CAMPAIGN_STATUS[c.status] ?? CAMPAIGN_STATUS.pending} />
+                      <Pill meta={statusMeta(c.status, paidState(c.id))} />
                       <span className="billing-row-amount">{money(c.budget)}</span>
                       {c.status === "pending" && !paymentError && !isPaid(c.id) && Number(c.budget) > 0 && (
                         <PayButton campaignId={c.id} />
+                      )}
+                      {canDelete(c.status, paidState(c.id)) && (
+                        <DeleteCampaignButton campaignId={c.id} onDelete={handleDelete} />
                       )}
                     </div>
                   </div>
