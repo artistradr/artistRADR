@@ -6,6 +6,7 @@ import Article from "@mui/icons-material/Article";
 import Dashboard from "@mui/icons-material/Dashboard";
 import EmojiEvents from "@mui/icons-material/EmojiEvents";
 import PhotoLibrary from "@mui/icons-material/PhotoLibrary";
+import Campaign from "@mui/icons-material/Campaign";
 
 // status: "live" | "next" | "planned"
 export const MODULES = [
@@ -81,6 +82,18 @@ export const MODULES = [
     tagline: "Review playlist submissions, then approve or reject them.",
     description:
       "The playlist submissions from the Magazine admin, now inside Studio. Approving or rejecting emails the submitter their outcome.",
+    features: [],
+  },
+  {
+    id: "campaigns",
+    label: "Campaigns",
+    path: "/studio/campaigns",
+    Icon: Campaign,
+    status: "live",
+    phase: "Artists",
+    tagline: "Review artist promotion campaigns and track them to the end.",
+    description:
+      "Campaigns artists start on the site arrive here for review. Approve one to start its duration, then follow progress until it completes.",
     features: [],
   },
   {
