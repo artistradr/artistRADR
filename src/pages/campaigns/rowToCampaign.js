@@ -1,4 +1,6 @@
 // DB row (snake_case) -> the shape CampaignList and CampaignDetailPanel use.
+import { rowToPlaylist } from "./playlists";
+
 function formatDate(value) {
   return new Date(value).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
@@ -7,6 +9,13 @@ export function rowToCampaign(row) {
   let nextBilling = "—";
   if (row.next_billing) nextBilling = formatDate(row.next_billing);
   else if (row.status === "pending") nextBilling = "Awaiting approval";
+
+  // Playlists staff attached to this campaign, oldest first.
+  const playlists = (row.campaign_playlists ?? [])
+    .slice()
+    .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
+    .map(rowToPlaylist)
+    .filter((p) => p.url);
 
   return {
     id: row.id,
@@ -23,5 +32,6 @@ export function rowToCampaign(row) {
     startedOn: row.started_on ? formatDate(row.started_on) : "—",
     nextBilling,
     payment: row.payment_method ?? "—",
+    playlists,
   };
 }

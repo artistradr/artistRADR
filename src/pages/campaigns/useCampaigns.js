@@ -14,7 +14,7 @@ export function useCampaigns(userId) {
     setError(null);
     const { data, error: fetchError } = await supabase
       .from("campaigns")
-      .select("*")
+      .select("*, campaign_playlists(id, spotify_playlist_id, title, image_url, created_at)")
       .eq("user_id", userId)
       .neq("status", "removed")
       .order("created_at", { ascending: false });
