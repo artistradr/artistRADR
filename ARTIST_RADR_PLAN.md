@@ -1,6 +1,6 @@
 # Artist RADR — Plan & TODO
 
-**Last updated:** 2026-11-26 (account area and billing page, campaign flow with Spotify song search, campaign packages, campaign playlists attached by staff, Campaign playlists page in Studio; all on unmerged branches, database changes live)
+**Last updated:** 2026-11-26 (account area and billing page, campaign flow with Spotify song search, campaign packages, campaign playlists attached by staff, Campaign playlists page in Studio; all on unmerged branches, database changes live; campaign work run locally and reported working; all campaign migration files saved in the repo)
 **Companion file:** `ARTIST_RADR_STATUS.md` (current state, commands, env, handoff)
 **Product brief:** the original "Artist RADR — Product Vision & Development Brief" still applies, with the changes recorded in section 1.
 
@@ -19,7 +19,7 @@
 | 6 | RADR AI | Not started |
 | 7 | Friday automation | Not started |
 | 8 | Magazine & RADR Originals | Posts admin moved into Studio at `/studio/magazine` (2026-11-25, untested). Editor upgrades and Originals not started |
-| 9 | Artist campaigns and billing | **Built, untested, not merged.** Account area, Billing page, campaign flow, packages, Studio Campaigns tab, campaign playlists, Campaign playlists page. No online payments yet (2026-11-26) |
+| 9 | Artist campaigns and billing | **Built, run locally and reported working (2026-11-26), not linted or fully built, not merged.** Account area, Billing page, campaign flow, packages, Studio Campaigns tab, campaign playlists, Campaign playlists page. No online payments yet |
 | 10 | Partner curators | **Planned, not started.** Placeholder tab on the Campaign playlists page (2026-11-26) |
 
 ---
@@ -176,7 +176,7 @@ Buffer and the Publishing module are out of scope. Staff post manually. If posti
 - [ ] Podcast RSS and hosting decision
 
 ### Phase 9 — Artist campaigns and billing (2026-11-26)
-Built (all untested end to end, none merged or deployed):
+Built (run locally and reported working by the editor on 2026-11-26; none merged or deployed; lint and full build not run):
 - [x] Account area: sidebar Profile, My Campaigns, Billing; Dashboard and Settings removed; one "Open RADR Studio" button for staff on Profile (`feature/billing`)
 - [x] Billing page `/campaigns/billing`: totals, campaign billing, payment history; `payments` migration applied
 - [x] Checkout-style campaign flow (Track, Goal, Budget, Review) with Spotify song search or pasted link (`spotify-track-search` v1 deployed, `campaigns_spotify_track` applied)
@@ -187,10 +187,10 @@ Built (all untested end to end, none merged or deployed):
 - [x] Studio: Campaign playlists page `/studio/campaign-playlists` (2026-11-26, commit `554a2c2`): by-campaign attach view, all-playlists view, counts, Partner curators placeholder tab
 
 Still to do, in order:
-- [ ] Test the whole artist journey locally (send a campaign, approve it in Studio, attach a public playlist from the Campaigns tab and from the Campaign playlists page, view as the artist). Use a clearly labeled test campaign
-- [ ] Save the seven missing migration SQL files into `supabase/migrations/` and fix the `campaigns_no_user_remove` file name (list in the status file)
+- [x] Test the artist journey locally and the Campaign playlists page (reported working by the editor, 2026-11-26)
+- [x] Save the seven missing migration SQL files into `supabase/migrations/` and fix the `campaigns_no_user_remove` file name (done 2026-11-26; all 24 files from 20261123 on match the remote)
 - [ ] Run lint and a full build on the branch
-- [ ] Decide merge order for `feature/studio`, `fix/campaign-dashboard-no-remove`, `feature/billing`, `feature/campaign-flow` (check which contains which), merge, rebuild both sites and upload
+- [ ] Work out which branch contains which, decide merge order for `feature/studio`, `fix/campaign-dashboard-no-remove`, `feature/billing`, `feature/campaign-flow`, merge, rebuild both sites and upload
 - [ ] Confirm the Supercharge targets above $100 (proposed by Claude, RADR must be able to deliver them) and which package "10K+ streams" belongs to
 - [ ] Review package wording against Spotify's rules on paid services that advertise streams or guarantee placement
 - [ ] Choose a payment provider; verify payments server-side before marking them paid
@@ -200,6 +200,7 @@ Still to do, in order:
 - [ ] Optional: scan RADR's own playlists for a campaign's song and suggest them on the Campaign playlists page (today staff find and paste each link by hand)
 - [ ] Optional: show attached playlists on the artist's campaign list; email the artist when playlists are added
 - [ ] Tidy: `campaign_playlists` has two identical unique indexes on (`campaign_id`, `spotify_playlist_id`); keep one
+- [ ] Optional: save the earlier `campaigns` guard triggers as migration files (they were never saved) if the schema is ever rebuilt from the repo
 
 ### Phase 10 — Partner curators (future, decided 2026-11-26)
 Artist RADR is open to curators with active playlists who want to earn from artist campaigns. Only a placeholder tab exists ("Partner curators" on the Campaign playlists page). Nothing below is built:
@@ -219,8 +220,8 @@ Artist RADR is open to curators with active playlists who want to earn from arti
 | Item | Detail | Action |
 |---|---|---|
 | **Service-role key in git history** | A real **legacy JWT** `service_role` key (expires 2036) is in `scripts/env.migration.example` (first commit `f33388e`) and in a local `scripts/.env.migration.save`. The repo is private. | **In progress 2026-11-24.** Steps 1 to 5 done. Legacy keys are now rejected (401 seen 2026-11-24). Still to verify: the public site rebuilt with the new key AND in public mode is uploaded and working (see section 7 notes). Then cleanup steps 6, 8, 9. Only `studio-spotify` uses it; the older functions and the database triggers do not. |
-| **Migration files missing from the repo** | Seven campaign migrations (`campaigns_allow_pending_status`, `studio_campaign_submissions_queue`, `studio_campaigns_separate_from_submissions`, `campaigns_release_day_reserve`, `campaign_playlists` and its two follow-ups) are applied in Supabase but have no SQL file. `campaigns_no_user_remove` has a different version in the repo than on the remote. | Save the files so the schema can be rebuilt from git. |
-| **Campaign work untested and unmerged** | Billing, campaign flow, packages, campaign playlists and the Campaign playlists page are on unmerged branches; the database changes are already live. Lint and full build were not run. | Test locally, then merge and deploy (Phase 9). |
+| ~~Migration files missing from the repo~~ | **Resolved 2026-11-26.** The seven campaign migrations are saved and `campaigns_no_user_remove` is renamed to the remote version `20261125200403`. All 24 migration files from `20261123023154` on match the remote. | Remaining gap: the 22 August/September migrations and the early `campaigns` guard triggers (see the remote-only row below). |
+| **Campaign work not linted, built or merged** | Billing, campaign flow, packages, campaign playlists and the Campaign playlists page are on unmerged branches and were run locally and reported working (2026-11-26); the database changes are already live. Lint and full build were not run. | Run lint and a full build, then merge and deploy (Phase 9). |
 | **Paid-stream wording** | Package copy mentions playlist, listener and stream targets. Spotify has rules on paid services that advertise streams or guarantee placement. | Review the wording before launch. |
 | **Sync edge cases partly tested** | One real sync succeeded and conflict detection is confirmed. Remove plus reorder and blocked cases (local files, unmatched tracks) are not yet exercised. | Test on a throwaway playlist before relying on it for live RADR playlists. |
 | Wrong file in git history | Commit `61322dc` contains a Free Republick function (`r2-video`). Setting names only, no secrets. | Check history before ever making the repo public. |

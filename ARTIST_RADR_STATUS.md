@@ -115,16 +115,9 @@ Only deploy if both checks pass. `--no-verify-jwt` is required (the function doe
 | `studio_accept_candidate(candidate_id, playlist_id)` | Add a matched candidate to the playlist's draft as `discovery`, mark accepted, log `discovery.accepted`. Needs a Spotify match. Never touches Spotify |
 
 ### Migrations (in `supabase/migrations/`, versions match the remote)
-- `20261123023154_radr_playlists_foundation.sql`
-- `20261123031717_studio_add_track_to_draft.sql`
-- `20261123032434_studio_draft_seed_and_reorder.sql`
-- `20261123034348_studio_approval_flow.sql`
-- `20261123090115_studio_discovery_foundation.sql`
-- `20261124215423_studio_top10_artworks.sql`
+Checked 2026-11-26: the repo has 24 migration files, from `20261123023154_radr_playlists_foundation.sql` to `20261126084037_campaign_playlists_drop_redundant_index.sql`, and every one matches a version and name on the remote. This covers the Studio, discovery, campaign, payments, packages and campaign playlists migrations. The seven campaign files that were missing are saved, and `campaigns_no_user_remove` is now `20261125200403` (the old `20261125200000` file is deleted).
 
-The remote also has 22 older August/September migrations that exist only there. Do not run `supabase db push`. Apply changes through the Supabase connector or SQL, then save a file with the version Supabase recorded.
-
-**Remote-only campaign migrations (checked 2026-11-26): applied in Supabase, no SQL file in the repo:** `20261125073708_campaigns_allow_pending_status`, `20261125194255_studio_campaign_submissions_queue`, `20261125194914_studio_campaigns_separate_from_submissions`, `20261126072323_campaigns_release_day_reserve`, `20261126082204_campaign_playlists`, `20261126084025_campaign_playlists_unique_and_added_by`, `20261126084037_campaign_playlists_drop_redundant_index`. Also `campaigns_no_user_remove` is `20261125200403` on the remote but the repo file is named `20261125200000_...`. Save the missing files (and fix that name) before anyone rebuilds the schema from the repo.
+The remote also has 22 older August/September migrations (`20260818225122_initial_schema` to `20260907193853_backfill_unstructured_editor_content`, including `create_campaigns_table`) that exist only there. Do not run `supabase db push`. Apply changes through the Supabase connector or SQL, then save a file with the version Supabase recorded.
 
 ### Edge Functions
 | Function | Purpose | JWT check |
@@ -175,7 +168,7 @@ src/studio/pages/ActivityLog.jsx         activity log list (reads activity_logs)
 src/studio/pages/playlists.css           page styles
 src/pages/Admin/AdminDashboard/components/DashboardHeader.jsx   "← RADR Studio" button
 src/pages/Auth/Profile.jsx               "Open RADR Studio" button (staff)
-supabase/migrations/                     eight migrations listed above
+supabase/migrations/                     24 migrations from 20261123 on (see Migrations above)
 supabase/functions/studio-spotify/index.ts   function source (matches deployed v12)
 ```
 
@@ -189,14 +182,14 @@ Routes in Studio mode: `/studio` (overview), `/studio/discovery`, `/studio/playl
 
 **Done and working:** Studio shell and deployment to `studio.artistradr.com`, staff-only security, Spotify connection and token refresh, Spotify search with release dates and a release-period filter, draft editor with numbered tracks, review → approve → sync (tested, including refusal after an outside edit), activity log, Discovery (candidates, review, accept into draft, sources).
 
-**Built on `feature/campaign-flow` but not yet tested end to end or deployed:** artist account area and Billing page (no online payment), checkout-style new campaign flow with Spotify song search, campaign packages (Starter, Basic, Supercharge, Pre-save), redesigned artist campaign preview, Studio's "Playlists for the artist" attach screen, and Studio's Campaign playlists page (a campaign-by-campaign view and an all-playlists view; Partner curators is a placeholder). Database changes for all of these are live in Supabase; the website and Studio builds are not.
+**Built on `feature/campaign-flow`, run locally and reported working by the editor (2026-11-26), but not linted, fully built, merged or deployed:** artist account area and Billing page (no online payment), checkout-style new campaign flow with Spotify song search, campaign packages (Starter, Basic, Supercharge, Pre-save), redesigned artist campaign preview, Studio's "Playlists for the artist" attach screen, and Studio's Campaign playlists page (a campaign-by-campaign view and an all-playlists view; Partner curators is a placeholder). Database changes for all of these are live in Supabase and all their migration files are now in the repo; the website and Studio builds are not live.
 
 **Instagram discovery: dropped 2026-11-25.** The Meta Connect step was blocked and the feature is out of scope. Code, function source, tables and panel are removed (see the cleanup note at the end).
 
 **Next, in order (updated 2026-11-26):**
-1. **Test the campaign work locally** (see "Campaign playlists" below): run the branch on the Mac, send a test campaign as an artist, approve it in Studio, attach a public playlist from the Campaigns tab and from the new Campaign playlists page, view it as the artist.
-2. **Save the missing migration files** to `supabase/migrations/` (list above) and fix the `campaigns_no_user_remove` file name.
-3. **Lint, full build, then merge and deploy.** Decide the branch order (`fix/campaign-dashboard-no-remove`, `feature/billing`, `feature/campaign-flow`), merge, rebuild and upload both sites, deploy `campaign-playlist-lookup` if the live copy differs.
+1. ~~Test the campaign work locally~~ Done 2026-11-26 (reported working by the editor: Campaign playlists page and attach flow).
+2. ~~Save the missing migration files~~ Done 2026-11-26 (see Migrations).
+3. **Work out which branch contains which, then lint, full build, merge and deploy.** Branch order to decide (`fix/campaign-dashboard-no-remove`, `feature/billing`, `feature/campaign-flow`, and `feature/studio`), merge, rebuild and upload both sites, deploy `campaign-playlist-lookup` if the live copy differs.
 4. **Payments:** choose a provider, build a staff screen to record payments.
 5. **Partner curators** (list, approval, partner playlists on campaigns, earnings) once payments exist.
 6. **Friday auto-draft** (needs the artwork library, now built).
@@ -279,12 +272,12 @@ Update 2026-11-26: on `feature/campaign-flow` the Studio and RADR AI placeholder
 
 ## Artist campaigns: no user remove (2026-11-25)
 - Artists can no longer delete or remove a campaign once it is sent. Sending = submitting, so every artist campaign is covered; only RADR staff can remove one.
-- Database (applied to project rjivkemajotafjvtalol, file `supabase/migrations/20261125200000_campaigns_no_user_remove.sql`): dropped policy "Users can delete their own campaigns" on `campaigns`; `studio_campaign_guard_update()` now rejects a non-staff change to status `removed`. Pause and resume of active/paused campaigns still works for the artist.
+- Database (applied to project rjivkemajotafjvtalol, file `supabase/migrations/20261125200403_campaigns_no_user_remove.sql`, renamed 2026-11-26 to match the remote version): dropped policy "Users can delete their own campaigns" on `campaigns`; `studio_campaign_guard_update()` now rejects a non-staff change to status `removed`. Pause and resume of active/paused campaigns still works for the artist.
 - Dashboard (`src/pages/campaigns`): removed the Remove campaign, Edit budget and View history buttons and the remove handler. Pause/Resume shows only for active or paused campaigns.
 - Wording: campaign goal "Editorial + algorithmic playlist placement" is now "Curated + algorithmic playlist placement" (existing rows keep the old text).
 - Code is on branch `fix/campaign-dashboard-no-remove` (off `feature/studio`), pushed, not merged. Not linted, built or tested (no package installs in that session).
 - Test: sign in as an artist, open /campaigns, open a campaign: no Remove, Edit budget or History; a direct delete or `status: 'removed'` update from the client should fail.
-- Known gap: the new migration file is in the repo and live in Supabase, but the earlier guard triggers on `campaigns` were never saved as migration files; add them if the schema is rebuilt from the repo.
+- Known gap: the earlier guard triggers on `campaigns` were never saved as migration files; add them if the schema is rebuilt from the repo.
 
 
 ## Account area and billing (2026-11-26)
@@ -292,7 +285,7 @@ Update 2026-11-26: on `feature/campaign-flow` the Studio and RADR AI placeholder
 - Profile staff card now has one button, "Open RADR Studio". "Go to Admin" is gone; the public `/admin` route still exists.
 - Account sidebar: Profile, My Campaigns, Billing. Dashboard and Settings removed; unused `CampaignSidebar.jsx` deleted.
 - New `/campaigns/billing` page: budget totals, campaign billing, payment history. No online payment (no provider connected).
-- `supabase/migrations/20261126000000_payments.sql` is **not applied**. Until it is, history shows as empty. After applying, rename the file to the recorded version. Staff have no screen for recording payments yet.
+- The `payments` migration is applied (recorded as `20261126025112_payments`, saved in the repo). Staff have no screen for recording payments yet.
 - Fixed the import casing `pages/Campaigns` to `pages/campaigns`. `App.jsx` also imports `pages/home/Home` while the file is `home.jsx` (matters on case-sensitive systems).
 - `studio-campaigns-tab` (commit `52f450f`, Studio Campaigns tab) was merged into this branch on 2026-11-26.
 
@@ -308,17 +301,15 @@ Update 2026-11-26: on `feature/campaign-flow` the Studio and RADR AI placeholder
 ## Campaign flow: layout and Spotify track search (2026-11-26)
 - On `feature/campaign-flow`. The flow uses the account page layout with the sidebar. No amounts show until a budget is chosen.
 - Artists search a song or paste a Spotify track link, then pick it. Artwork and details show in the flow, campaign list and campaign detail. Typing a name without picking still works.
-- **Not yet live:** apply `supabase/migrations/20261126030000_campaigns_spotify_track.sql` FIRST, then deploy `spotify-track-search`:
-  `supabase functions deploy spotify-track-search --no-verify-jwt --use-api`
-  If the function is live without the column, sending a campaign with a picked song fails.
-- Not tested against real Spotify or Supabase. Studio's Campaigns tab does not show the artwork yet.
-- Open issue: `studio_campaign_guard_update` does not stop an artist changing `name`, `platform`, `goal` or `budget` on their own campaign through the API.
+- Applied and deployed (see "Supabase applied" below): the `campaigns_spotify_track` migration, then `spotify-track-search`. If the function is ever live without the column, sending a campaign with a picked song fails.
+- Studio's Campaigns tab does not show the artwork yet.
+- Earlier open issue (artist changing `name`, `platform`, `goal` or `budget` through the API) is closed by `campaigns_lock_artist_fields`.
 
 ## Supabase applied (2026-11-26)
 - Applied: `payments`, `campaigns_spotify_track`, `campaigns_lock_artist_fields`. Deployed `spotify-track-search` (v1). This replaces the earlier "not applied" and "not yet live" notes, and closes the open issue about artists editing campaign fields.
 - Rolled-back database test passed: artists cannot edit locked fields, remove or self-approve campaigns, or add payments; staff can approve, edit and add payments; artists can pause and resume.
 - Function logs show successful (200) searches, and one campaign is saved with a Spotify track.
-- The database also has `campaigns_release_day_reserve` (20261126072323), not applied from this branch; its file was not found on GitHub when checked.
+- The database also has `campaigns_release_day_reserve` (20261126072323). Its SQL file is now saved in the repo.
 - Staff still have no screen for recording payments. Studio's Campaigns tab does not show artwork.
 
 ## Campaign packages (2026-11-26, branch `feature/campaign-flow`, not merged, not deployed)
@@ -326,7 +317,7 @@ Update 2026-11-26: on `feature/campaign-flow` the Studio and RADR AI placeholder
 - Budget step is now packages: 1 Week $25, 2 Weeks $50 (Recommended), 1 Month $100, Custom from $50 (1 week to 2 months), Pre-save from $50 (future release date, optional release-day spot request). One price per campaign.
 - Prices, lengths and wording: `src/pages/campaigns/packages.js`. The database checks the same prices and lengths, so change both together.
 - Playlist, listener and stream figures are shown as targets, not guarantees. Open: confirm which package "10K+ streams" belongs to (shown on 1 Month), and review the wording against Spotify's rules on paid services that advertise streams or guarantee placement.
-- Supabase: migration `20261126073345_campaigns_packages` applied (new `package` column, price/length check on insert, `package` locked for artists). `release_date` and `reserve_release_spots` came from `20261126072323_campaigns_release_day_reserve`, whose SQL file is not in this repo.
+- Supabase: migration `20261126073345_campaigns_packages` applied (new `package` column, price/length check on insert, `package` locked for artists). `release_date` and `reserve_release_spots` came from `20261126072323_campaigns_release_day_reserve` (SQL file now in the repo).
 - Studio Campaigns tab shows package, release date, spot request and song; approval suggests the package length (pre-save: through release day). Live Studio keeps the 14-day default until redeployed.
 - Release-day spots are a request only; nothing holds playlist slots automatically. No payment is taken.
 - Tested: database rules (rolled back), flow and Studio page in a browser with sample data, syntax check. Not tested: full build, lint, live sign-in.
@@ -357,13 +348,13 @@ Update 2026-11-26: on `feature/campaign-flow` the Studio and RADR AI placeholder
 - RLS: artists read only playlists on their own campaigns; only staff add or remove.
 - Edge Function `campaign-playlist-lookup` (staff-only) deployed; source in `supabase/functions/campaign-playlist-lookup`.
 - Security advisor flagged nothing new from this work.
-- The three migration SQL files are **not in the repo yet** (see the remote-only list under Migrations).
+- The three migration SQL files are now saved in the repo (2026-11-26).
 - Checked 2026-11-26: the table still has two identical unique indexes on (`campaign_id`, `spotify_playlist_id`). Harmless, but the "drop redundant index" migration did not leave just one. Tidy later.
 
-**Not verified**
-- No end-to-end test against live Spotify or the live database from the artist screen. The playlist must be public. If the song check says it could not check, the title and cover should still come through.
+**Verification**
+- Run locally by the editor on 2026-11-26 and reported working (attach flow and the Campaign playlists page).
 - Full lint and build were not run. All new or changed artist-side files are under 300 lines.
-- Studio and the public site both need rebuilding and uploading before any of this is live.
+- Studio and the public site both need rebuilding and uploading before any of this is live. The playlist must be public.
 
 **Test on the Mac**
 ```bash
@@ -384,4 +375,4 @@ A Studio place where admins post and see the playlist links attached to campaign
 - Files: `src/studio/pages/CampaignPlaylistsPage.jsx` (277 lines), `campaignPlaylistsPage.css`, `src/studio/components/AllCampaignPlaylists.jsx`, `PartnerCurators.jsx`, `campaignSong.js` (helpers). `CampaignPlaylists.jsx` gained an optional `onChange` prop so the page's counts refresh after an attach or remove. `modules.js` and `App.jsx` gained one entry each.
 - Playlists are found by hand: staff look for playlists that carry the song and paste the links. There is no automatic scan of RADR's own playlists for the song yet.
 - Artwork shows only when it is Spotify-hosted (`i.scdn.co`), as on the artist side.
-- Not run, linted or built. Test: open the page, pick a test campaign, attach and remove a public playlist, check the counts and the All playlists view, then view the campaign as the artist.
+- Run locally by the editor on 2026-11-26 and reported working. Not linted or fully built. Test: open the page, pick a test campaign, attach and remove a public playlist, check the counts and the All playlists view, then view the campaign as the artist.
