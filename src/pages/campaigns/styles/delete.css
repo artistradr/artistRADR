@@ -1,0 +1,29 @@
+.delete-box {
+  margin-top: 10px;
+}
+
+.delete-btn {
+  background: none;
+  border: 1px solid rgba(217, 79, 43, 0.4);
+  color: #d94f2b;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.delete-btn:hover:not(:disabled) {
+  background: rgba(217, 79, 43, 0.08);
+}
+
+.delete-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.delete-error {
+  margin-top: 6px;
+  font-size: 0.8rem;
+  color: #d94f2b;
+}

@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "../../supabaseClient"; // relative: no Vite alias covers top-level src/ files
 import { rowToCampaign } from "./rowToCampaign";
+import { removeCampaign } from "./payments";
 
 export function useCampaigns(userId) {
   const [campaigns, setCampaigns] = useState([]);
@@ -24,9 +25,12 @@ export function useCampaigns(userId) {
 
     if (fetchError) setError(fetchError.message);
     else {
-      // If payments can't be read, Pay now still shows; the server refuses a second payment.
-      const paid = new Set((paidResult.data ?? []).map((p) => p.campaign_id));
-      setCampaigns((data ?? []).map((row) => ({ ...rowToCampaign(row), paid: paid.has(row.id) })));
+      // If payments can't be read, `paid` stays undefined: no Unpaid label and no Delete,
+      // because we can't be sure. Pay now still shows; the server refuses a second payment.
+      const paid = paidResult.error ? null : new Set((paidResult.data ?? []).map((p) => p.campaign_id));
+      setCampaigns(
+        (data ?? []).map((row) => ({ ...rowToCampaign(row), paid: paid ? paid.has(row.id) : undefined })),
+      );
     }
     setLoading(false);
   }, [userId]);
@@ -56,7 +60,8 @@ export function useCampaigns(userId) {
       .single();
 
     if (insertError) return { error: insertError.message };
-    const campaign = rowToCampaign(data);
+    // A brand-new campaign has no payment yet.
+    const campaign = { ...rowToCampaign(data), paid: false };
     setCampaigns((prev) => [campaign, ...prev]);
     return { campaign };
   }
@@ -77,5 +82,11 @@ export function useCampaigns(userId) {
     setCampaigns((prev) => prev.map((c) => (c.id === campaign.id ? { ...c, status } : c)));
   }
 
-  return { campaigns, loading, error, createCampaign, togglePause };
+  // Throws with a readable message if the server refuses (for example, it was paid meanwhile).
+  async function deleteCampaign(campaignId) {
+    await removeCampaign(campaignId);
+    setCampaigns((prev) => prev.filter((c) => c.id !== campaignId));
+  }
+
+  return { campaigns, loading, error, createCampaign, togglePause, deleteCampaign };
 }

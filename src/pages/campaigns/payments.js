@@ -24,3 +24,8 @@ export async function verifyPayment(reference) {
   const data = await callPaystack({ action: "verify", reference });
   return data?.status ?? "pending";
 }
+
+// Removes an unpaid campaign. The server refuses if it has been paid.
+export async function removeCampaign(campaignId) {
+  await callPaystack({ action: "delete", campaign_id: campaignId });
+}
