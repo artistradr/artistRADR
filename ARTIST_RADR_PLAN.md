@@ -1,6 +1,6 @@
 # Artist RADR — Plan & TODO
 
-**Last updated:** 2026-11-25 (artist campaigns locked against user removal; campaigns added; Buffer and Instagram removed; legacy keys off; public site rebuild and upload to verify)
+**Last updated:** 2026-11-26 (account area and billing page, campaign flow with Spotify song search, campaign packages, campaign playlists attached by staff; all on unmerged branches, database changes live)
 **Companion file:** `ARTIST_RADR_STATUS.md` (current state, commands, env, handoff)
 **Product brief:** the original "Artist RADR — Product Vision & Development Brief" still applies, with the changes recorded in section 1.
 
@@ -19,6 +19,7 @@
 | 6 | RADR AI | Not started |
 | 7 | Friday automation | Not started |
 | 8 | Magazine & RADR Originals | Posts admin moved into Studio at `/studio/magazine` (2026-11-25, untested). Editor upgrades and Originals not started |
+| 9 | Artist campaigns and billing | **Built, untested, not merged.** Account area, Billing page, campaign flow, packages, Studio Campaigns tab, campaign playlists. No online payments yet (2026-11-26) |
 
 ---
 
@@ -38,6 +39,9 @@
 12. **Migrations live in the repo.** Anything applied to the remote database must also exist in `supabase/migrations/`.
 13. **Sync is built on Spotify's `/items` endpoints**, which were verified in Development Mode on 2026-11-23.
 14. **Playlists page layout:** opening a playlist shows the draft editor (with numbered tracks). The live Spotify track list stays hidden until the "Show live tracks on Spotify" button is clicked.
+15. **Artists cannot remove or edit sent campaigns.** Only staff approve, set days, attach playlists and remove (2026-11-25/26).
+16. **No online payment yet.** Billing shows totals and history only; payments are recorded by staff once that screen exists (2026-11-26).
+17. **Campaign playlists are attached by staff in Studio** by pasting a Spotify playlist link; artists only see cover and link (2026-11-26).
 
 ---
 
@@ -119,8 +123,8 @@
 - [ ] Match by ISRC, artist, duration; manual review of uncertain matches (needed for Discovery and Apple Music)
 - [x] Submission campaigns: approve with days, countdown from first live add, Active campaigns panel, auto-resolve (2026-11-25, untested)
 - [x] Artist campaigns: users cannot remove or delete sent campaigns; Edit budget, History and Remove buttons dropped; goal wording "Curated + algorithmic" (2026-11-25, branch `fix/campaign-dashboard-no-remove`, untested, not merged)
-- [ ] Merge `fix/campaign-dashboard-no-remove` into `feature/studio` after a test as an artist
-- [ ] Studio campaigns tab for artist campaigns: staff approve, set duration, separate from Submissions (decided 2026-11-25, not built)
+- [ ] Merge `fix/campaign-dashboard-no-remove` into `feature/studio` after a test as an artist (see Phase 9: branch order still to decide)
+- [x] Studio campaigns tab for artist campaigns: staff approve, set duration, separate from Submissions (built 2026-11-26, `studio-campaigns-tab`, merged into `feature/billing`; untested)
 - [ ] Apple Music: decision on approach, then MusicKit connection and matching
 
 ### Phase 3 — Discovery
@@ -168,6 +172,29 @@ Buffer and the Publishing module are out of scope. Staff post manually. If posti
 - [ ] Transcripts, captions, media references
 - [ ] Podcast RSS and hosting decision
 
+### Phase 9 — Artist campaigns and billing (2026-11-26)
+Built (all untested end to end, none merged or deployed):
+- [x] Account area: sidebar Profile, My Campaigns, Billing; Dashboard and Settings removed; one "Open RADR Studio" button for staff on Profile (`feature/billing`)
+- [x] Billing page `/campaigns/billing`: totals, campaign billing, payment history; `payments` migration applied
+- [x] Checkout-style campaign flow (Track, Goal, Budget, Review) with Spotify song search or pasted link (`spotify-track-search` v1 deployed, `campaigns_spotify_track` applied)
+- [x] Artists cannot edit locked campaign fields (`campaigns_lock_artist_fields` applied, rolled-back test passed)
+- [x] Packages: Starter $25, Basic $50, Supercharge $100 to $999, Pre-save from $50; staff set days at approval
+- [x] Redesigned artist campaign preview: artwork header, status and package chips, four-step tracker, playlist covers
+- [x] Studio: attach playlists to a campaign by Spotify link (`campaign_playlists`, `campaign-playlist-lookup`)
+
+Still to do, in order:
+- [ ] Test the whole artist journey locally (send a campaign, approve it in Studio, attach a public playlist, view as the artist). Test attach with a clearly labeled test campaign
+- [ ] Save the seven missing migration SQL files into `supabase/migrations/` and fix the `campaigns_no_user_remove` file name (list in the status file)
+- [ ] Run lint and a full build on the branch
+- [ ] Decide merge order for `feature/studio`, `fix/campaign-dashboard-no-remove`, `feature/billing`, `feature/campaign-flow` (check which contains which), merge, rebuild both sites and upload
+- [ ] Confirm the Supercharge targets above $100 (proposed by Claude, RADR must be able to deliver them) and which package "10K+ streams" belongs to
+- [ ] Review package wording against Spotify's rules on paid services that advertise streams or guarantee placement
+- [ ] Choose a payment provider; verify payments server-side before marking them paid
+- [ ] Studio screen for staff to record payments
+- [ ] Top-up of a running campaign (needs payments first)
+- [ ] Show song artwork in Studio's Campaigns tab
+- [ ] Optional: show attached playlists on the artist's campaign list; email the artist when playlists are added
+
 ---
 
 ## 4. Open risks and security items
@@ -175,6 +202,9 @@ Buffer and the Publishing module are out of scope. Staff post manually. If posti
 | Item | Detail | Action |
 |---|---|---|
 | **Service-role key in git history** | A real **legacy JWT** `service_role` key (expires 2036) is in `scripts/env.migration.example` (first commit `f33388e`) and in a local `scripts/.env.migration.save`. The repo is private. | **In progress 2026-11-24.** Steps 1 to 5 done. Legacy keys are now rejected (401 seen 2026-11-24). Still to verify: the public site rebuilt with the new key AND in public mode is uploaded and working (see section 7 notes). Then cleanup steps 6, 8, 9. Only `studio-spotify` uses it; the older functions and the database triggers do not. |
+| **Migration files missing from the repo** | Seven campaign migrations (`campaigns_allow_pending_status`, `studio_campaign_submissions_queue`, `studio_campaigns_separate_from_submissions`, `campaigns_release_day_reserve`, `campaign_playlists` and its two follow-ups) are applied in Supabase but have no SQL file. `campaigns_no_user_remove` has a different version in the repo than on the remote. | Save the files so the schema can be rebuilt from git. |
+| **Campaign work untested and unmerged** | Billing, campaign flow, packages and campaign playlists are on unmerged branches; the database changes are already live. Lint and full build were not run. | Test locally, then merge and deploy (Phase 9). |
+| **Paid-stream wording** | Package copy mentions playlist, listener and stream targets. Spotify has rules on paid services that advertise streams or guarantee placement. | Review the wording before launch. |
 | **Sync edge cases partly tested** | One real sync succeeded and conflict detection is confirmed. Remove plus reorder and blocked cases (local files, unmatched tracks) are not yet exercised. | Test on a throwaway playlist before relying on it for live RADR playlists. |
 | Wrong file in git history | Commit `61322dc` contains a Free Republick function (`r2-video`). Setting names only, no secrets. | Check history before ever making the repo public. |
 | Remote-only old migrations | 22 August/September migrations exist on the remote but not as repo files. `supabase db push` would complain. | Avoid `db push`. Optionally pull them later with `supabase db pull`. |
@@ -186,7 +216,7 @@ Buffer and the Publishing module are out of scope. Staff post manually. If posti
 | Existing functions callable by `anon` | `is_radr_staff()` is flagged by the security advisor. Harmless (returns false) but noisy. | Optional: revoke execute from `anon`. |
 | `pg_net` in `public` schema | Advisor warning, not from this work. | Optional: move to the `extensions` schema. |
 | Leaked-password protection off | Supabase Auth setting. | Turn on if the plan allows. |
-| Import path case | `pages/Campaigns/...` vs folder `campaigns`. Works on macOS only. | Fix before building on Linux. |
+| Import path case | The `pages/Campaigns` casing was fixed to `pages/campaigns` on `feature/billing`. `App.jsx` still imports `pages/home/Home` while the file is `home.jsx`. Works on macOS only. | Fix before building on Linux. |
 | Public follow flow | Old Spotify app may be limited to 5 allowlisted users. | Test with a non-staff account. |
 
 ---
@@ -198,6 +228,8 @@ Buffer and the Publishing module are out of scope. Staff post manually. If posti
 3. Podcast hosting and RSS provider.
 4. Final accent colour (`--rs-accent`) for Studio.
 5. ~~When to rotate the exposed service-role key.~~ In progress, see section 7.
+6. Payment provider for artist campaigns.
+7. Final Supercharge targets and the package wording (see Phase 9).
 
 **Resolved:** which test playlist to use for the first write check (a private throwaway on `admin@artistradr.com`, done 2026-11-23).
 
@@ -223,9 +255,3 @@ Order matters. Deactivating the legacy keys breaks anything still using them, in
 7. **Done 2026-11-24.** Legacy keys deactivated (Settings, API Keys, Legacy tab); re-enable there if a site breaks. Still retest the public site, Studio login, Playlists and Discovery.
 8. Later: move to JWT signing keys, then revoke the legacy JWT secret (the leaked key is a JWT signed by it). Check the effect on logged-in users first.
 9. Remove the key text from `scripts/env.migration.example` (replace with a placeholder) and commit. It stays in git history, which is harmless once the key is dead.
-
-## Billing TODO (2026-11-26)
-- [ ] Apply the `payments` migration
-- [ ] Choose a payment provider; verify payments server-side before marking them paid
-- [ ] Studio screen for staff to record payments
-- [x] Merge `studio-campaigns-tab` with `feature/billing`

@@ -1,6 +1,6 @@
 # Artist RADR — Project Status & Handoff
 
-**As of:** 2026-11-25
+**As of:** 2026-11-26
 Compact summary of everything built and decided so far. Paste this into a new chat or Claude Code to restore context. The roadmap and full TODO are in `ARTIST_RADR_PLAN.md`.
 
 ---
@@ -22,6 +22,7 @@ Artist RADR (artistradr.com) is an independent music discovery and editorial pla
 | Repo | `github.com/artistradr/artistRADR` (private) |
 | Local folder | `~/artist-radr` |
 | Working branch | `feature/studio` (Studio is built and deployed from this branch; not merged to `main`) |
+| Current work | `feature/campaign-flow` (campaign flow, packages, Studio Campaigns tab, campaign playlists). Not merged, not deployed. Other unmerged branches: `fix/campaign-dashboard-no-remove`, `feature/billing`. Check which branch contains which before merging |
 | `main` | fast-forwarded to `a0f9581` (promo work) |
 | Rollback tag | `live-before-studio` |
 | Studio commits pushed | `88fa3ed` (Spotify, draft editor, approval and sync), `0f717ba` (Discovery, activity log), `61322dc` (release dates, test panel removed), `0004d37` (restored correct `studio-spotify`), `0586ca0` (Instagram function, migration, watchlist panel). Run `git log -1 --oneline` for the latest |
@@ -123,11 +124,15 @@ Only deploy if both checks pass. `--no-verify-jwt` is required (the function doe
 
 The remote also has 22 older August/September migrations that exist only there. Do not run `supabase db push`. Apply changes through the Supabase connector or SQL, then save a file with the version Supabase recorded.
 
+**Remote-only campaign migrations (checked 2026-11-26): applied in Supabase, no SQL file in the repo:** `20261125073708_campaigns_allow_pending_status`, `20261125194255_studio_campaign_submissions_queue`, `20261125194914_studio_campaigns_separate_from_submissions`, `20261126072323_campaigns_release_day_reserve`, `20261126082204_campaign_playlists`, `20261126084025_campaign_playlists_unique_and_added_by`, `20261126084037_campaign_playlists_drop_redundant_index`. Also `campaigns_no_user_remove` is `20261125200403` on the remote but the repo file is named `20261125200000_...`. Save the missing files (and fix that name) before anyone rebuilds the schema from the repo.
+
 ### Edge Functions
 | Function | Purpose | JWT check |
 |---|---|---|
 | `follow-on-spotify` | Public artist flow: follows RADR accounts for visitors (older Spotify app) | off |
 | `studio-spotify` (v12 deployed, matches repo) | Studio, staff-only. Actions: `connect`, `disconnect`, `playlist_tracks`, `search` (returns `release_date`, optional `year_from`/`year_to`), `write_test`, `preview`, `sync`. Shared `getAccessToken` refreshes tokens | off (does its own staff check) |
+| `spotify-track-search` (v1) | Artist-side song search / pasted Spotify track link in the campaign flow | off |
+| `campaign-playlist-lookup` | Studio, staff-only. Looks up a pasted Spotify playlist link: title, cover, whether the campaign's song is in it | see function source |
 
 Responses: `409 {needs_reconnect: true}` when the Spotify login is gone or expired; `502 {spotify_status}` when Spotify itself errors.
 
@@ -184,13 +189,19 @@ Routes in Studio mode: `/studio` (overview), `/studio/discovery`, `/studio/playl
 
 **Done and working:** Studio shell and deployment to `studio.artistradr.com`, staff-only security, Spotify connection and token refresh, Spotify search with release dates and a release-period filter, draft editor with numbered tracks, review → approve → sync (tested, including refusal after an outside edit), activity log, Discovery (candidates, review, accept into draft, sources).
 
+**Built on `feature/campaign-flow` but not yet tested end to end or deployed:** artist account area and Billing page (no online payment), checkout-style new campaign flow with Spotify song search, campaign packages (Starter, Basic, Supercharge, Pre-save), redesigned artist campaign preview, and Studio's "Playlists for the artist" attach screen. Database changes for all of these are live in Supabase; the website and Studio builds are not.
+
 **Instagram discovery: dropped 2026-11-25.** The Meta Connect step was blocked and the feature is out of scope. Code, function source, tables and panel are removed (see the cleanup note at the end).
 
-**Next, in order:**
-1. **Friday auto-draft** (needs the artwork library, now built).
-2. Finish rotating the exposed Supabase service-role key.
-3. Decide Apple Music approach.
-4. Phase 4: Studio modules (artwork, spotlights).
+**Next, in order (updated 2026-11-26):**
+1. **Test the campaign work locally** (see "Campaign playlists" below): run the branch on the Mac, send a test campaign as an artist, approve it in Studio, attach a public playlist, view it as the artist.
+2. **Save the missing migration files** to `supabase/migrations/` (list above) and fix the `campaigns_no_user_remove` file name.
+3. **Lint, full build, then merge and deploy.** Decide the branch order (`fix/campaign-dashboard-no-remove`, `feature/billing`, `feature/campaign-flow`), merge, rebuild and upload both sites, deploy `campaign-playlist-lookup` if the live copy differs.
+4. **Payments:** choose a provider, build a staff screen to record payments.
+5. **Friday auto-draft** (needs the artwork library, now built).
+6. Finish rotating the exposed Supabase service-role key (plan section 7, steps 6 and 9).
+7. Decide Apple Music approach.
+8. Phase 4: Studio modules (artwork, spotlights).
 
 ---
 
@@ -326,3 +337,35 @@ Overview, Discovery (live), Playlists (live), Studio (planned), Top 10 Generator
 - Adding funds applies only before a campaign is sent. Topping up a running campaign is not built (no payments yet).
 - Tested: database rules (rolled back), flow and Studio page in a browser with sample data, syntax check. Not tested: full build, lint, live sign-in.
 - Still open: Spotify rules on paid services that advertise streams or guarantee placement.
+
+## Campaign playlists (2026-11-26, branch `feature/campaign-flow`, two commits, latest `1fe6f03`, not merged, not deployed)
+
+**Artist side (campaign preview redesign)**
+- Header: bigger song artwork, song name, status chip and package chip. The balance and progress bar at the top are removed; the package row shows plain price text (e.g. "Basic · $50").
+- Four-step tracker: Submitted, In review, Live, Completed. Shows "Paused" when the campaign is paused.
+- Playlists section: each attached playlist's cover and title, linking to Spotify. Until playlists are attached it shows a short waiting message that depends on the campaign status. Only Spotify-hosted images are shown.
+- An artist sees newly attached playlists the next time the campaigns page loads.
+
+**Studio side**
+- Campaigns tab, open a campaign: new "Playlists for the artist" section (`src/studio/components/CampaignPlaylists.jsx`, `campaignPlaylists.css`; `CampaignsPage.jsx` gained 3 lines). Paste a Spotify playlist link, look it up (title, cover, whether the campaign's song is in it), then "Attach to campaign". Remove deletes the attached row.
+- The song check is a best-effort guide, not a block: a playlist can be attached even if the song was not found.
+
+**Database and functions (applied live)**
+- Table `campaign_playlists`; migrations `20261126082204_campaign_playlists`, `20261126084025_campaign_playlists_unique_and_added_by`, `20261126084037_campaign_playlists_drop_redundant_index`. The same playlist cannot be attached twice to a campaign; `added_by` is filled automatically.
+- RLS: artists read only playlists on their own campaigns; only staff add or remove.
+- Edge Function `campaign-playlist-lookup` (staff-only) deployed; source in `supabase/functions/campaign-playlist-lookup`.
+- Security advisor flagged nothing new from this work.
+- The three migration SQL files are **not in the repo yet** (see the remote-only list under Migrations).
+
+**Not verified**
+- No end-to-end test against live Spotify or the live database from the artist screen. The playlist must be public. If the song check says it could not check, the title and cover should still come through.
+- Full lint and build were not run. All new or changed artist-side files are under 300 lines.
+- Studio and the public site both need rebuilding and uploading before any of this is live.
+
+**Test on the Mac**
+```bash
+cd ~/artist-radr && git fetch origin && git switch feature/campaign-flow && git pull --ff-only origin feature/campaign-flow && npm run build && npm run dev
+```
+If Git refuses to switch, do not force it. In a second terminal run `npm run dev:studio`, open a clearly labeled test campaign, attach a public playlist, then open the campaign as the artist. Attaching saves real rows in the live Supabase project; Remove deletes them.
+
+**Possible follow-ups:** show attached playlists on the artist's campaign list; email the artist when playlists are added; show song artwork in Studio's Campaigns tab.
