@@ -317,3 +317,12 @@ Overview, Discovery (live), Playlists (live), Studio (planned), Top 10 Generator
 - Studio Campaigns tab shows package, release date, spot request and song; approval suggests the package length (pre-save: through release day). Live Studio keeps the 14-day default until redeployed.
 - Release-day spots are a request only; nothing holds playlist slots automatically. No payment is taken.
 - Tested: database rules (rolled back), flow and Studio page in a browser with sample data, syntax check. Not tested: full build, lint, live sign-in.
+
+### Package update (2026-11-26, replaces the package list above)
+
+- Packages: Starter $25, Basic $50 (Recommended), Supercharge $100 to $999 (replaces 1 Month and Custom), Pre-save from $50. No durations are shown or chosen; staff set days at approval (14 suggested; pre-save: through release day).
+- Supercharge: slider, +$25/+$50/+$100 add-funds buttons or typed whole dollars. Target steps are in `SUPERCHARGE_TIERS` in `packages.js` ($100, 200, 300, 500, 750, 999). The numbers above $100 were proposed by Claude and need confirmation that RADR can deliver them.
+- Supabase: migration `20261126075217_campaigns_supercharge` applied.
+- Adding funds applies only before a campaign is sent. Topping up a running campaign is not built (no payments yet).
+- Tested: database rules (rolled back), flow and Studio page in a browser with sample data, syntax check. Not tested: full build, lint, live sign-in.
+- Still open: Spotify rules on paid services that advertise streams or guarantee placement.

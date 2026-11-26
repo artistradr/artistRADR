@@ -1,7 +1,7 @@
 // Package, release day and linked song for one campaign. Renders inside <dl className="rc-facts">.
 
 import PropTypes from "prop-types";
-import { formatPlainDate, localDate, packageName } from "../../pages/campaigns/packages";
+import { formatPlainDate, localDate, packageName, targetsFor } from "../../pages/campaigns/packages";
 import { artistNames, safeArtwork, spotifyUrl } from "../../pages/campaigns/spotifyTrack";
 
 export default function CampaignPackageFacts({ campaign, now }) {
@@ -10,11 +10,15 @@ export default function CampaignPackageFacts({ campaign, now }) {
   const link = spotifyUrl(track);
   const releaseDate = campaign.release_date;
   const passed = releaseDate && releaseDate < localDate(0, new Date(now));
+  const targets = targetsFor(campaign.package, campaign.budget);
 
   return (
     <>
       {campaign.package && (
         <div><dt>Package</dt><dd>{packageName(campaign.package)}</dd></div>
+      )}
+      {targets.length > 0 && (
+        <div><dt>Campaign targets</dt><dd>{targets.join(", ")}</dd></div>
       )}
       {releaseDate && (
         <div>

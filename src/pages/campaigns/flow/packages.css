@@ -1,4 +1,4 @@
-/* New campaign flow: package cards, custom and pre-save fields */
+/* New campaign flow: package cards, Supercharge and pre-save fields */
 .flow-packages { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
 .flow-package {
   position: relative; display: flex; flex-direction: column; padding: 22px 16px 18px; cursor: pointer;
@@ -14,6 +14,7 @@
 }
 .flow-package-name { font-size: 13px; font-weight: 700; color: #555; }
 .flow-package-price { font-family: var(--font-display); font-size: 32px; font-weight: 800; color: #111; margin: 4px 0 14px; }
+.flow-package-price small { font-family: var(--font-body); font-size: 12px; font-weight: 600; color: #888; }
 .flow-package-caption {
   font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: #999;
   border-top: 1px solid rgba(0,0,0,0.08); padding-top: 12px; margin-bottom: 8px;
@@ -24,7 +25,21 @@
 .flow-flexible { margin-top: 12px; }
 .flow-flexible-panel { margin-top: 14px; padding: 18px; border-radius: 12px; background: #f7f6f3; }
 .flow-label--spaced { margin-top: 18px; }
-.flow-flexible-panel .flow-chips { margin-bottom: 0; }
+.flow-volume {
+  -webkit-appearance: none; appearance: none; width: 100%; height: 8px; margin-top: 20px; cursor: pointer;
+  border-radius: 100px; background: linear-gradient(to right, #D94F2B var(--fill), rgba(0,0,0,0.12) var(--fill));
+}
+.flow-volume::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 24px; height: 24px; border-radius: 50%; background: white; border: 3px solid #D94F2B;
+}
+.flow-volume::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: white; border: 3px solid #D94F2B; }
+.flow-volume:focus-visible { outline: 2px solid #111; outline-offset: 6px; }
+.flow-volume-ends { display: flex; justify-content: space-between; margin-top: 8px; font-size: 12px; color: #888; }
+.flow-add { display: grid; grid-template-columns: auto repeat(3, minmax(0, 1fr)); gap: 8px; align-items: center; margin-top: 16px; }
+.flow-add-label { font-size: 12.5px; font-weight: 700; color: #333; margin-right: 6px; }
+.flow-add .flow-chip:disabled { opacity: 0.4; cursor: default; }
+.flow-live { margin-top: 18px; border-top: 1px solid rgba(0,0,0,0.08); }
+.flow-live .flow-package-caption { display: block; border-top: 0; }
 .flow-check { display: flex; gap: 10px; align-items: flex-start; margin-top: 16px; cursor: pointer; }
 .flow-check input { accent-color: #D94F2B; margin-top: 3px; }
 

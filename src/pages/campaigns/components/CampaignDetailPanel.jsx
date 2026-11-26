@@ -1,5 +1,5 @@
 import { PLATFORM_META } from "./CampaignList";
-import { formatPlainDate, lengthLabel, packageName } from "../packages";
+import { formatPlainDate, packageName } from "../packages";
 import { artistNames, safeArtwork, spotifyUrl } from "../spotifyTrack";
 
 const F = { d: "var(--font-display)", b: "var(--font-body)" };
@@ -68,9 +68,7 @@ function CampaignDetailPanel({ campaign, onPause }) {
           <div className="campaign-detail-row">
             <span>Package</span>
             <span className="campaign-detail-row-value">
-              {[packageName(campaign.package), campaign.package === "custom" && lengthLabel(campaign.days)]
-                .filter(Boolean)
-                .join(" · ")}
+              {packageName(campaign.package)}
             </span>
           </div>
         )}

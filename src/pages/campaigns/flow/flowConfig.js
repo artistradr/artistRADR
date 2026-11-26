@@ -1,6 +1,6 @@
 // Options and rules for the new campaign flow.
 import { looksLikeLink } from "../spotifyTrack";
-import { CUSTOM_MIN, findPackage, isFutureDate } from "../packages";
+import { PRESAVE, SUPERCHARGE, findPackage, isFutureDate, isSuperchargeAmount } from "../packages";
 
 export const STEPS = ["Track", "Goal", "Package", "Review"];
 
@@ -13,19 +13,16 @@ export const GOALS = [
 
 export const INITIAL_DRAFT = {
   name: "", track: null, platform: "spotify", goal: GOALS[0].value,
-  package: "", budget: "", customDays: 30, releaseDate: "", reserve: true,
+  package: "", budget: "", releaseDate: "", reserve: true,
 };
 
 // True once a package is chosen and has a valid price.
 export function hasBudget(draft) {
   const budget = Number(draft.budget);
-  if (findPackage(draft.package)) return budget === findPackage(draft.package).price;
-  return Boolean(draft.package) && Number.isFinite(budget) && budget >= CUSTOM_MIN;
-}
-
-export function draftDays(draft) {
-  if (draft.package === "custom") return draft.customDays;
-  return findPackage(draft.package)?.days ?? null;
+  if (draft.package === SUPERCHARGE.id) return isSuperchargeAmount(draft.budget);
+  if (draft.package === PRESAVE.id) return Number.isFinite(budget) && budget >= PRESAVE.min;
+  const fixed = findPackage(draft.package);
+  return Boolean(fixed) && budget === fixed.price;
 }
 
 export function money(amount) {
@@ -40,7 +37,11 @@ export function stepError(step, draft) {
   }
   if (step === 2) {
     if (!draft.package) return "Choose a package.";
-    if (!hasBudget(draft)) return `Enter a budget of at least ${money(CUSTOM_MIN)}.`;
+    if (!hasBudget(draft)) {
+      return draft.package === SUPERCHARGE.id
+        ? `Enter a whole dollar amount from $${SUPERCHARGE.min} to $${SUPERCHARGE.max}.`
+        : `Enter a budget of at least ${money(PRESAVE.min)}.`;
+    }
     if (draft.package === "presave" && !isFutureDate(draft.releaseDate)) return "Choose a release date after today.";
   }
   return "";

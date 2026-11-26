@@ -1,19 +1,31 @@
 import PropTypes from "prop-types";
-import { CUSTOM_MIN, DISCLAIMER, FLEXIBLE, PACKAGES, findPackage, isFutureDate } from "../packages";
+import { DISCLAIMER, PACKAGES, PRESAVE, SUPERCHARGE, findPackage, isFutureDate, superchargeTargets } from "../packages";
 import PackageCard from "./PackageCard";
-import FlexibleFields from "./FlexibleFields";
+import SuperchargeFields from "./SuperchargeFields";
+import PresaveFields from "./PresaveFields";
+
+const SUPERCHARGE_CARD = {
+  id: SUPERCHARGE.id,
+  name: SUPERCHARGE.name,
+  prefix: "from",
+  price: SUPERCHARGE.min,
+  targets: superchargeTargets(SUPERCHARGE.min),
+};
 
 function StepBudget({ draft, update }) {
   function choose(id) {
     if (id === draft.package) return;
-    const fixed = findPackage(id);
-    // Custom and pre-save start empty: no amount shows until the artist enters one.
-    const changes = { package: id, budget: fixed ? String(fixed.price) : "" };
-    if (id === "presave" && !draft.releaseDate && isFutureDate(draft.track?.release_date)) {
+    // Pre-save starts empty: no amount shows until the artist enters one.
+    let budget = findPackage(id)?.price ?? "";
+    if (id === SUPERCHARGE.id) budget = SUPERCHARGE.min;
+    const changes = { package: id, budget: String(budget) };
+    if (id === PRESAVE.id && !draft.releaseDate && isFutureDate(draft.track?.release_date)) {
       changes.releaseDate = draft.track.release_date;
     }
     update(changes);
   }
+
+  const presaveOn = draft.package === PRESAVE.id;
 
   return (
     <fieldset className="flow-fieldset">
@@ -21,26 +33,24 @@ function StepBudget({ draft, update }) {
       <p className="flow-sub">One price per campaign, in US dollars.</p>
 
       <div className="flow-packages">
-        {PACKAGES.map((item) => (
+        {[...PACKAGES, SUPERCHARGE_CARD].map((item) => (
           <PackageCard key={item.id} item={item} selected={draft.package === item.id} onSelect={choose} />
         ))}
       </div>
 
-      <div className="flow-options flow-options--two flow-flexible">
-        {FLEXIBLE.map(({ id, name, hint }) => (
-          <label key={id} className={`flow-option${draft.package === id ? " flow-option--on" : ""}`}>
-            <input type="radio" name="package" checked={draft.package === id} onChange={() => choose(id)} />
-            <span>
-              <span className="flow-option-name">{name} · from ${CUSTOM_MIN}</span>
-              <span className="flow-option-hint">{hint}</span>
-            </span>
-          </label>
-        ))}
+      {draft.package === SUPERCHARGE.id && <SuperchargeFields draft={draft} update={update} />}
+
+      <div className="flow-options flow-flexible">
+        <label className={`flow-option${presaveOn ? " flow-option--on" : ""}`}>
+          <input type="radio" name="package" checked={presaveOn} onChange={() => choose(PRESAVE.id)} />
+          <span>
+            <span className="flow-option-name">{PRESAVE.name} · from ${PRESAVE.min}</span>
+            <span className="flow-option-hint">{PRESAVE.hint}</span>
+          </span>
+        </label>
       </div>
 
-      {(draft.package === "custom" || draft.package === "presave") && (
-        <FlexibleFields draft={draft} update={update} />
-      )}
+      {presaveOn && <PresaveFields draft={draft} update={update} />}
 
       <div className="flow-note">{DISCLAIMER}</div>
     </fieldset>

@@ -7,7 +7,9 @@ function PackageCard({ item, selected, onSelect }) {
       <input type="radio" name="package" checked={selected} onChange={() => onSelect(item.id)} />
       {item.recommended && <span className="flow-package-badge">Recommended</span>}
       <span className="flow-package-name">{item.name}</span>
-      <span className="flow-package-price">${item.price}</span>
+      <span className="flow-package-price">
+        {item.prefix && <small>{item.prefix} </small>}${item.price}
+      </span>
       <span className="flow-package-caption">Campaign targets</span>
       <span className="flow-package-targets">
         {item.targets.map((target) => (

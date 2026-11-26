@@ -1,7 +1,7 @@
 import PropTypes from "prop-types";
 import { PLATFORM_META } from "../components/CampaignList";
-import { DISCLAIMER, formatPlainDate, lengthLabel, packageName } from "../packages";
-import { draftDays, money } from "./flowConfig";
+import { DISCLAIMER, formatPlainDate, packageName, targetsFor } from "../packages";
+import { money } from "./flowConfig";
 
 function StepReview({ draft, onEdit, disabled }) {
   const rows = [
@@ -15,7 +15,7 @@ function StepReview({ draft, onEdit, disabled }) {
     rows.push({ label: "Release date", value: formatPlainDate(draft.releaseDate), step: 2 });
     rows.push({ label: "Release-day spots", value: draft.reserve ? "Requested" : "Not requested", step: 2 });
   } else {
-    rows.push({ label: "Length", value: lengthLabel(draftDays(draft)), step: 2 });
+    rows.push({ label: "Targets", value: targetsFor(draft.package, draft.budget).join(", "), step: 2 });
   }
 
   return (

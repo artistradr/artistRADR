@@ -16,7 +16,6 @@ export function rowToCampaign(row) {
     status: row.status,
     budget: Number(row.budget),
     package: row.package ?? null,
-    days: row.campaign_days ?? null,
     releaseDate: row.release_date ?? null,
     reserveSpots: Boolean(row.reserve_release_spots),
     spent: Number(row.spent),

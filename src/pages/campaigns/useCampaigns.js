@@ -39,7 +39,6 @@ export function useCampaigns(userId) {
         platform: draft.platform,
         budget: draft.budget,
         package: draft.package,
-        campaign_days: draft.days,
         release_date: draft.package === "presave" ? draft.releaseDate : null,
         reserve_release_spots: draft.package === "presave" && draft.reserve,
         goal: draft.goal,
