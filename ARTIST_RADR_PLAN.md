@@ -223,3 +223,9 @@ Order matters. Deactivating the legacy keys breaks anything still using them, in
 7. **Done 2026-11-24.** Legacy keys deactivated (Settings, API Keys, Legacy tab); re-enable there if a site breaks. Still retest the public site, Studio login, Playlists and Discovery.
 8. Later: move to JWT signing keys, then revoke the legacy JWT secret (the leaked key is a JWT signed by it). Check the effect on logged-in users first.
 9. Remove the key text from `scripts/env.migration.example` (replace with a placeholder) and commit. It stays in git history, which is harmless once the key is dead.
+
+## Billing TODO (2026-11-26)
+- [ ] Apply the `payments` migration
+- [ ] Choose a payment provider; verify payments server-side before marking them paid
+- [ ] Studio screen for staff to record payments
+- [ ] Merge `studio-campaigns-tab` with `feature/billing`

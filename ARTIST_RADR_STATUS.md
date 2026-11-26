@@ -273,3 +273,12 @@ Overview, Discovery (live), Playlists (live), Studio (planned), Top 10 Generator
 - Test: sign in as an artist, open /campaigns, open a campaign: no Remove, Edit budget or History; a direct delete or `status: 'removed'` update from the client should fail.
 - Known gap: the new migration file is in the repo and live in Supabase, but the earlier guard triggers on `campaigns` were never saved as migration files; add them if the schema is rebuilt from the repo.
 
+
+## Account area and billing (2026-11-26)
+- Branch `feature/billing`, off `fix/campaign-dashboard-no-remove`. Not merged. Syntax checked and Billing/Profile previewed with stand-in data; full lint and build not run.
+- Profile staff card now has one button, "Open RADR Studio". "Go to Admin" is gone; the public `/admin` route still exists.
+- Account sidebar: Profile, My Campaigns, Billing. Dashboard and Settings removed; unused `CampaignSidebar.jsx` deleted.
+- New `/campaigns/billing` page: budget totals, campaign billing, payment history. No online payment (no provider connected).
+- `supabase/migrations/20261126000000_payments.sql` is **not applied**. Until it is, history shows as empty. After applying, rename the file to the recorded version. Staff have no screen for recording payments yet.
+- Fixed the import casing `pages/Campaigns` to `pages/campaigns`. `App.jsx` also imports `pages/home/Home` while the file is `home.jsx` (matters on case-sensitive systems).
+- `studio-campaigns-tab` (commit `52f450f`, Studio Campaigns tab) is not in this branch. Merge it before building Studio.

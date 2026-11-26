@@ -24,7 +24,8 @@ import PrivacyPolicy from "pages/PrivacyPolicy";
 import TermsAndConditions from "pages/TermsAndConditions";
 
 import Promotion from "pages/promotion/Promotion";
-import CampaignDashboard from "pages/Campaigns/CampaignDashboard";
+import CampaignDashboard from "pages/campaigns/CampaignDashboard";
+import Billing from "pages/campaigns/Billing";
 
 // ── Studio shell ────────────────────────────────────────────────────────
 import StudioLayout from "./studio/StudioLayout";
@@ -176,6 +177,7 @@ function AppRoutes() {
              not a navbar destination itself. Auth-gated: manages billing
              and campaign spend, same guard as /profile. */}
         <Route path="/campaigns" element={<PrivateRoute><CampaignDashboard /></PrivateRoute>} />
+        <Route path="/campaigns/billing" element={<PrivateRoute><Billing /></PrivateRoute>} />
 
         {/* ── Legal — bare routes, not in routes.js ──
              Previously a "Legal" navbar dropdown; that group has been

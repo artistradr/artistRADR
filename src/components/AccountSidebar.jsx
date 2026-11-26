@@ -3,12 +3,12 @@ import { useSupabaseAuth } from "context/SupabaseAuthContext";
 
 const NAV_ITEMS = [
   {
-    key: "dashboard",
-    label: "Dashboard",
-    path: "/campaigns",
+    key: "profile",
+    label: "Profile",
+    path: "/profile",
     icon: (
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="3" y="3" width="7" height="9" rx="1.5" /><rect x="14" y="3" width="7" height="5" rx="1.5" /><rect x="14" y="12" width="7" height="9" rx="1.5" /><rect x="3" y="16" width="7" height="5" rx="1.5" />
+        <circle cx="12" cy="8" r="4" /><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8" />
       </svg>
     )
   },
@@ -23,16 +23,6 @@ const NAV_ITEMS = [
     )
   },
   {
-    key: "profile",
-    label: "Profile",
-    path: "/profile",
-    icon: (
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="12" cy="8" r="4" /><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8" />
-      </svg>
-    )
-  },
-  {
     key: "billing",
     label: "Billing",
     path: "/campaigns/billing",
@@ -42,21 +32,11 @@ const NAV_ITEMS = [
       </svg>
     )
   },
-  {
-    key: "settings",
-    label: "Settings",
-    path: "/campaigns/settings",
-    icon: (
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" />
-      </svg>
-    )
-  },
 ];
 
 /**
  * Shared right-side account nav. Drop into any account-area page
- * (Campaigns dashboard, Profile, Billing, Settings, ...) — self-contained
+ * (Profile, Campaigns, Billing) — self-contained
  * styles, real auth user via useSupabaseAuth, sign-out built in.
  *
  * Props:
