@@ -30,7 +30,6 @@ import Billing from "pages/campaigns/Billing";
 // ── Studio shell ────────────────────────────────────────────────────────
 import StudioLayout from "./studio/StudioLayout";
 import StudioHome from "./studio/StudioHome";
-import ModulePage from "./studio/ModulePage";
 import PlaylistsPage from "./studio/pages/PlaylistsPage";
 import DiscoveryPage from "./studio/pages/DiscoveryPage";
 import Top10Generator from "./studio/pages/Top10Generator";
@@ -89,8 +88,6 @@ function PrivateRoute({ children }) {
 }
 
 // ── Studio build: admin + Studio routes only ────────────────────────────
-// To build a module for real, swap its <ModulePage id="..." /> element for
-// the real page component.
 function StudioRoutes() {
   useEffect(() => {
     // Keep Studio out of search engines.
@@ -117,14 +114,12 @@ function StudioRoutes() {
         <Route path="discovery" element={<DiscoveryPage />} />
         <Route path="playlists" element={<PlaylistsPage />} />
         <Route path="spotify/callback" element={<StudioSpotifyCallback />} />
-        <Route path="create" element={<ModulePage id="studio" />} />
         <Route path="artwork/top10" element={<Top10Generator />} />
         <Route path="artwork/library" element={<ArtworkLibrary />} />
         <Route path="submissions" element={<SubmissionsPage />} />
         <Route path="magazine" element={<MagazineList />} />
         <Route path="magazine/new" element={<MagazineEditor />} />
         <Route path="magazine/edit/:id" element={<MagazineEditor />} />
-        <Route path="ai" element={<ModulePage id="ai" />} />
       </Route>
 
       {/* Everything else goes to the Studio overview (logged-out users go to login) */}

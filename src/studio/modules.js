@@ -1,10 +1,8 @@
 // src/studio/modules.js
 import Explore from "@mui/icons-material/Explore";
 import QueueMusic from "@mui/icons-material/QueueMusic";
-import Palette from "@mui/icons-material/Palette";
 import Inbox from "@mui/icons-material/Inbox";
 import Article from "@mui/icons-material/Article";
-import AutoAwesome from "@mui/icons-material/AutoAwesome";
 import Dashboard from "@mui/icons-material/Dashboard";
 import EmojiEvents from "@mui/icons-material/EmojiEvents";
 import PhotoLibrary from "@mui/icons-material/PhotoLibrary";
@@ -34,7 +32,7 @@ export const MODULES = [
     label: "Playlists",
     path: "/studio/playlists",
     Icon: QueueMusic,
-    status: "next",
+    status: "live",
     phase: "Phase 2",
     tagline: "Curate RADR playlists on Spotify and Apple Music.",
     description:
@@ -47,24 +45,6 @@ export const MODULES = [
       "Drag-and-drop draft ordering",
       "Change preview: adds, removes, reorders, conflicts",
       "Approved sync with logs",
-    ],
-  },
-  {
-    id: "studio",
-    label: "Studio",
-    path: "/studio/create",
-    Icon: Palette,
-    status: "planned",
-    phase: "Phase 4",
-    tagline: "Turn discoveries into branded artwork and copy.",
-    description:
-      "Templates and assets for artist spotlights, RADR Selections and playlist promos, in the aspect ratios each social platform needs.",
-    features: [
-      "Reusable RADR artwork templates",
-      "Artist Spotlight and RADR Selection formats",
-      "Approved asset library with credit and rights fields",
-      "Captions and headline drafting",
-      "Draft, review and approved states",
     ],
   },
   {
@@ -113,23 +93,6 @@ export const MODULES = [
     tagline: "Blog posts: write, edit, publish and feature.",
     description: "Your blog posts and the post editor, now inside Studio. The public site keeps its own /admin.",
     features: [],
-  },
-  {
-    id: "ai",
-    label: "RADR AI",
-    path: "/studio/ai",
-    Icon: AutoAwesome,
-    status: "planned",
-    phase: "Phase 6",
-    tagline: "An assistant that works through scoped, auditable tools.",
-    description:
-      "Discover, Prepare and Execute permission levels, with explicit approval before anything goes live.",
-    features: [
-      "Provider-independent tool layer",
-      "Discovery, playlist and Studio tools",
-      "Approval gates and action summaries",
-      "Activity history",
-    ],
   },
 ];
 
