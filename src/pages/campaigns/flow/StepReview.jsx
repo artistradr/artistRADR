@@ -1,6 +1,7 @@
 import PropTypes from "prop-types";
 import { PLATFORM_META } from "../components/CampaignList";
-import { DISCLAIMER, formatPlainDate, packageName, targetsFor } from "../packages";
+import { DISCLAIMER, SUPERCHARGE, formatPlainDate, packageName, targetsFor } from "../packages";
+import { artistNames } from "../spotifyTrack";
 import { money } from "./flowConfig";
 
 function StepReview({ draft, onEdit, disabled }) {
@@ -8,9 +9,21 @@ function StepReview({ draft, onEdit, disabled }) {
     { label: "Track", value: draft.name.trim(), step: 0 },
     { label: "Platform", value: PLATFORM_META[draft.platform]?.label, step: 0 },
     { label: "Goal", value: draft.goal, step: 1 },
-    { label: "Package", value: packageName(draft.package), step: 2 },
-    { label: "Price", value: money(draft.budget), step: 2 },
+    { label: "Plan", value: packageName(draft.package), step: 2 },
   ];
+  if (draft.package === "daily") {
+    rows.push({ label: "Daily spend", value: `${money(draft.dailyRate)} per day`, step: 2 });
+    rows.push({ label: "Length", value: `${draft.days} days`, step: 2 });
+  }
+  if (draft.package === SUPERCHARGE.id) {
+    rows.push({ label: "Length", value: `${SUPERCHARGE.days} days`, step: 2 });
+    rows.push({
+      label: "Second song",
+      value: draft.extraTrack ? [draft.extraTrack.name, artistNames(draft.extraTrack)].filter(Boolean).join(" · ") : "None",
+      step: 2,
+    });
+  }
+  rows.push({ label: "Total", value: money(draft.budget), step: 2 });
   if (draft.package === "presave") {
     rows.push({ label: "Release date", value: formatPlainDate(draft.releaseDate), step: 2 });
     rows.push({ label: "Release-day spots", value: draft.reserve ? "Requested" : "Not requested", step: 2 });

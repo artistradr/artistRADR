@@ -1,24 +1,39 @@
 import PropTypes from "prop-types";
-import { DISCLAIMER, PACKAGES, PRESAVE, SUPERCHARGE, findPackage, isFutureDate, superchargeTargets } from "../packages";
+import { DAILY, DISCLAIMER, PRESAVE, SUPERCHARGE, dailyTargets, dailyTotal, isFutureDate, superchargeTargets } from "../packages";
 import PackageCard from "./PackageCard";
+import DailyFields from "./DailyFields";
 import SuperchargeFields from "./SuperchargeFields";
 import PresaveFields from "./PresaveFields";
+
+const DAILY_CARD = {
+  id: DAILY.id,
+  name: DAILY.name,
+  prefix: "from",
+  price: DAILY.minRate,
+  unit: `per day · ${DAILY.minDays}+ days`,
+  targets: dailyTargets(dailyTotal(DAILY.minRate, DAILY.minDays)),
+};
 
 const SUPERCHARGE_CARD = {
   id: SUPERCHARGE.id,
   name: SUPERCHARGE.name,
   prefix: "from",
   price: SUPERCHARGE.min,
+  unit: `· ${SUPERCHARGE.days} days`,
   targets: superchargeTargets(SUPERCHARGE.min),
 };
 
 function StepBudget({ draft, update }) {
   function choose(id) {
     if (id === draft.package) return;
-    // Pre-save starts empty: no amount shows until the artist enters one.
-    let budget = findPackage(id)?.price ?? "";
-    if (id === SUPERCHARGE.id) budget = SUPERCHARGE.min;
-    const changes = { package: id, budget: String(budget) };
+    // Each plan starts from its minimum. Pre-save starts empty until the artist enters an amount.
+    const changes = { package: id, budget: "" };
+    if (id === DAILY.id) {
+      changes.dailyRate = String(DAILY.minRate);
+      changes.days = String(DAILY.minDays);
+      changes.budget = String(dailyTotal(DAILY.minRate, DAILY.minDays));
+    }
+    if (id === SUPERCHARGE.id) changes.budget = String(SUPERCHARGE.min);
     if (id === PRESAVE.id && !draft.releaseDate && isFutureDate(draft.track?.release_date)) {
       changes.releaseDate = draft.track.release_date;
     }
@@ -29,15 +44,16 @@ function StepBudget({ draft, update }) {
 
   return (
     <fieldset className="flow-fieldset">
-      <legend className="flow-title">Choose your package</legend>
-      <p className="flow-sub">One price per campaign, in US dollars.</p>
+      <legend className="flow-title">Choose your plan</legend>
+      <p className="flow-sub">One payment per campaign, in US dollars.</p>
 
       <div className="flow-packages">
-        {[...PACKAGES, SUPERCHARGE_CARD].map((item) => (
+        {[DAILY_CARD, SUPERCHARGE_CARD].map((item) => (
           <PackageCard key={item.id} item={item} selected={draft.package === item.id} onSelect={choose} />
         ))}
       </div>
 
+      {draft.package === DAILY.id && <DailyFields draft={draft} update={update} />}
       {draft.package === SUPERCHARGE.id && <SuperchargeFields draft={draft} update={update} />}
 
       <div className="flow-options flow-flexible">

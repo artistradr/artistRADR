@@ -1,7 +1,9 @@
 import PropTypes from "prop-types";
 import { SUPERCHARGE, isSuperchargeAmount, nextTierAt, superchargeTargets } from "../packages";
+import ExtraTrackField from "./ExtraTrackField";
 
-// Add funds with the slider, the buttons or by typing. Targets update live.
+// One payment for a 30-day campaign. Add funds with the slider, the buttons or by typing.
+// Targets update live. The artist can add a second song.
 function SuperchargeFields({ draft, update }) {
   const { min, max, addSteps } = SUPERCHARGE;
   const amount = Number(draft.budget) || 0;
@@ -13,7 +15,7 @@ function SuperchargeFields({ draft, update }) {
 
   return (
     <div className="flow-flexible-panel">
-      <label className="flow-label" htmlFor="flow-budget">Your budget</label>
+      <label className="flow-label" htmlFor="flow-budget">Your budget for {SUPERCHARGE.days} days</label>
       <div className="flow-amount">
         <span>$</span>
         <input
@@ -63,6 +65,8 @@ function SuperchargeFields({ draft, update }) {
       ) : (
         <div className="flow-note">Enter a whole dollar amount from ${min} to ${max}.</div>
       )}
+
+      <ExtraTrackField draft={draft} update={update} />
     </div>
   );
 }

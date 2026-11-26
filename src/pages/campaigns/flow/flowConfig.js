@@ -1,6 +1,6 @@
 // Options and rules for the new campaign flow.
 import { looksLikeLink } from "../spotifyTrack";
-import { PRESAVE, SUPERCHARGE, findPackage, isFutureDate, isSuperchargeAmount } from "../packages";
+import { DAILY, PRESAVE, SUPERCHARGE, dailyTotal, isDailyPlan, isFutureDate, isSuperchargeAmount } from "../packages";
 
 export const STEPS = ["Track", "Goal", "Package", "Review"];
 
@@ -14,6 +14,7 @@ export const GOALS = [
 export const INITIAL_DRAFT = {
   name: "", track: null, platform: "spotify", goal: GOALS[0].value,
   package: "", budget: "", releaseDate: "", reserve: true,
+  dailyRate: "", days: "", extraTrack: null,
 };
 
 // Starting point for renewing a finished campaign: same song, goal and platform.
@@ -29,13 +30,15 @@ export function renewDraft(campaign) {
   };
 }
 
-// True once a package is chosen and has a valid price.
+// True once a plan is chosen and has a valid price.
 export function hasBudget(draft) {
   const budget = Number(draft.budget);
+  if (draft.package === DAILY.id) {
+    return isDailyPlan(draft.dailyRate, draft.days) && budget === dailyTotal(draft.dailyRate, draft.days);
+  }
   if (draft.package === SUPERCHARGE.id) return isSuperchargeAmount(draft.budget);
   if (draft.package === PRESAVE.id) return Number.isFinite(budget) && budget >= PRESAVE.min;
-  const fixed = findPackage(draft.package);
-  return Boolean(fixed) && budget === fixed.price;
+  return false;
 }
 
 export function money(amount) {
@@ -49,8 +52,11 @@ export function stepError(step, draft) {
     if (!draft.track && looksLikeLink(draft.name)) return "Pick your song from the results, or type its name.";
   }
   if (step === 2) {
-    if (!draft.package) return "Choose a package.";
+    if (!draft.package) return "Choose a plan.";
     if (!hasBudget(draft)) {
+      if (draft.package === DAILY.id) {
+        return `Choose a daily spend from ${money(DAILY.minRate)} to ${money(DAILY.maxRate)} and ${DAILY.minDays} to ${DAILY.maxDays} days.`;
+      }
       return draft.package === SUPERCHARGE.id
         ? `Enter a whole dollar amount from $${SUPERCHARGE.min} to $${SUPERCHARGE.max}.`
         : `Enter a budget of at least ${money(PRESAVE.min)}.`;

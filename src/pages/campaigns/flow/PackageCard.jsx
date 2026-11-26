@@ -9,6 +9,7 @@ function PackageCard({ item, selected, onSelect }) {
       <span className="flow-package-name">{item.name}</span>
       <span className="flow-package-price">
         {item.prefix && <small>{item.prefix} </small>}${item.price}
+        {item.unit && <small> {item.unit}</small>}
       </span>
       <span className="flow-package-caption">Campaign targets</span>
       <span className="flow-package-targets">

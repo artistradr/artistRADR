@@ -42,6 +42,8 @@ export function useCampaigns(userId) {
   // Returns { campaign } or { error } so the flow can show the result itself.
   async function createCampaign(draft) {
     if (!userId) return { error: "Please sign in again." };
+    const daily = draft.package === "daily";
+    const supercharge = draft.package === "supercharge";
     const { data, error: insertError } = await supabase
       .from("campaigns")
       .insert({
@@ -55,6 +57,8 @@ export function useCampaigns(userId) {
         goal: draft.goal,
         status: "pending",
         ...(draft.track && { spotify_track: draft.track }),
+        ...(daily && { daily_rate: Number(draft.dailyRate), plan_days: Number(draft.days) }),
+        ...(supercharge && draft.extraTrack && { extra_track: draft.extraTrack }),
       })
       .select()
       .single();
