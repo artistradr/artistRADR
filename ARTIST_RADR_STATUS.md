@@ -22,7 +22,7 @@ Artist RADR (artistradr.com) is an independent music discovery and editorial pla
 | Repo | `github.com/artistradr/artistRADR` (private) |
 | Local folder | `~/artist-radr` |
 | Working branch | `feature/studio` (Studio is built and deployed from this branch; not merged to `main`) |
-| Current work | `feature/campaign-flow` (campaign flow, packages, Studio Campaigns tab, campaign playlists). Not merged, not deployed. Other unmerged branches: `fix/campaign-dashboard-no-remove`, `feature/billing`. Check which branch contains which before merging |
+| Current work | `feature/campaign-flow` (campaign flow, packages, Studio Campaigns tab, campaign playlists, Campaign playlists page). Not merged, not deployed. Other unmerged branches: `fix/campaign-dashboard-no-remove`, `feature/billing`. Check which branch contains which before merging |
 | `main` | fast-forwarded to `a0f9581` (promo work) |
 | Rollback tag | `live-before-studio` |
 | Studio commits pushed | `88fa3ed` (Spotify, draft editor, approval and sync), `0f717ba` (Discovery, activity log), `61322dc` (release dates, test panel removed), `0004d37` (restored correct `studio-spotify`), `0586ca0` (Instagram function, migration, watchlist panel). Run `git log -1 --oneline` for the latest |
@@ -189,19 +189,20 @@ Routes in Studio mode: `/studio` (overview), `/studio/discovery`, `/studio/playl
 
 **Done and working:** Studio shell and deployment to `studio.artistradr.com`, staff-only security, Spotify connection and token refresh, Spotify search with release dates and a release-period filter, draft editor with numbered tracks, review → approve → sync (tested, including refusal after an outside edit), activity log, Discovery (candidates, review, accept into draft, sources).
 
-**Built on `feature/campaign-flow` but not yet tested end to end or deployed:** artist account area and Billing page (no online payment), checkout-style new campaign flow with Spotify song search, campaign packages (Starter, Basic, Supercharge, Pre-save), redesigned artist campaign preview, and Studio's "Playlists for the artist" attach screen. Database changes for all of these are live in Supabase; the website and Studio builds are not.
+**Built on `feature/campaign-flow` but not yet tested end to end or deployed:** artist account area and Billing page (no online payment), checkout-style new campaign flow with Spotify song search, campaign packages (Starter, Basic, Supercharge, Pre-save), redesigned artist campaign preview, Studio's "Playlists for the artist" attach screen, and Studio's Campaign playlists page (a campaign-by-campaign view and an all-playlists view; Partner curators is a placeholder). Database changes for all of these are live in Supabase; the website and Studio builds are not.
 
 **Instagram discovery: dropped 2026-11-25.** The Meta Connect step was blocked and the feature is out of scope. Code, function source, tables and panel are removed (see the cleanup note at the end).
 
 **Next, in order (updated 2026-11-26):**
-1. **Test the campaign work locally** (see "Campaign playlists" below): run the branch on the Mac, send a test campaign as an artist, approve it in Studio, attach a public playlist, view it as the artist.
+1. **Test the campaign work locally** (see "Campaign playlists" below): run the branch on the Mac, send a test campaign as an artist, approve it in Studio, attach a public playlist from the Campaigns tab and from the new Campaign playlists page, view it as the artist.
 2. **Save the missing migration files** to `supabase/migrations/` (list above) and fix the `campaigns_no_user_remove` file name.
 3. **Lint, full build, then merge and deploy.** Decide the branch order (`fix/campaign-dashboard-no-remove`, `feature/billing`, `feature/campaign-flow`), merge, rebuild and upload both sites, deploy `campaign-playlist-lookup` if the live copy differs.
 4. **Payments:** choose a provider, build a staff screen to record payments.
-5. **Friday auto-draft** (needs the artwork library, now built).
-6. Finish rotating the exposed Supabase service-role key (plan section 7, steps 6 and 9).
-7. Decide Apple Music approach.
-8. Phase 4: Studio modules (artwork, spotlights).
+5. **Partner curators** (list, approval, partner playlists on campaigns, earnings) once payments exist.
+6. **Friday auto-draft** (needs the artwork library, now built).
+7. Finish rotating the exposed Supabase service-role key (plan section 7, steps 6 and 9).
+8. Decide Apple Music approach.
+9. Phase 4: Studio modules (artwork, spotlights).
 
 ---
 
@@ -245,6 +246,7 @@ Routes in Studio mode: `/studio` (overview), `/studio/discovery`, `/studio/playl
 ## Studio layout (2026-11-24)
 Sidebar and Overview cards come from `src/studio/modules.js`. Current order:
 Overview, Discovery (live), Playlists (live), Studio (planned), Top 10 Generator (live, /studio/artwork/top10), Artwork library (live, /studio/artwork/library, added 2026-11-25), Submissions (live, /studio/submissions, replaces Originals), Magazine (live, /studio/magazine), RADR AI (planned).
+Update 2026-11-26: on `feature/campaign-flow` the Studio and RADR AI placeholders are gone, and Campaigns (live, /studio/campaigns) and Campaign playlists (live, /studio/campaign-playlists) sit after Submissions, before Magazine.
 
 ## Open checks (2026-11-25)
 - Not yet tested by a human: Save to library (`top10_artworks` has 0 rows) and Submissions approve/reject (`playlist_submissions` has 0 rows; make a test submission first, approval sends an email).
@@ -351,11 +353,12 @@ Overview, Discovery (live), Playlists (live), Studio (planned), Top 10 Generator
 - The song check is a best-effort guide, not a block: a playlist can be attached even if the song was not found.
 
 **Database and functions (applied live)**
-- Table `campaign_playlists`; migrations `20261126082204_campaign_playlists`, `20261126084025_campaign_playlists_unique_and_added_by`, `20261126084037_campaign_playlists_drop_redundant_index`. The same playlist cannot be attached twice to a campaign; `added_by` is filled automatically.
+- Table `campaign_playlists` (columns: `id`, `campaign_id`, `spotify_playlist_id`, `title`, `image_url`, `added_by`, `created_at`); migrations `20261126082204_campaign_playlists`, `20261126084025_campaign_playlists_unique_and_added_by`, `20261126084037_campaign_playlists_drop_redundant_index`. The same playlist cannot be attached twice to a campaign; `added_by` is filled automatically.
 - RLS: artists read only playlists on their own campaigns; only staff add or remove.
 - Edge Function `campaign-playlist-lookup` (staff-only) deployed; source in `supabase/functions/campaign-playlist-lookup`.
 - Security advisor flagged nothing new from this work.
 - The three migration SQL files are **not in the repo yet** (see the remote-only list under Migrations).
+- Checked 2026-11-26: the table still has two identical unique indexes on (`campaign_id`, `spotify_playlist_id`). Harmless, but the "drop redundant index" migration did not leave just one. Tidy later.
 
 **Not verified**
 - No end-to-end test against live Spotify or the live database from the artist screen. The playlist must be public. If the song check says it could not check, the title and cover should still come through.
@@ -369,3 +372,16 @@ cd ~/artist-radr && git fetch origin && git switch feature/campaign-flow && git 
 If Git refuses to switch, do not force it. In a second terminal run `npm run dev:studio`, open a clearly labeled test campaign, attach a public playlist, then open the campaign as the artist. Attaching saves real rows in the live Supabase project; Remove deletes them.
 
 **Possible follow-ups:** show attached playlists on the artist's campaign list; email the artist when playlists are added; show song artwork in Studio's Campaigns tab.
+
+## Campaign playlists page in Studio (2026-11-26, commit `554a2c2`, `feature/campaign-flow`, not merged, not deployed)
+
+A Studio place where admins post and see the playlist links attached to campaigns. Sidebar item "Campaign playlists" at `/studio/campaign-playlists` (after Campaigns). No database change: it uses the existing `campaign_playlists` table and the `campaign-playlist-lookup` function.
+
+- **Our playlists tab, "By campaign" view:** campaign list on the left (song artwork, title, artist, status chip, how many playlists are attached or "None yet"), with search, a status filter (default: waiting or running) and an "only campaigns with no playlists yet" box. The selected campaign's attach panel is on the right: paste a Spotify playlist link, look it up (title, cover, whether the song is in it), attach, or remove. Same attach panel as the Campaigns tab.
+- **"All playlists" view:** every attached playlist across campaigns, grouped so a playlist carrying several songs shows once, with the campaigns it is attached to. Click a campaign to jump to it. Search by playlist, song or artist.
+- **Top of page:** three counts: open campaigns with no playlist yet, playlist links attached, different playlists.
+- **Partner curators tab:** placeholder only ("Coming soon"). Curators with active playlists will be able to earn from Artist RADR; nothing is stored or built yet. See plan Phase 10.
+- Files: `src/studio/pages/CampaignPlaylistsPage.jsx` (277 lines), `campaignPlaylistsPage.css`, `src/studio/components/AllCampaignPlaylists.jsx`, `PartnerCurators.jsx`, `campaignSong.js` (helpers). `CampaignPlaylists.jsx` gained an optional `onChange` prop so the page's counts refresh after an attach or remove. `modules.js` and `App.jsx` gained one entry each.
+- Playlists are found by hand: staff look for playlists that carry the song and paste the links. There is no automatic scan of RADR's own playlists for the song yet.
+- Artwork shows only when it is Spotify-hosted (`i.scdn.co`), as on the artist side.
+- Not run, linted or built. Test: open the page, pick a test campaign, attach and remove a public playlist, check the counts and the All playlists view, then view the campaign as the artist.
