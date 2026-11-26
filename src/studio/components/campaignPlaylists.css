@@ -1,0 +1,128 @@
+/* src/studio/components/campaignPlaylists.css */
+/* Uses the --rs-* variables defined on .rs-root in studio.css */
+
+.cpl {
+  margin: 0 0 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--rs-border);
+}
+.cpl-head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.cpl-title {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--rs-muted);
+}
+.cpl-sub {
+  font-size: 12.5px;
+  color: var(--rs-muted);
+}
+.cpl-track {
+  margin: 8px 0 14px;
+  font-size: 13.5px;
+  line-height: 1.45;
+}
+.cpl-track a {
+  color: var(--rs-accent);
+  font-weight: 600;
+}
+.cpl-empty {
+  margin-bottom: 14px;
+  font-size: 13.5px;
+  color: var(--rs-muted);
+}
+
+/* Playlists already attached */
+.cpl-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.cpl-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+  background: var(--rs-panel);
+  border: 1px solid var(--rs-border);
+  border-radius: 10px;
+}
+.cpl-cover {
+  width: 48px;
+  height: 48px;
+  border-radius: 6px;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: var(--rs-panel-2);
+}
+.cpl-cover-empty {
+  border: 1px dashed var(--rs-border);
+}
+.cpl-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: inherit;
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cpl-name:hover {
+  color: var(--rs-accent);
+}
+
+/* Paste a link, look it up, attach it */
+.cpl-form {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.cpl-form .rc-input {
+  flex: 1;
+  min-width: 220px;
+}
+.cpl-found {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+  padding: 12px;
+  background: var(--rs-panel);
+  border: 1px solid var(--rs-border);
+  border-radius: 10px;
+}
+.cpl-found .cpl-cover {
+  width: 64px;
+  height: 64px;
+}
+.cpl-found-main {
+  flex: 1;
+  min-width: 180px;
+}
+.cpl-found-title {
+  font-size: 14px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.cpl-check {
+  margin-top: 3px;
+  font-size: 12.5px;
+  color: var(--rs-muted);
+}
+.cpl-check.ok {
+  color: #4ade80;
+}
+.cpl-check.warn {
+  color: #ffc766;
+}

@@ -8,6 +8,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "../../supabaseClient";
 import CampaignPackageFacts from "../components/CampaignPackageFacts";
+import CampaignPlaylists from "../components/CampaignPlaylists";
 import { approvalDays } from "../components/campaignDays";
 import "./playlists.css";
 import "./campaigns.css";
@@ -334,6 +335,8 @@ export default function CampaignsPage() {
                     {c.reviewed_at && <div><dt>Reviewed</dt><dd>{day(c.reviewed_at)}</dd></div>}
                     {c.review_note && <div><dt>Note</dt><dd>{c.review_note}</dd></div>}
                   </dl>
+
+                  {c.status !== "removed" && <CampaignPlaylists campaign={c} />}
 
                   {c.status === "pending" && (
                     <div className="rc-actions">
