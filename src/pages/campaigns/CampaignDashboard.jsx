@@ -16,9 +16,11 @@ import "./styles/detail.css";
 
 function CampaignDashboard() {
   const { user } = useSupabaseAuth();
-  const { campaigns, loading, error, createCampaign, togglePause } = useCampaigns(user?.id);
+  const { campaigns, loading, error, createCampaign } = useCampaigns(user?.id);
   const [selectedId, setSelectedId] = useState(null);
   const [creating, setCreating] = useState(false);
+  // Set when renewing a finished campaign: the new campaign starts from its song and goal.
+  const [renewFrom, setRenewFrom] = useState(null);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -29,20 +31,29 @@ function CampaignDashboard() {
   function showList() {
     setSelectedId(null);
     setCreating(false);
+    setRenewFrom(null);
   }
 
   function showCampaign(id) {
     setSelectedId(id);
     setCreating(false);
+    setRenewFrom(null);
   }
 
   function startCampaign() {
     setSelectedId(null);
+    setRenewFrom(null);
+    setCreating(true);
+  }
+
+  function renewCampaign(campaign) {
+    setSelectedId(null);
+    setRenewFrom(campaign);
     setCreating(true);
   }
 
   let content;
-  if (selected) content = <CampaignDetailPanel campaign={selected} onPause={() => togglePause(selected)} />;
+  if (selected) content = <CampaignDetailPanel campaign={selected} onRenew={() => renewCampaign(selected)} />;
   else if (loading) content = <div className="campaign-status-banner">Loading your campaigns…</div>;
   else content = <CampaignList campaigns={campaigns} selectedId={selectedId} onSelect={showCampaign} />;
 
@@ -66,8 +77,8 @@ function CampaignDashboard() {
             {creating ? (
               <>
                 <div className="campaign-kicker">Campaign Dashboard</div>
-                <h1 className="campaign-title campaign-title--spaced">New Campaign</h1>
-                <NewCampaignFlow onExit={showList} onCreate={createCampaign} onView={showCampaign} />
+                <h1 className="campaign-title campaign-title--spaced">{renewFrom ? "Renew Campaign" : "New Campaign"}</h1>
+                <NewCampaignFlow onExit={showList} onCreate={createCampaign} onView={showCampaign} renewFrom={renewFrom} />
               </>
             ) : (
               <>

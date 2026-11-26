@@ -1,6 +1,6 @@
 import { useState } from "react";
 import PropTypes from "prop-types";
-import { INITIAL_DRAFT, STEPS, stepError } from "./flowConfig";
+import { INITIAL_DRAFT, STEPS, renewDraft, stepError } from "./flowConfig";
 import Stepper from "./Stepper";
 import StepTrack from "./StepTrack";
 import StepGoal from "./StepGoal";
@@ -14,10 +14,12 @@ import "./track.css";
 import "./packages.css";
 
 const STEP_VIEWS = [StepTrack, StepGoal, StepBudget, StepReview];
+const PACKAGE_STEP = 2;
 
-function NewCampaignFlow({ onExit, onCreate, onView }) {
-  const [step, setStep] = useState(0);
-  const [draft, setDraft] = useState(INITIAL_DRAFT);
+function NewCampaignFlow({ onExit, onCreate, onView, renewFrom }) {
+  // A renewal keeps the song, goal and platform and starts at the Package step.
+  const [step, setStep] = useState(renewFrom ? PACKAGE_STEP : 0);
+  const [draft, setDraft] = useState(() => (renewFrom ? renewDraft(renewFrom) : INITIAL_DRAFT));
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [sent, setSent] = useState(null);
@@ -99,6 +101,12 @@ NewCampaignFlow.propTypes = {
   onExit: PropTypes.func.isRequired,
   onCreate: PropTypes.func.isRequired,
   onView: PropTypes.func.isRequired,
+  renewFrom: PropTypes.shape({
+    name: PropTypes.string,
+    track: PropTypes.object,
+    platform: PropTypes.string,
+    goal: PropTypes.string,
+  }),
 };
 
 export default NewCampaignFlow;

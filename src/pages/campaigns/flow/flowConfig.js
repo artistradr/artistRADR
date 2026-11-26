@@ -16,6 +16,19 @@ export const INITIAL_DRAFT = {
   package: "", budget: "", releaseDate: "", reserve: true,
 };
 
+// Starting point for renewing a finished campaign: same song, goal and platform.
+// The package, price and release date are chosen again.
+export function renewDraft(campaign) {
+  const goal = GOALS.some((g) => g.value === campaign.goal) ? campaign.goal : INITIAL_DRAFT.goal;
+  return {
+    ...INITIAL_DRAFT,
+    name: campaign.name ?? "",
+    track: campaign.track ?? null,
+    platform: campaign.platform || INITIAL_DRAFT.platform,
+    goal,
+  };
+}
+
 // True once a package is chosen and has a valid price.
 export function hasBudget(draft) {
   const budget = Number(draft.budget);
