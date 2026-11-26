@@ -1,8 +1,9 @@
-// Where a campaign is in its life: submitted, in review, live, completed.
-const STEPS = ["Submitted", "In review", "Live", "Completed"];
+// Where a campaign is in its life: submitted, live, completed.
+const STEPS = ["Submitted", "Live", "Completed"];
 
-// Steps before this number are done; this one is current. 4 means everything is done.
-const STAGE = { pending: 1, active: 2, paused: 2, completed: 4 };
+// Steps before this number are done; this one is current. 3 means everything is done.
+// Once a campaign is submitted, "Live" is the next step; it stays current until the campaign completes.
+const STAGE = { pending: 1, active: 1, paused: 1, completed: 3 };
 
 function StatusTracker({ status }) {
   const stage = STAGE[status] ?? 1;
@@ -11,7 +12,7 @@ function StatusTracker({ status }) {
     <ol className="campaign-tracker" aria-label="Campaign progress">
       {STEPS.map((label, i) => {
         const state = i < stage ? "done" : i === stage ? "current" : "";
-        const text = i === 2 && status === "paused" ? "Paused" : label;
+        const text = i === 1 && status === "paused" ? "Paused" : label;
         return (
           <li
             key={label}
