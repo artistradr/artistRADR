@@ -16,7 +16,7 @@ import "./styles/detail.css";
 
 function CampaignDashboard() {
   const { user } = useSupabaseAuth();
-  const { campaigns, loading, error, createCampaign } = useCampaigns(user?.id);
+  const { campaigns, loading, error, createCampaign, deleteCampaign } = useCampaigns(user?.id);
   const [selectedId, setSelectedId] = useState(null);
   const [creating, setCreating] = useState(false);
   // Set when renewing a finished campaign: the new campaign starts from its song and goal.
@@ -52,9 +52,18 @@ function CampaignDashboard() {
     setCreating(true);
   }
 
+  // Back to the list once the campaign is gone. Errors are thrown to the Delete button.
+  async function handleDelete(id) {
+    await deleteCampaign(id);
+    showList();
+  }
+
   let content;
-  if (selected) content = <CampaignDetailPanel campaign={selected} onRenew={() => renewCampaign(selected)} />;
-  else if (loading) content = <div className="campaign-status-banner">Loading your campaigns…</div>;
+  if (selected) {
+    content = (
+      <CampaignDetailPanel campaign={selected} onRenew={() => renewCampaign(selected)} onDelete={handleDelete} />
+    );
+  } else if (loading) content = <div className="campaign-status-banner">Loading your campaigns…</div>;
   else content = <CampaignList campaigns={campaigns} selectedId={selectedId} onSelect={showCampaign} />;
 
   return (

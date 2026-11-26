@@ -1,20 +1,12 @@
 import { SpotifyLogo, AppleMusicLogo, YoutubeLogo, TikTokLogo } from "components/PlatformLogos";
 import { safeArtwork } from "../spotifyTrack";
-
-const F = { d: "var(--font-display)", b: "var(--font-body)" };
+import { statusMeta } from "../campaignStatus";
 
 export const PLATFORM_META = {
   spotify: { Logo: SpotifyLogo, label: "Spotify", color: "#1DB954" },
   appleMusic: { Logo: AppleMusicLogo, label: "Apple Music", color: "#FA243C" },
   youtube: { Logo: YoutubeLogo, label: "YouTube", color: "#FF0000" },
   tiktok: { Logo: TikTokLogo, label: "TikTok", color: "#000000" },
-};
-
-const STATUS_META = {
-  active: { label: "Active", color: "#1DB954", bg: "rgba(29,185,84,0.1)" },
-  pending: { label: "Pending Review", color: "#D9A02B", bg: "rgba(217,160,43,0.12)" },
-  completed: { label: "Completed", color: "#888", bg: "rgba(0,0,0,0.05)" },
-  paused: { label: "Paused", color: "#D94F2B", bg: "rgba(217,79,43,0.1)" },
 };
 
 function CampaignList({ campaigns, selectedId, onSelect }) {
@@ -31,7 +23,7 @@ function CampaignList({ campaigns, selectedId, onSelect }) {
     <div className="campaign-list">
       {campaigns.map((campaign) => {
         const platform = PLATFORM_META[campaign.platform];
-        const status = STATUS_META[campaign.status] ?? STATUS_META.pending;
+        const status = statusMeta(campaign.status, campaign.paid);
         const Logo = platform?.Logo;
         const isSelected = campaign.id === selectedId;
 

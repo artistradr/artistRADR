@@ -1,16 +1,11 @@
 import { PLATFORM_META } from "./CampaignList";
 import PayButton from "./PayButton";
+import DeleteCampaignButton from "./DeleteCampaignButton";
 import PlaylistCovers from "./PlaylistCovers";
 import StatusTracker from "./StatusTracker";
 import { formatPlainDate, packageName } from "../packages";
 import { artistNames, safeArtwork, spotifyUrl } from "../spotifyTrack";
-
-const STATUS_META = {
-  active: { label: "Active", color: "#1DB954", bg: "rgba(29,185,84,0.1)" },
-  pending: { label: "Pending Review", color: "#D9A02B", bg: "rgba(217,160,43,0.12)" },
-  completed: { label: "Completed", color: "#888", bg: "rgba(0,0,0,0.05)" },
-  paused: { label: "Paused", color: "#D94F2B", bg: "rgba(217,79,43,0.1)" },
-};
+import { canDelete, statusMeta } from "../campaignStatus";
 
 const RENEW_ICON = (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D94F2B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -36,10 +31,10 @@ function Row({ label, children }) {
   );
 }
 
-function CampaignDetailPanel({ campaign, onRenew }) {
+function CampaignDetailPanel({ campaign, onRenew, onDelete }) {
   const platform = PLATFORM_META[campaign.platform];
   const Logo = platform?.Logo;
-  const status = STATUS_META[campaign.status] ?? STATUS_META.pending;
+  const status = statusMeta(campaign.status, campaign.paid);
   const art = safeArtwork(campaign.track);
   const link = spotifyUrl(campaign.track);
   const artists = artistNames(campaign.track);
@@ -97,6 +92,10 @@ function CampaignDetailPanel({ campaign, onRenew }) {
 
       {campaign.status === "pending" && !campaign.paid && campaign.budget > 0 && (
         <PayButton campaignId={campaign.id} />
+      )}
+
+      {onDelete && canDelete(campaign.status, campaign.paid) && (
+        <DeleteCampaignButton campaignId={campaign.id} onDelete={onDelete} />
       )}
 
       {/* Shown only once the campaign is over. */}
