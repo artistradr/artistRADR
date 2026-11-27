@@ -44,12 +44,15 @@ export function openOAuthPopup(platform) {
 
 // Sends the signed-in user's session token so the server can record the verification
 // against that user. The server, not the browser, decides what counts as verified.
+// For Spotify the redirect_uri used at /authorize is sent too: Spotify requires the token
+// exchange to repeat it exactly, so the server no longer has to guess between prod and local.
 export async function callAPI(platform, code) {
   try {
     const { data: { session } } = await supabase.auth.getSession();
     const headers = { "Content-Type": "application/json" };
     if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
-    const res = await fetch(API[platform], { method: "POST", headers, body: JSON.stringify({ code }) });
+    const payload = platform === "spotify" ? { code, redirect_uri: SPOTIFY_REDIRECT } : { code };
+    const res = await fetch(API[platform], { method: "POST", headers, body: JSON.stringify(payload) });
     if (!res.ok) throw new Error("API error");
     return await res.json();
   } catch { return null; }

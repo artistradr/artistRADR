@@ -1,0 +1,20 @@
+/* Spotify follows page. Builds on the shared rc-* / rs-* Studio styles. */
+.ft-summary { display: flex; flex-wrap: wrap; gap: 12px 32px; margin: 16px 0; }
+.ft-summary-row { display: flex; flex-direction: column; gap: 2px; }
+.ft-summary-k { font-size: 12px; opacity: 0.6; }
+
+.ft-add { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.ft-link { flex: 2 1 280px; min-width: 0; }
+.ft-label { flex: 1 1 160px; min-width: 0; }
+
+.ft-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.ft-row {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px;
+  padding: 12px 14px; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px;
+}
+.ft-row.off { opacity: 0.55; }
+.ft-main { min-width: 0; flex: 1 1 260px; }
+.ft-name { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.ft-id { display: block; margin-top: 4px; font-size: 12px; opacity: 0.6; overflow-wrap: anywhere; color: inherit; }
+.ft-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.ft-chip-main { font-weight: 600; }

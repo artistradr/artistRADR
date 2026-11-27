@@ -1,16 +1,16 @@
 import { SpotifyIcon, IGIcon, YTIcon } from "./icons";
 
+// The Spotify step shows ONE follow: Artist RADR. Any extra playlists or profiles are followed
+// quietly by the server (managed in Studio > Spotify follows) and are never listed here.
 export const STEPS = [
   {
     id: "spotify", platform: "Spotify", color: "#1DB954", colorDim: "rgba(29,185,84,0.1)",
-    label: "Follow on Spotify", sublabel: "Profile + 3 playlists",
-    description: "Connect your Spotify account and we'll follow the RADR profile and all 3 curated playlists on your behalf — instantly, with one click. No password shared with us.",
+    label: "Follow on Spotify", sublabel: "Artist RADR",
+    description: "Connect your Spotify account and we'll follow Artist RADR for you with one click. No password shared with us.",
+    cta: "Connect Spotify & Follow Artist RADR",
     mode: "oauth-follow", Icon: SpotifyIcon,
     items: [
-      { key: "spotify_profile",     label: "RADR Profile",     sub: "Official Artist Account" },
-      { key: "spotify_new_music",   label: "New Music Friday",  sub: "Weekly Drops Playlist" },
-      { key: "spotify_discoveries", label: "RADR Discoveries",  sub: "Emerging Artists Playlist" },
-      { key: "spotify_spotlight",   label: "RADR Spotlight",    sub: "Featured Artists Playlist" },
+      { key: "spotify_profile", label: "Artist RADR", sub: "Official Spotify Artist Account" },
     ],
   },
   {

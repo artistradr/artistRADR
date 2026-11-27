@@ -8,6 +8,7 @@ import EmojiEvents from "@mui/icons-material/EmojiEvents";
 import PhotoLibrary from "@mui/icons-material/PhotoLibrary";
 import Campaign from "@mui/icons-material/Campaign";
 import PlaylistAddCheck from "@mui/icons-material/PlaylistAddCheck";
+import PersonAdd from "@mui/icons-material/PersonAdd";
 
 // status: "live" | "next" | "planned"
 export const MODULES = [
@@ -83,6 +84,18 @@ export const MODULES = [
     tagline: "Review playlist submissions, then approve or reject them.",
     description:
       "The playlist submissions from the Magazine admin, now inside Studio. Approving or rejecting emails the submitter their outcome.",
+    features: [],
+  },
+  {
+    id: "follow-targets",
+    label: "Spotify follows",
+    path: "/studio/follow-targets",
+    Icon: PersonAdd,
+    status: "live",
+    phase: "Submissions",
+    tagline: "Choose what people follow on Spotify when they submit a track.",
+    description:
+      "Submitters only see one follow: Artist RADR. Add extra playlists or profiles here and they are followed quietly in the background on the same connection.",
     features: [],
   },
   {
