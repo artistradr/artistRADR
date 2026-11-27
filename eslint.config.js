@@ -17,5 +17,9 @@ export default defineConfig([
       globals: globals.browser,
       parserOptions: { ecmaFeatures: { jsx: true } },
     },
+    rules: {
+      // Project rule: no source file longer than 350 lines. Split it into components.
+      'max-lines': ['error', { max: 350, skipBlankLines: false, skipComments: false }],
+    },
   },
 ])

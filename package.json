@@ -10,6 +10,7 @@
     "build:studio": "vite build --mode studio --outDir dist-studio",
     "postbuild": "node scripts/generate-post-html.mjs",
     "lint": "eslint .",
+    "lint:lines": "node scripts/check-line-limit.mjs",
     "preview": "vite preview"
   },
   "dependencies": {
