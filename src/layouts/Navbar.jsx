@@ -379,15 +379,12 @@ function Navbar({ routes = [], action = null }) {
             </div>
           )}
 
-          {/* Mobile right side */}
+          {/* Mobile right side — just the menu button (profile lives inside the menu) */}
           {isMobile && (
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              {user && (
-                <Link to="/profile" className="radr-avatar-btn" title="Profile" style={{ width: "30px", height: "30px", fontSize: "12px" }}>{initial}</Link>
-              )}
-              <button className="radr-hamburger" onClick={() => setMobileOpen((p) => !p)} aria-label="Menu" aria-expanded={mobileOpen}>
+            <div style={{ display: "flex", alignItems: "center" }}>
+              <button className="radr-hamburger" onClick={() => setMobileOpen((p) => !p)} aria-label={mobileOpen ? "Close menu" : "Open menu"} aria-expanded={mobileOpen}>
                 {mobileOpen
-                  ? <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 15 12 9 18 15"/></svg>
                   : <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><line x1="3" y1="7" x2="21" y2="7"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="17" x2="21" y2="17"/></svg>
                 }
               </button>
