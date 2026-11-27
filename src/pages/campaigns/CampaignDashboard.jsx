@@ -8,11 +8,13 @@ import AccountSidebar from "components/AccountSidebar";
 import { useSupabaseAuth } from "context/SupabaseAuthContext";
 
 import CampaignList from "./components/CampaignList";
+import CampaignOverview from "./components/CampaignOverview";
 import CampaignDetailPanel from "./components/CampaignDetailPanel";
 import NewCampaignFlow from "./flow/NewCampaignFlow";
 import { useCampaigns } from "./useCampaigns";
 import "./styles/dashboard.css";
 import "./styles/detail.css";
+import "./styles/premium.css";
 
 function CampaignDashboard() {
   const { user } = useSupabaseAuth();
@@ -64,7 +66,9 @@ function CampaignDashboard() {
       <CampaignDetailPanel campaign={selected} onRenew={() => renewCampaign(selected)} onDelete={handleDelete} />
     );
   } else if (loading) content = <div className="campaign-status-banner">Loading your campaigns…</div>;
-  else content = <CampaignList campaigns={campaigns} selectedId={selectedId} onSelect={showCampaign} />;
+  // After a failed load, don't claim there are no campaigns.
+  else if (error && !campaigns.length) content = null;
+  else content = <CampaignList campaigns={campaigns} onSelect={showCampaign} onStart={startCampaign} />;
 
   return (
     <>
@@ -96,15 +100,7 @@ function CampaignDashboard() {
                     ← All Campaigns
                   </button>
                 ) : (
-                  <div className="campaign-header-row">
-                    <div>
-                      <div className="campaign-kicker">Campaign Dashboard</div>
-                      <h1 className="campaign-title">Your Campaigns</h1>
-                    </div>
-                    <button type="button" className="campaign-new-btn" onClick={startCampaign}>
-                      + New Campaign
-                    </button>
-                  </div>
+                  <CampaignOverview campaigns={campaigns} loading={loading} failed={Boolean(error) && !campaigns.length} onStart={startCampaign} />
                 )}
                 {error && <div className="campaign-error-banner">{error}</div>}
                 {content}

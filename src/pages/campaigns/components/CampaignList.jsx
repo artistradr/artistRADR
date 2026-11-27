@@ -1,6 +1,8 @@
+import { useState } from "react";
+import PropTypes from "prop-types";
 import { SpotifyLogo, AppleMusicLogo, YoutubeLogo, TikTokLogo } from "components/PlatformLogos";
-import { safeArtwork } from "../spotifyTrack";
-import { statusMeta } from "../campaignStatus";
+import CampaignCard from "./CampaignCard";
+import { FILTERS } from "../filters";
 
 export const PLATFORM_META = {
   spotify: { Logo: SpotifyLogo, label: "Spotify", color: "#1DB954" },
@@ -9,55 +11,52 @@ export const PLATFORM_META = {
   tiktok: { Logo: TikTokLogo, label: "TikTok", color: "#000000" },
 };
 
-function CampaignList({ campaigns, selectedId, onSelect }) {
+function CampaignList({ campaigns, onSelect, onStart }) {
+  const [filter, setFilter] = useState("all");
+
   if (!campaigns.length) {
     return (
       <div className="campaign-list-empty">
         <div className="campaign-list-empty-title">No campaigns yet</div>
         <div className="campaign-list-empty-sub">Start your first campaign to get your music in front of the right audiences.</div>
+        <button type="button" className="campaign-new-btn" onClick={onStart}>Start your first campaign</button>
       </div>
     );
   }
 
+  // Only offer tabs that have something in them.
+  const tabs = FILTERS.map((f) => ({ ...f, count: campaigns.filter(f.match).length })).filter((f) => f.count > 0);
+  const current = tabs.find((f) => f.id === filter) ?? tabs[0];
+
   return (
-    <div className="campaign-list">
-      {campaigns.map((campaign) => {
-        const platform = PLATFORM_META[campaign.platform];
-        const status = statusMeta(campaign.status, campaign.paid);
-        const Logo = platform?.Logo;
-        const isSelected = campaign.id === selectedId;
-
-        return (
+    <section aria-label="Campaigns">
+      <div className="campaign-tabs" role="group" aria-label="Filter campaigns">
+        {tabs.map((f) => (
           <button
-            key={campaign.id}
+            key={f.id}
             type="button"
-            onClick={() => onSelect(campaign.id)}
-            className={`campaign-list-row${isSelected ? " campaign-list-row--active" : ""}`}
+            className={`campaign-tab${f.id === current.id ? " campaign-tab--active" : ""}`}
+            aria-pressed={f.id === current.id}
+            onClick={() => setFilter(f.id)}
           >
-            <div className="campaign-list-row-icon">
-              {safeArtwork(campaign.track) ? (
-                <img className="campaign-artwork" src={safeArtwork(campaign.track)} alt="" />
-              ) : (
-                Logo && <Logo size={22} />
-              )}
-            </div>
-
-            <div className="campaign-list-row-main">
-              <div className="campaign-list-row-name">{campaign.name}</div>
-              <div className="campaign-list-row-sub">{platform?.label ?? campaign.platform} · {campaign.goal}</div>
-            </div>
-
-            <div className="campaign-list-row-meta">
-              <span className="campaign-list-status" style={{ color: status.color, background: status.bg }}>
-                {status.label}
-              </span>
-              <span className="campaign-list-row-budget">${campaign.budget.toFixed(2)}</span>
-            </div>
+            {f.label} <span>{f.count}</span>
           </button>
-        );
-      })}
-    </div>
+        ))}
+      </div>
+
+      <div className="campaign-list">
+        {campaigns.filter(current.match).map((campaign) => (
+          <CampaignCard key={campaign.id} campaign={campaign} onSelect={onSelect} />
+        ))}
+      </div>
+    </section>
   );
 }
+
+CampaignList.propTypes = {
+  campaigns: PropTypes.arrayOf(PropTypes.object).isRequired,
+  onSelect: PropTypes.func.isRequired,
+  onStart: PropTypes.func.isRequired,
+};
 
 export default CampaignList;
