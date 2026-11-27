@@ -1,6 +1,6 @@
 // Single source of truth for RADR's Spotify follow targets.
 //
-// Both playlist-submission.jsx (the OAuth follow flow) and
+// Both pages/Toolkit/playlist-submission/ (the OAuth follow flow) and
 // EditorialPlaylists.jsx (the Promotion page) import from here instead of
 // hardcoding their own copies. This is what caused the mismatch fixed in
 // MIGRATION.md Section 23 — EditorialPlaylists.jsx had invented placeholder
