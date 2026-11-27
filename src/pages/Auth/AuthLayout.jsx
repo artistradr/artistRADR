@@ -5,8 +5,8 @@ import routes from "routes";
 import "./AuthLayout.css";
 
 // Shared page shell for sign in and register. On desktop it is two columns: a brand panel on the
-// left and the form on the right. On smaller screens only the form shows.
-export default function AuthLayout({ navAction, tone = "orange", badge, title, subtitle, aside, children }) {
+// left and a compact modal card on the right. On smaller screens only the card shows.
+export default function AuthLayout({ navAction, aside, footer, children }) {
   return (
     <div className="auth-page">
       <Navbar routes={routes} action={navAction} />
@@ -22,12 +22,8 @@ export default function AuthLayout({ navAction, tone = "orange", badge, title, s
         </aside>
 
         <main className="auth-main">
-          <div className="auth-form-wrap">
-            <div className={`auth-badge${tone === "teal" ? " auth-badge--teal" : ""}`}>{badge}</div>
-            <h1 className="auth-title">{title}</h1>
-            <p className="auth-sub">{subtitle}</p>
-            {children}
-          </div>
+          <div className="auth-modal">{children}</div>
+          {footer && <p className="auth-modal-foot">{footer}</p>}
         </main>
       </div>
 
@@ -38,15 +34,12 @@ export default function AuthLayout({ navAction, tone = "orange", badge, title, s
 
 AuthLayout.propTypes = {
   navAction: PropTypes.object.isRequired,
-  tone: PropTypes.oneOf(["orange", "teal"]),
-  badge: PropTypes.string.isRequired,
-  title: PropTypes.string.isRequired,
-  subtitle: PropTypes.node.isRequired,
   aside: PropTypes.shape({
     kicker: PropTypes.string.isRequired,
     heading: PropTypes.string.isRequired,
     text: PropTypes.string.isRequired,
     points: PropTypes.arrayOf(PropTypes.string).isRequired,
   }).isRequired,
+  footer: PropTypes.node,
   children: PropTypes.node.isRequired,
 };
