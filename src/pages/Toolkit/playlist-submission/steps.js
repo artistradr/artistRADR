@@ -4,8 +4,11 @@ export const STEPS = [
   {
     id: "spotify", platform: "Spotify", color: "#1DB954", colorDim: "rgba(29,185,84,0.1)",
     label: "Follow on Spotify", sublabel: "Profile + 3 playlists",
-    description: "Connect your Spotify account and we'll follow the RADR profile and all 3 curated playlists on your behalf — instantly, with one click. No password shared with us.",
-    mode: "oauth-follow", Icon: SpotifyIcon,
+    description: "Follow the RADR profile and all 3 curated playlists on Spotify, then tick each box to confirm. Each 'Follow →' button opens Spotify in a new tab.",
+    // Spotify's Development Mode only lets allowlisted accounts use the OAuth follow, so this step
+    // is self-reported ("honor") for now. To switch back once Spotify grants extended access, set
+    // mode to "oauth-follow" and restore the original "connect your Spotify account" description.
+    mode: "honor", Icon: SpotifyIcon,
     items: [
       { key: "spotify_profile",     label: "RADR Profile",     sub: "Official Artist Account" },
       { key: "spotify_new_music",   label: "New Music Friday",  sub: "Weekly Drops Playlist" },
