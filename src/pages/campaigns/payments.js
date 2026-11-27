@@ -29,3 +29,13 @@ export async function verifyPayment(reference) {
 export async function removeCampaign(campaignId) {
   await callPaystack({ action: "delete", campaign_id: campaignId });
 }
+
+// Naira per US dollar, for showing estimates. Display only: the charge is priced on the server.
+export async function getRate() {
+  const { data, error } = await supabase.functions.invoke("fx-rate", { body: {} });
+  const rate = Number(data?.rate);
+  if (error || data?.currency !== "NGN" || !Number.isFinite(rate) || rate <= 0) {
+    throw new Error("Exchange rate unavailable");
+  }
+  return rate;
+}

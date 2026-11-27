@@ -1,12 +1,16 @@
 import { useState } from "react";
 import PropTypes from "prop-types";
 import { usePay } from "../usePay";
+import { useCurrency } from "../useCurrency";
+import { canPay } from "../currency";
+import CurrencySwitch from "../components/CurrencySwitch";
 import { INITIAL_DRAFT, STEPS, renewDraft, stepError } from "./flowConfig";
 import Stepper from "./Stepper";
 import StepTrack from "./StepTrack";
 import StepGoal from "./StepGoal";
 import StepBudget from "./StepBudget";
 import StepReview from "./StepReview";
+import StepPayment from "./StepPayment";
 import OrderSummary from "./OrderSummary";
 import FlowSuccess from "./FlowSuccess";
 import "./flow.css";
@@ -14,7 +18,7 @@ import "./fields.css";
 import "./track.css";
 import "./packages.css";
 
-const STEP_VIEWS = [StepTrack, StepGoal, StepBudget, StepReview];
+const STEP_VIEWS = [StepTrack, StepGoal, StepBudget, StepReview, StepPayment];
 const PACKAGE_STEP = 2;
 
 function NewCampaignFlow({ onExit, onCreate, onView, renewFrom }) {
@@ -25,8 +29,9 @@ function NewCampaignFlow({ onExit, onCreate, onView, renewFrom }) {
   const [submitting, setSubmitting] = useState(false);
   const [sent, setSent] = useState(null);
   const payment = usePay();
+  const { currency, format } = useCurrency();
 
-  const isReview = step === STEPS.length - 1;
+  const isLast = step === STEPS.length - 1;
   const StepView = STEP_VIEWS[step];
 
   function update(changes) {
@@ -42,12 +47,12 @@ function NewCampaignFlow({ onExit, onCreate, onView, renewFrom }) {
   async function handleSubmit(event) {
     event.preventDefault();
     if (submitting) return;
-    const problem = stepError(step, draft);
+    const problem = stepError(step, draft, currency);
     if (problem) {
       setError(problem);
       return;
     }
-    if (!isReview) {
+    if (!isLast) {
       goTo(step + 1);
       return;
     }
@@ -68,12 +73,17 @@ function NewCampaignFlow({ onExit, onCreate, onView, renewFrom }) {
   }
 
   let submitLabel = "Continue";
-  if (isReview) submitLabel = submitting ? "Saving…" : "Continue to payment";
+  if (step === STEPS.length - 2) submitLabel = "Continue to payment";
+  if (isLast) {
+    if (submitting) submitLabel = "Saving…";
+    else submitLabel = canPay(draft, currency) ? `Pay ${format(draft.budget)}` : "Pay now";
+  }
 
   return (
     <div className="flow">
       <div className="flow-top">
         <Stepper current={step} onSelect={goTo} disabled={submitting} />
+        <CurrencySwitch disabled={submitting} />
         <button type="button" className="flow-link" onClick={onExit} disabled={submitting}>
           Cancel
         </button>

@@ -1,0 +1,9 @@
+/* Currency switch (USD / NGN) */
+.currency-switch { display: inline-flex; padding: 3px; gap: 2px; border-radius: 100px; background: rgba(0,0,0,0.06); }
+.currency-switch-btn {
+  border: 0; background: transparent; cursor: pointer; border-radius: 100px;
+  padding: 6px 12px; font-size: 12px; font-weight: 700; letter-spacing: 0.3px; color: #666;
+}
+.currency-switch-btn--on { background: #111; color: white; }
+.currency-switch-btn:disabled { opacity: 0.5; cursor: default; }
+.currency-switch-btn:focus-visible { outline: 2px solid #D94F2B; outline-offset: 2px; }
