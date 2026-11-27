@@ -430,3 +430,11 @@ cd ~/artist-radr && git fetch origin && git switch feature/campaign-flow && git 
 6. Create a throwaway campaign and delete it. A paid one must refuse deletion.
 
 **Still open:** confirm the secret is set; margin and fallback decision; webhook URL in the Paystack dashboard; no staff screen to record payments; save-and-test the daily plan database rules.
+
+## Playlist submission verification (2026-11-27)
+- PR #2 merged into `main` (`8b3106c`). The 645-line playlist submission page is now `src/pages/Toolkit/playlist-submission/` (largest file 125 lines). The Spotify and YouTube verification calls send the signed-in session. The browser no longer sends `spotify_verified` or `youtube_verified`; `instagram_verified` is still self-reported. Instagram flag bug fixed.
+- 350-line rule: ESLint `max-lines` (JS/JSX), `npm run lint:lines` (`scripts/check-line-limit.mjs`, also TS and CSS), and `CLAUDE.md`. `lint:lines` fails on 12 older files: studio-spotify/index.ts 890, PostEditor.jsx 877, ContactUs.jsx 605, DiscoveryPage.jsx 540, Navbar.jsx 503, knowledge-center.jsx 465, brand.css 464, CampaignsPage.jsx 445, BlogPage.jsx and PlaylistDraft.jsx 442 each, paystack/index.ts 391 (leave until the payment test passes), Top10Generator.jsx 358.
+- Database: part 1 applied (table `submission_verifications`, server-only, written by the two verification functions). Part 2 (trigger and insert policy that enforce verification) is NOT applied. Apply it only after the new build is live, because the old page sets the flags from the browser.
+- `playlist_submissions` has 2 rows from Aug 24 with all three flags verified. The browser set them, so they do not prove the follows happened.
+- Deploy: manual cPanel upload. As of 2026-11-27 PR #2 is merged but not uploaded. The live bundle (`index-BLOjXHTQ.js`) still contains `spotify_verified`; the new build (`index-Dy83OTsr.js`) does not. `radr-dist.zip` is built from `main`. A check of localhost mentions in the new bundle is still open.
+- Not confirmed: the five browser checks on the new page.

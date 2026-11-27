@@ -310,3 +310,11 @@ Order matters. Deactivating the legacy keys breaks anything still using them, in
 7. **Done 2026-11-24.** Legacy keys deactivated (Settings, API Keys, Legacy tab); re-enable there if a site breaks. Still retest the public site, Studio login, Playlists and Discovery.
 8. Later: move to JWT signing keys, then revoke the legacy JWT secret (the leaked key is a JWT signed by it). Check the effect on logged-in users first.
 9. Remove the key text from `scripts/env.migration.example` (replace with a placeholder) and commit. It stays in git history, which is harmless once the key is dead.
+
+## Playlist submission verification: to do (2026-11-27)
+1. Check the localhost mentions in the new bundle.
+2. Back up the live folder, upload the new build through cPanel (keep `.htaccess`), confirm `spotify_verified` count is 0 on the live bundle.
+3. Test a Spotify or YouTube step on the live page.
+4. Apply part 2 (database enforcement).
+5. Save the part 1 migration as a file in `supabase/migrations/`.
+6. Split the 12 files over 350 lines, a few at a time; paystack last.
