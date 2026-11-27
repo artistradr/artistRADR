@@ -179,9 +179,9 @@ function AppRoutes() {
         <Route path="/campaigns" element={<PrivateRoute><CampaignDashboard /></PrivateRoute>} />
         <Route path="/campaigns/billing" element={<PrivateRoute><Billing /></PrivateRoute>} />
 
-        {/* ── Support tickets (signed-in). Signed-in visitors to Contact Us land here. ── */}
+        {/* ── Support tickets (signed-in). Reached from Support > Create a Ticket.
+             /contact-us stays open to everyone (it is in routes.js). ── */}
         <Route path="/support" element={<PrivateRoute><Support /></PrivateRoute>} />
-        {user && <Route path="/contact-us" element={<Navigate to="/support" replace />} />}
 
         {/* ── Legal — bare routes, not in routes.js ──
              Previously a "Legal" navbar dropdown; that group has been

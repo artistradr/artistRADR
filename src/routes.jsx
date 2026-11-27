@@ -21,13 +21,13 @@ import Register from "pages/Auth/Register";
 // NOTE: SpotifyCallback and YoutubeCallback are registered directly in App.jsx
 // as bare routes so they are never wrapped in any auth guard or navbar layout.
 
-// NOTE: "Campaign Dashboard" below intentionally has no `component` field. The
-// actual <Route path="/campaigns"> is registered as a bare, auth-gated
-// route directly in App.jsx (same pattern as /profile), so it's excluded
-// from getRoutes()'s flatMap (which requires both `route` AND `component`).
-// This entry exists only so the link shows up in the navbar — omitting
-// `component` here avoids registering a second, duplicate <Route> for the
-// same path.
+// NOTE: "Campaign Dashboard" and "Create a Ticket" below intentionally have no
+// `component` field. Their actual <Route> (/campaigns and /support) is
+// registered as a bare, auth-gated route directly in App.jsx (same pattern as
+// /profile), so they're excluded from getRoutes()'s flatMap (which requires
+// both `route` AND `component`). These entries exist only so the links show up
+// in the navbar — omitting `component` here avoids registering a second,
+// duplicate <Route> for the same path.
 
 // NOTE: Privacy Policy and Terms & Conditions used to live here as a
 // "Legal" nav group. That group has been removed entirely from the navbar.
@@ -99,17 +99,21 @@ const routes = [
   },
   {
     name: "Support",
-    description: "Contact our team and track your tickets",
-    route: "/support",
-    userOnly: true,
-    // no `component` — auth-gated route registered in App.jsx
-  },
-  {
-    name: "Contact Us",
-    description: "Get in touch with our team",
-    route: "/contact-us",
-    component: <ContactUs />,
-    guestOnly: true,
+    collapse: [
+      {
+        name: "Create a Ticket",
+        description: "Open a support ticket and track replies",
+        route: "/support",
+        userOnly: true,
+        // no `component` — auth-gated route registered in App.jsx
+      },
+      {
+        name: "Contact Us",
+        description: "Get in touch with our team",
+        route: "/contact-us",
+        component: <ContactUs />,
+      },
+    ],
   },
   // Sign In and Register are navbar buttons, so they're hidden from the links.
   {

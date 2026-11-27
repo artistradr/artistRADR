@@ -127,15 +127,15 @@ function Navbar({ routes = [], action = null }) {
         /* ── Nav links ── */
         .radr-nav-link {
           position: relative; display: inline-flex; align-items: center; gap: 5px;
-          padding: 9px 15px; border-radius: 999px; text-decoration: none; cursor: pointer;
-          color: rgba(245,245,245,0.82); font-size: 13.5px; font-weight: 500; letter-spacing: -0.1px;
+          padding: 7px 12px; border-radius: 10px; text-decoration: none; cursor: pointer;
+          color: rgba(245,245,245,0.82); font-size: 13px; font-weight: 500; letter-spacing: -0.1px;
           transition: background 220ms ease, color 220ms ease;
           white-space: nowrap; user-select: none; background: transparent; border: none; font-family: inherit;
         }
         .radr-nav-link:hover { background: rgba(255,255,255,0.06); color: #F5F5F5; }
         .radr-nav-link:focus-visible { outline: 2px solid #FF542E; outline-offset: 2px; }
         .radr-nav-link::after {
-          content: ''; position: absolute; bottom: 1px; left: 16px; right: 16px;
+          content: ''; position: absolute; bottom: 1px; left: 12px; right: 12px;
           height: 2px; border-radius: 2px;
           background: #FF542E;
           box-shadow: 0 0 10px 1px rgba(255,84,46,0.55);
@@ -151,25 +151,25 @@ function Navbar({ routes = [], action = null }) {
           display: flex; align-items: center; gap: 8px;
           background: rgba(255,255,255,0.05);
           border: 1px solid rgba(255,255,255,0.10);
-          border-radius: 999px; padding: 8px 14px 8px 12px;
-          min-width: 230px; max-width: 260px;
+          border-radius: 10px; padding: 6px 12px 6px 10px;
+          min-width: 210px; max-width: 240px;
           transition: background 220ms ease, border-color 220ms ease;
         }
         .radr-search:focus-within { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.18); }
         .radr-search svg { flex-shrink: 0; color: rgba(255,255,255,0.5); }
         .radr-search input {
           background: transparent; border: none; outline: none; width: 100%;
-          font-family: inherit; font-size: 12.5px; font-weight: 400; letter-spacing: -0.1px;
+          font-family: inherit; font-size: 12px; font-weight: 400; letter-spacing: -0.1px;
           color: #F5F5F5;
         }
         .radr-search input::placeholder { color: rgba(255,255,255,0.42); }
 
         /* ── CTA ── */
         .radr-cta {
-          display: inline-flex; align-items: center; gap: 7px; margin-left: 4px;
+          display: inline-flex; align-items: center; gap: 6px; margin-left: 4px;
           background: linear-gradient(135deg, #FF542E 0%, #D94F2B 100%);
-          color: #fff !important; padding: 9px 18px; border-radius: 999px;
-          font-size: 13px; font-weight: 600; text-decoration: none; letter-spacing: -0.1px;
+          color: #fff !important; padding: 8px 15px; border-radius: 10px;
+          font-size: 12.5px; font-weight: 600; text-decoration: none; letter-spacing: -0.1px;
           box-shadow: 0 4px 18px rgba(255,84,46,0.30);
           transition: box-shadow 220ms ease, transform 180ms ease; white-space: nowrap; border: none; cursor: pointer;
         }
@@ -179,8 +179,8 @@ function Navbar({ routes = [], action = null }) {
         .radr-cta:hover svg { transform: translateX(2px); }
 
         .radr-signin-link {
-          display: inline-flex; align-items: center; padding: 9px 15px; border-radius: 999px;
-          font-size: 13.5px; font-weight: 500; color: rgba(245,245,245,0.82); text-decoration: none;
+          display: inline-flex; align-items: center; padding: 7px 12px; border-radius: 10px;
+          font-size: 13px; font-weight: 500; color: rgba(245,245,245,0.82); text-decoration: none;
           margin-left: 2px; transition: background 220ms ease, color 220ms ease; font-family: inherit;
         }
         .radr-signin-link:hover { background: rgba(255,255,255,0.06); color: #F5F5F5; }
@@ -191,16 +191,16 @@ function Navbar({ routes = [], action = null }) {
           background: rgba(15,15,15,0.94);
           backdrop-filter: blur(24px) saturate(150%);
           -webkit-backdrop-filter: blur(24px) saturate(150%);
-          border: 1px solid rgba(255,255,255,0.10); border-radius: 18px; padding: 8px;
-          min-width: 260px; box-shadow: 0 20px 50px rgba(0,0,0,0.45);
+          border: 1px solid rgba(255,255,255,0.10); border-radius: 14px; padding: 6px;
+          min-width: 250px; box-shadow: 0 20px 50px rgba(0,0,0,0.45);
           animation: radrFadeIn 200ms cubic-bezier(0.4,0,0.2,1) forwards;
         }
         @keyframes radrFadeIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
 
         .radr-dropdown-item {
-          display: flex; flex-direction: column; gap: 2px; padding: 10px 14px;
-          border-radius: 12px; text-decoration: none;
-          font-size: 13.5px; font-weight: 500; transition: background 180ms ease;
+          display: flex; flex-direction: column; gap: 2px; padding: 9px 12px;
+          border-radius: 10px; text-decoration: none;
+          font-size: 13px; font-weight: 500; transition: background 180ms ease;
           cursor: pointer; width: 100%; box-sizing: border-box; background: transparent; border: none;
           font-family: inherit; text-align: left; color: rgba(245,245,245,0.88);
         }
@@ -261,10 +261,10 @@ function Navbar({ routes = [], action = null }) {
 
         /* ── Avatar ── */
         .radr-avatar-btn {
-          width: 36px; height: 36px; border-radius: 50%;
+          width: 32px; height: 32px; border-radius: 50%;
           background: #16181A;
           color: #F5F5F5 !important; display: inline-flex; align-items: center; justify-content: center;
-          font-size: 13px; font-weight: 700; cursor: pointer; flex-shrink: 0;
+          font-size: 12.5px; font-weight: 700; cursor: pointer; flex-shrink: 0;
           border: 1.5px solid rgba(255,84,46,0.55);
           box-shadow: 0 0 14px rgba(255,84,46,0.25);
           text-decoration: none; transition: transform 180ms ease, box-shadow 180ms ease;
@@ -280,7 +280,7 @@ function Navbar({ routes = [], action = null }) {
         onTouchEnd={isMobile ? handleTouchEnd : undefined}
         style={{
           position: "fixed",
-          top: isMobile ? (scrolled ? "10px" : "14px") : scrolled ? "16px" : "24px",
+          top: isMobile ? (scrolled ? "10px" : "14px") : scrolled ? "12px" : "18px",
           left: "50%",
           transform: "translateX(-50%)",
           width: isMobile
@@ -291,10 +291,10 @@ function Navbar({ routes = [], action = null }) {
           background: scrolled || mobileOpen ? "rgba(7,9,10,0.9)" : "rgba(10,12,14,0.72)",
           backdropFilter: scrolled ? "blur(28px) saturate(160%)" : "blur(24px) saturate(150%)",
           WebkitBackdropFilter: scrolled ? "blur(28px) saturate(160%)" : "blur(24px) saturate(150%)",
-          borderRadius: isMobile ? "16px" : "999px",
+          borderRadius: "16px",
           border: "1px solid rgba(255,255,255,0.10)",
           boxShadow: scrolled || mobileOpen ? "0 24px 70px rgba(0,0,0,0.42)" : "0 20px 60px rgba(0,0,0,0.30)",
-          padding: isMobile ? "0 10px 0 16px" : "0 16px 0 22px",
+          padding: isMobile ? "0 10px 0 16px" : "0 12px 0 18px",
           transition: "all 280ms cubic-bezier(0.4,0,0.2,1)",
         }}
       >
@@ -303,19 +303,19 @@ function Navbar({ routes = [], action = null }) {
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            height: isMobile ? (scrolled ? "50px" : "56px") : scrolled ? "64px" : "72px",
+            height: isMobile ? (scrolled ? "50px" : "56px") : scrolled ? "52px" : "58px",
             transition: "height 280ms cubic-bezier(0.4,0,0.2,1)",
-            gap: "18px",
+            gap: "16px",
           }}
         >
           {/* Brand */}
           <Link to="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", flexShrink: 0 }}>
-            <img src={radrLogo} alt="Artist RADR" style={{ height: isMobile ? "23px" : "28px", width: "auto", display: "block" }} />
+            <img src={radrLogo} alt="Artist RADR" style={{ height: "23px", width: "auto", display: "block" }} />
           </Link>
 
           {/* Desktop nav */}
           {!isMobile && (
-            <div style={{ display: "flex", alignItems: "center", gap: "18px", flex: 1, justifyContent: "flex-end" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "14px", flex: 1, justifyContent: "flex-end" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "2px" }}>
                 {navRoutes.map(({ name, href, route, collapse }) => {
                   const isActive = route && location.pathname === route;
@@ -337,7 +337,7 @@ function Navbar({ routes = [], action = null }) {
               {/* Search — decorative only, no backend wired up */}
               {showSearch && (
                 <div className="radr-search">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                     <circle cx="11" cy="11" r="7" />
                     <line x1="21" y1="21" x2="16.65" y2="16.65" />
                   </svg>
@@ -358,7 +358,7 @@ function Navbar({ routes = [], action = null }) {
                       ? (
                         <Link to={action.route || "/"} className="radr-cta">
                           {action.label}
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                             <line x1="5" y1="12" x2="19" y2="12" />
                             <polyline points="12 5 19 12 12 19" />
                           </svg>
@@ -367,7 +367,7 @@ function Navbar({ routes = [], action = null }) {
                       : (
                         <a href={action.route} target="_blank" rel="noreferrer" className="radr-cta">
                           {action.label}
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                             <line x1="5" y1="12" x2="19" y2="12" />
                             <polyline points="12 5 19 12 12 19" />
                           </svg>
