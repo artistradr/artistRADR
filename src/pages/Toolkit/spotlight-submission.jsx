@@ -117,7 +117,7 @@ export default function SpotlightSubmissionPage() {
     <>
       <style>{`
         .sp-page { font-family:var(--font-body); background:#f7f6f3; min-height:100vh; display:flex; flex-direction:column; }
-        .sp-wrap { max-width:1100px; margin:0 auto; padding:0 2rem; width:100%; box-sizing:border-box; }
+        .sp-wrap { max-width:1180px; margin:0 auto; padding:0 1.5rem; width:100%; box-sizing:border-box; }
         .sp-body { display:grid; grid-template-columns:1fr 340px; gap:48px; align-items:start; padding-bottom:100px; }
         .sp-card { background:white; border:0.5px solid rgba(0,0,0,0.08); border-radius:20px; padding:32px; }
         .sp-field { display:block; margin-bottom:14px; }
@@ -130,7 +130,7 @@ export default function SpotlightSubmissionPage() {
         .sp-btn.ghost { background:transparent; color:#555; border:0.5px solid rgba(0,0,0,0.12); }
         .sp-side-title { font-family:var(--font-display); font-size:0.8rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:#111; margin-bottom:8px; }
         .sp-side-text { font-size:13px; color:#888; font-weight:300; line-height:1.65; margin:0; }
-        @media (max-width:900px) { .sp-body { grid-template-columns:1fr; gap:28px; } .sp-card { padding:24px 20px; } .sp-wrap { padding:0 1.25rem; } }
+        @media (max-width:900px) { .sp-body { grid-template-columns:1fr; gap:28px; } .sp-card { padding:24px 20px; } }
       `}</style>
 
       <div className="sp-page">
