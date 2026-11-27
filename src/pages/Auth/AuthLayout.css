@@ -1,0 +1,42 @@
+/* Sign in and register: two columns on desktop, one column on phones and tablets */
+.auth-page { display: flex; flex-direction: column; min-height: 100vh; background: #fff; font-family: var(--font-body); }
+.auth-split { flex: 1; display: grid; grid-template-columns: minmax(0, 1fr); }
+
+.auth-aside { display: none; }
+.auth-main { padding: 110px 1.5rem 64px; }
+.auth-form-wrap { width: 100%; max-width: 420px; }
+
+.auth-badge {
+  display: inline-flex; align-items: center; gap: 7px; margin-bottom: 18px; padding: 5px 14px; border-radius: 100px;
+  font-size: 10px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase;
+  color: #D94F2B; background: rgba(217,79,43,0.08); border: 0.5px solid rgba(217,79,43,0.25);
+}
+.auth-badge::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+.auth-badge--teal { color: #1fa79f; background: rgba(77,217,208,0.08); border-color: rgba(77,217,208,0.35); }
+
+.auth-title {
+  margin: 0 0 10px; font-family: var(--font-display); font-size: clamp(2.2rem, 5vw, 2.8rem); font-weight: 800;
+  letter-spacing: 2px; text-transform: uppercase; color: #111;
+}
+.auth-sub { margin: 0 0 30px; font-size: 14px; font-weight: 300; color: #888; }
+.auth-sub a { color: #D94F2B; font-weight: 600; text-decoration: none; }
+
+.auth-aside-kicker { font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #D94F2B; }
+.auth-aside-heading {
+  margin: 14px 0 16px; font-family: var(--font-display); font-size: clamp(2.4rem, 3.4vw, 3.6rem); font-weight: 800;
+  line-height: 1.05; letter-spacing: 1px; text-transform: uppercase; color: #111;
+}
+.auth-aside-text { max-width: 440px; margin: 0 0 32px; font-size: 15px; line-height: 1.7; color: #555; }
+.auth-aside-points { display: grid; gap: 14px; max-width: 440px; margin: 0; padding: 0; list-style: none; }
+.auth-aside-points li { position: relative; padding-left: 28px; font-size: 14px; line-height: 1.5; color: #222; }
+.auth-aside-points li::before { content: "✓"; position: absolute; left: 0; top: 0; font-weight: 700; color: #D94F2B; }
+
+@media (min-width: 900px) {
+  .auth-split { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .auth-aside {
+    display: flex; flex-direction: column; justify-content: center; padding: 130px 64px 80px 72px;
+    background: #f0ede7; border-right: 1px solid rgba(0,0,0,0.07);
+  }
+  /* Left-aligned in its column, not floating in the middle of the page */
+  .auth-main { display: flex; align-items: flex-start; padding: 150px 72px 80px 72px; }
+}

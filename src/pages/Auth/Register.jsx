@@ -1,12 +1,21 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../../supabaseClient";
-import Navbar from "layouts/Navbar";
-import Footer from "layouts/Footer";
-import routes from "routes";
+import AuthLayout from "./AuthLayout";
 import GoogleButton from "./GoogleButton";
 
-const F = { d: "var(--font-display)", b: "var(--font-body)" };
+const F = { b: "var(--font-body)" };
+
+const ASIDE = {
+  kicker: "Join the movement",
+  heading: "Get your music heard.",
+  text: "Create a free account, then start a campaign when you are ready. It takes two steps to sign up.",
+  points: [
+    "Campaigns from $2.99 a day, from 7 days",
+    "RADR staff review every campaign before it starts",
+    "Pay in US dollars or Naira with Paystack",
+  ],
+};
 
 // Two steps: who you are, then your password.
 const STEPS = ["Your details", "Password"];
@@ -172,144 +181,129 @@ export default function Register() {
   const matches = form.confirm.length > 0 && form.password === form.confirm;
 
   return (
-    <div style={{ fontFamily: F.b, background: "#f7f6f3", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+    <AuthLayout
+      navAction={{ type: "internal", route: "/sign-in", label: "Sign In" }}
+      tone="teal"
+      badge="Join the movement"
+      title="Create Account"
+      subtitle={<>Already have an account? <Link to="/sign-in">Sign In</Link></>}
+      aside={ASIDE}
+    >
       <style>{ANIMATION}</style>
-      <Navbar routes={routes} action={{ type: "internal", route: "/sign-in", label: "Sign In" }} />
 
-      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "120px 2rem 80px" }}>
-        <div style={{ width: "100%", maxWidth: "420px" }}>
-
-          <div style={{ textAlign: "center", marginBottom: "32px" }}>
-            <div style={{ display: "inline-flex", alignItems: "center", gap: "7px", fontSize: "10px", fontWeight: 600, letterSpacing: "2px", textTransform: "uppercase", color: "#4DD9D0", background: "rgba(77,217,208,0.08)", border: "0.5px solid rgba(77,217,208,0.3)", borderRadius: "100px", padding: "5px 14px", marginBottom: "18px" }}>
-              <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#4DD9D0", display: "inline-block" }} />
-              Join the movement
-            </div>
-            <h1 style={{ fontFamily: F.d, fontSize: "clamp(2.2rem, 6vw, 3rem)", fontWeight: 800, textTransform: "uppercase", letterSpacing: "2px", color: "#111", margin: "0 0 10px" }}>Create Account</h1>
-            <p style={{ fontSize: "14px", color: "#888", fontWeight: 300 }}>
-              Already have an account?{" "}
-              <Link to="/sign-in" style={{ color: "#D94F2B", fontWeight: 600, textDecoration: "none" }}>Sign In</Link>
-            </p>
-          </div>
-
-          <div style={{ background: "white", border: "0.5px solid rgba(0,0,0,0.09)", borderRadius: "20px", padding: "36px 32px", boxShadow: "0 2px 20px rgba(0,0,0,0.06)" }}>
-
-            {checkEmail ? (
-              <div role="status" style={{ textAlign: "center" }}>
-                <p style={{ fontSize: "14px", color: "#333", lineHeight: 1.7, margin: 0 }}>
-                  Almost there — we sent a confirmation link to <strong>{form.email}</strong>. Click it to activate your account, then sign in.
-                </p>
-                <div style={{ marginTop: "20px", fontSize: "13px", color: "#888" }}>
-                  {resend === "sent" ? (
-                    "Sent again. Check your inbox and spam folder."
-                  ) : (
-                    <>
-                      Didn&apos;t get it?{" "}
-                      <button type="button" onClick={resendEmail} disabled={resend === "sending"} style={{ ...linkButton, fontSize: "13px" }}>
-                        {resend === "sending" ? "Sending…" : "Send it again"}
-                      </button>
-                    </>
-                  )}
-                  {resend === "error" && <div style={{ marginTop: "8px", color: "#D94F2B" }}>Couldn&apos;t send it. Try again in a minute.</div>}
-                </div>
-                <Link to="/sign-in" style={{ display: "inline-block", marginTop: "22px", color: "#D94F2B", fontWeight: 600, fontSize: "14px", textDecoration: "none" }}>Go to Sign In</Link>
-              </div>
+      {checkEmail ? (
+        <div role="status">
+          <p style={{ fontSize: "14px", color: "#333", lineHeight: 1.7, margin: 0 }}>
+            Almost there — we sent a confirmation link to <strong>{form.email}</strong>. Click it to activate your account, then sign in.
+          </p>
+          <div style={{ marginTop: "20px", fontSize: "13px", color: "#888" }}>
+            {resend === "sent" ? (
+              "Sent again. Check your inbox and spam folder."
             ) : (
               <>
-                <StepProgress step={step} />
-
-                <div aria-live="polite">
-                  {error && (
-                    <div role="alert" style={{ background: "rgba(217,79,43,0.08)", border: "0.5px solid rgba(217,79,43,0.3)", borderRadius: "10px", padding: "12px 16px", color: "#D94F2B", fontSize: "13px", fontWeight: 500, marginBottom: "20px" }}>
-                      {error}
-                    </div>
-                  )}
-                </div>
-
-                <form onSubmit={submit} noValidate>
-                  {step === 0 ? (
-                    <div key="details" className="radr-step">
-                      <div style={{ marginBottom: "16px" }}>
-                        <label htmlFor="reg-name" style={labelStyle}>Full Name</label>
-                        <input id="reg-name" ref={nameRef} type="text" name="fullName" value={form.fullName} onChange={handle} autoComplete="name" placeholder="Your name" style={inputStyle} />
-                      </div>
-                      <div style={{ marginBottom: "28px" }}>
-                        <label htmlFor="reg-email" style={labelStyle}>Email</label>
-                        <input id="reg-email" type="email" name="email" value={form.email} onChange={handle} autoComplete="username" inputMode="email" autoCapitalize="none" spellCheck={false} placeholder="you@example.com" style={inputStyle} />
-                      </div>
-                      <button type="submit" style={primaryButton(false)}>Continue</button>
-                    </div>
-                  ) : (
-                    <div key="password" className="radr-step">
-                      {/* Kept in the form so password managers save the right username. */}
-                      <input type="email" value={form.email} readOnly tabIndex={-1} aria-hidden="true" autoComplete="username" style={{ position: "absolute", width: "1px", height: "1px", overflow: "hidden", opacity: 0, pointerEvents: "none" }} />
-
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", background: "#fafafa", border: "0.5px solid rgba(0,0,0,0.1)", borderRadius: "10px", padding: "10px 14px", marginBottom: "20px" }}>
-                        <span style={{ fontSize: "13px", color: "#333", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{form.fullName} · {form.email}</span>
-                        <button type="button" onClick={() => goToStep(0)} disabled={loading} style={linkButton}>Edit</button>
-                      </div>
-
-                      <div style={{ marginBottom: "16px" }}>
-                        <label htmlFor="reg-password" style={labelStyle}>Password</label>
-                        <div style={{ position: "relative" }}>
-                          <input
-                            id="reg-password" ref={passwordRef} type={showPassword ? "text" : "password"} name="password" value={form.password}
-                            onChange={handle} onKeyUp={trackCaps} onKeyDown={trackCaps} onBlur={() => setCapsLock(false)}
-                            autoComplete="new-password" placeholder={`Min. ${MIN_PASSWORD} characters`}
-                            style={{ ...inputStyle, paddingRight: "64px" }}
-                          />
-                          <button
-                            type="button" onClick={() => setShowPassword((v) => !v)}
-                            aria-label={showPassword ? "Hide password" : "Show password"} aria-pressed={showPassword}
-                            style={{ ...linkButton, position: "absolute", right: "14px", top: "50%", transform: "translateY(-50%)", color: "#888" }}
-                          >
-                            {showPassword ? "Hide" : "Show"}
-                          </button>
-                        </div>
-                        {capsLock && <div style={{ marginTop: "8px", fontSize: "12px", color: "#b45309" }}>Caps Lock is on.</div>}
-                        <Check ok={longEnough}>At least {MIN_PASSWORD} characters</Check>
-                      </div>
-
-                      <div style={{ marginBottom: "28px" }}>
-                        <label htmlFor="reg-confirm" style={labelStyle}>Confirm Password</label>
-                        <input id="reg-confirm" type={showPassword ? "text" : "password"} name="confirm" value={form.confirm} onChange={handle} autoComplete="new-password" placeholder="Repeat password" style={inputStyle} />
-                        <Check ok={matches}>Passwords match</Check>
-                      </div>
-
-                      <div style={{ display: "flex", gap: "10px" }}>
-                        <button type="button" onClick={() => goToStep(0)} disabled={loading} style={{ flex: "0 0 auto", padding: "14px 20px", background: "white", border: "0.5px solid rgba(0,0,0,0.15)", borderRadius: "10px", fontFamily: F.b, fontSize: "14px", fontWeight: 600, color: "#333", cursor: loading ? "not-allowed" : "pointer" }}>
-                          Back
-                        </button>
-                        <button type="submit" disabled={loading} style={{ ...primaryButton(loading), flex: 1, width: "auto" }}>
-                          {loading ? "Creating account…" : "Create Account"}
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </form>
-
-                {step === 0 && (
-                  <>
-                    <div style={{ display: "flex", alignItems: "center", gap: "12px", margin: "24px 0" }}>
-                      <div style={{ flex: 1, height: "0.5px", background: "rgba(0,0,0,0.1)" }} />
-                      <span style={{ fontSize: "11px", color: "#bbb", fontWeight: 500 }}>or</span>
-                      <div style={{ flex: 1, height: "0.5px", background: "rgba(0,0,0,0.1)" }} />
-                    </div>
-                    <GoogleButton next="/" onError={setError} />
-                  </>
-                )}
-
-                <p style={{ fontSize: "11px", color: "#bbb", textAlign: "center", marginTop: "16px", lineHeight: 1.6 }}>
-                  By continuing you agree to our{" "}
-                  <Link to="/terms" style={{ color: "#D94F2B", textDecoration: "none" }}>Terms</Link>
-                  {" & "}
-                  <Link to="/privacy" style={{ color: "#D94F2B", textDecoration: "none" }}>Privacy Policy</Link>
-                </p>
+                Didn&apos;t get it?{" "}
+                <button type="button" onClick={resendEmail} disabled={resend === "sending"} style={{ ...linkButton, fontSize: "13px" }}>
+                  {resend === "sending" ? "Sending…" : "Send it again"}
+                </button>
               </>
             )}
+            {resend === "error" && <div style={{ marginTop: "8px", color: "#D94F2B" }}>Couldn&apos;t send it. Try again in a minute.</div>}
           </div>
+          <Link to="/sign-in" style={{ display: "inline-block", marginTop: "22px", color: "#D94F2B", fontWeight: 600, fontSize: "14px", textDecoration: "none" }}>Go to Sign In</Link>
         </div>
-      </div>
-      <Footer />
-    </div>
+      ) : (
+        <>
+          <StepProgress step={step} />
+
+          <div aria-live="polite">
+            {error && (
+              <div role="alert" style={{ background: "rgba(217,79,43,0.08)", border: "0.5px solid rgba(217,79,43,0.3)", borderRadius: "10px", padding: "12px 16px", color: "#D94F2B", fontSize: "13px", fontWeight: 500, marginBottom: "20px" }}>
+                {error}
+              </div>
+            )}
+          </div>
+
+          <form onSubmit={submit} noValidate>
+            {step === 0 ? (
+              <div key="details" className="radr-step">
+                <div style={{ marginBottom: "16px" }}>
+                  <label htmlFor="reg-name" style={labelStyle}>Full Name</label>
+                  <input id="reg-name" ref={nameRef} type="text" name="fullName" value={form.fullName} onChange={handle} autoComplete="name" placeholder="Your name" style={inputStyle} />
+                </div>
+                <div style={{ marginBottom: "28px" }}>
+                  <label htmlFor="reg-email" style={labelStyle}>Email</label>
+                  <input id="reg-email" type="email" name="email" value={form.email} onChange={handle} autoComplete="username" inputMode="email" autoCapitalize="none" spellCheck={false} placeholder="you@example.com" style={inputStyle} />
+                </div>
+                <button type="submit" style={primaryButton(false)}>Continue</button>
+              </div>
+            ) : (
+              <div key="password" className="radr-step">
+                {/* Kept in the form so password managers save the right username. */}
+                <input type="email" value={form.email} readOnly tabIndex={-1} aria-hidden="true" autoComplete="username" style={{ position: "absolute", width: "1px", height: "1px", overflow: "hidden", opacity: 0, pointerEvents: "none" }} />
+
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", background: "#fafafa", border: "0.5px solid rgba(0,0,0,0.1)", borderRadius: "10px", padding: "10px 14px", marginBottom: "20px" }}>
+                  <span style={{ fontSize: "13px", color: "#333", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{form.fullName} · {form.email}</span>
+                  <button type="button" onClick={() => goToStep(0)} disabled={loading} style={linkButton}>Edit</button>
+                </div>
+
+                <div style={{ marginBottom: "16px" }}>
+                  <label htmlFor="reg-password" style={labelStyle}>Password</label>
+                  <div style={{ position: "relative" }}>
+                    <input
+                      id="reg-password" ref={passwordRef} type={showPassword ? "text" : "password"} name="password" value={form.password}
+                      onChange={handle} onKeyUp={trackCaps} onKeyDown={trackCaps} onBlur={() => setCapsLock(false)}
+                      autoComplete="new-password" placeholder={`Min. ${MIN_PASSWORD} characters`}
+                      style={{ ...inputStyle, paddingRight: "64px" }}
+                    />
+                    <button
+                      type="button" onClick={() => setShowPassword((v) => !v)}
+                      aria-label={showPassword ? "Hide password" : "Show password"} aria-pressed={showPassword}
+                      style={{ ...linkButton, position: "absolute", right: "14px", top: "50%", transform: "translateY(-50%)", color: "#888" }}
+                    >
+                      {showPassword ? "Hide" : "Show"}
+                    </button>
+                  </div>
+                  {capsLock && <div style={{ marginTop: "8px", fontSize: "12px", color: "#b45309" }}>Caps Lock is on.</div>}
+                  <Check ok={longEnough}>At least {MIN_PASSWORD} characters</Check>
+                </div>
+
+                <div style={{ marginBottom: "28px" }}>
+                  <label htmlFor="reg-confirm" style={labelStyle}>Confirm Password</label>
+                  <input id="reg-confirm" type={showPassword ? "text" : "password"} name="confirm" value={form.confirm} onChange={handle} autoComplete="new-password" placeholder="Repeat password" style={inputStyle} />
+                  <Check ok={matches}>Passwords match</Check>
+                </div>
+
+                <div style={{ display: "flex", gap: "10px" }}>
+                  <button type="button" onClick={() => goToStep(0)} disabled={loading} style={{ flex: "0 0 auto", padding: "14px 20px", background: "white", border: "0.5px solid rgba(0,0,0,0.15)", borderRadius: "10px", fontFamily: F.b, fontSize: "14px", fontWeight: 600, color: "#333", cursor: loading ? "not-allowed" : "pointer" }}>
+                    Back
+                  </button>
+                  <button type="submit" disabled={loading} style={{ ...primaryButton(loading), flex: 1, width: "auto" }}>
+                    {loading ? "Creating account…" : "Create Account"}
+                  </button>
+                </div>
+              </div>
+            )}
+          </form>
+
+          {step === 0 && (
+            <>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px", margin: "24px 0" }}>
+                <div style={{ flex: 1, height: "0.5px", background: "rgba(0,0,0,0.1)" }} />
+                <span style={{ fontSize: "11px", color: "#bbb", fontWeight: 500 }}>or</span>
+                <div style={{ flex: 1, height: "0.5px", background: "rgba(0,0,0,0.1)" }} />
+              </div>
+              <GoogleButton next="/" onError={setError} />
+            </>
+          )}
+
+          <p style={{ fontSize: "11px", color: "#aaa", marginTop: "16px", lineHeight: 1.6 }}>
+            By continuing you agree to our{" "}
+            <Link to="/terms" style={{ color: "#D94F2B", textDecoration: "none" }}>Terms</Link>
+            {" & "}
+            <Link to="/privacy" style={{ color: "#D94F2B", textDecoration: "none" }}>Privacy Policy</Link>
+          </p>
+        </>
+      )}
+    </AuthLayout>
   );
 }
