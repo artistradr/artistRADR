@@ -1,36 +1,85 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../../supabaseClient";
-import Navbar from "layouts/Navbar";
-import Footer from "layouts/Footer";
-import routes from "routes";
+import AuthLayout from "./AuthLayout";
+import StageHeader from "./StageHeader";
+import GoogleButton from "./GoogleButton";
 
-const F = { d: "var(--font-display)", b: "var(--font-body)" };
+const ASIDE = {
+  kicker: "Join the movement",
+  heading: "Get your music heard.",
+  text: "Create a free account, then start a campaign when you are ready. Signing up takes three quick steps.",
+  points: [
+    "Campaigns from $2.99 a day, from 7 days",
+    "RADR staff review every campaign before it starts",
+    "Pay in US dollars or Naira with Paystack",
+  ],
+};
+
+// Three stages, one question each: name, email, password.
+const STAGES = 3;
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MIN_PASSWORD = 6;
 
 // Supabase returns error.message strings, not error codes like Firebase did.
 function friendlyError(message = "") {
   const m = message.toLowerCase();
-  if (m.includes("already registered") || m.includes("already exists")) return "An account with this email already exists.";
+  if (m.includes("already registered") || m.includes("already exists")) return "An account with this email already exists. Try signing in.";
   if (m.includes("unable to validate email") || m.includes("invalid email")) return "Please enter a valid email address.";
   if (m.includes("password") && m.includes("6")) return "Password must be at least 6 characters.";
   if (m.includes("rate limit")) return "Too many attempts. Try again later.";
+  if (m.includes("failed to fetch") || m.includes("network")) return "Couldn't reach the server. Check your connection and try again.";
   return message || "Registration failed. Please try again.";
 }
 
 export default function Register() {
   const navigate = useNavigate();
+  const [stage, setStage] = useState(0);
   const [form, setForm] = useState({ fullName: "", email: "", password: "", confirm: "" });
+  const [showPassword, setShowPassword] = useState(false);
+  const [capsLock, setCapsLock] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [checkEmail, setCheckEmail] = useState(false);
+  const [resend, setResend] = useState("idle"); // idle | sending | sent | error
+  const fieldRefs = [useRef(null), useRef(null), useRef(null)];
 
-  const handle = (e) => setForm((p) => ({ ...p, [e.target.name]: e.target.value }));
+  // Move the cursor to the field for the current stage.
+  useEffect(() => {
+    if (!checkEmail) fieldRefs[stage].current?.focus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stage, checkEmail]);
 
-  const submit = async (e) => {
-    e.preventDefault();
+  const handle = (e) => {
+    setForm((p) => ({ ...p, [e.target.name]: e.target.value }));
     setError("");
+  };
+
+  function goToStage(target) {
+    setError("");
+    setShowPassword(false);
+    setCapsLock(false);
+    setStage(target);
+  }
+
+  function continueFromName() {
+    const name = form.fullName.trim();
+    if (!name) { setError("Enter your name."); return; }
+    setForm((p) => ({ ...p, fullName: name }));
+    goToStage(1);
+  }
+
+  function continueFromEmail() {
+    const email = form.email.trim();
+    if (!EMAIL_PATTERN.test(email)) { setError("Enter a valid email address."); return; }
+    setForm((p) => ({ ...p, email }));
+    goToStage(2);
+  }
+
+  async function createAccount() {
+    if (form.password.length < MIN_PASSWORD) { setError(`Password must be at least ${MIN_PASSWORD} characters.`); fieldRefs[2].current?.focus(); return; }
     if (form.password !== form.confirm) { setError("Passwords do not match."); return; }
-    if (form.password.length < 6) { setError("Password must be at least 6 characters."); return; }
+    setError("");
     setLoading(true);
 
     const { data, error: err } = await supabase.auth.signUp({
@@ -49,6 +98,16 @@ export default function Register() {
       return;
     }
 
+    // With email confirmation on, Supabase hides that an email is taken: it returns a user
+    // with no identities instead of an error. Tell the artist, and let them fix the email.
+    if (Array.isArray(data.user?.identities) && data.user.identities.length === 0) {
+      setForm((p) => ({ ...p, password: "", confirm: "" }));
+      setLoading(false);
+      goToStage(1);
+      setError("An account with this email already exists. Try signing in.");
+      return;
+    }
+
     // If email confirmation is enabled in the Supabase dashboard, signUp
     // succeeds but returns no session — the account exists but isn't logged
     // in until the confirmation link is clicked. Handle both cases.
@@ -58,79 +117,144 @@ export default function Register() {
       setCheckEmail(true);
       setLoading(false);
     }
+  }
+
+  const submit = (e) => {
+    e.preventDefault();
+    if (loading) return;
+    if (stage === 0) continueFromName();
+    else if (stage === 1) continueFromEmail();
+    else createAccount();
   };
 
-  const inputStyle = {
-    width: "100%", boxSizing: "border-box", padding: "13px 16px",
-    border: "0.5px solid rgba(0,0,0,0.15)", borderRadius: "10px",
-    fontFamily: F.b, fontSize: "14px", color: "#111",
-    background: "#fafafa", outline: "none",
-  };
+  async function resendEmail() {
+    if (resend === "sending") return;
+    setResend("sending");
+    const { error: err } = await supabase.auth.resend({ type: "signup", email: form.email });
+    setResend(err ? "error" : "sent");
+  }
+
+  const trackCaps = (e) => setCapsLock(Boolean(e.getModifierState?.("CapsLock")));
+  const longEnough = form.password.length >= MIN_PASSWORD;
+  const matches = form.confirm.length > 0 && form.password === form.confirm;
+  const errorBox = <div aria-live="polite">{error && <div role="alert" className="auth-error">{error}</div>}</div>;
+
+  const footer = <>Already have an account? <Link to="/sign-in">Sign in</Link></>;
+  const aside = ASIDE;
+  const navAction = { type: "internal", route: "/sign-in", label: "Sign In" };
+
+  if (checkEmail) {
+    return (
+      <AuthLayout navAction={navAction} aside={aside} footer={footer}>
+        <div role="status" className="auth-stage">
+          <h1 className="auth-modal-title">Check your email</h1>
+          <p className="auth-modal-text">
+            We sent a confirmation link to <strong>{form.email}</strong>. Click it to activate your account, then sign in.
+          </p>
+          <div style={{ fontSize: "13px", color: "#888", marginBottom: "20px" }}>
+            {resend === "sent" ? (
+              "Sent again. Check your inbox and spam folder."
+            ) : (
+              <>
+                Didn&apos;t get it?{" "}
+                <button type="button" className="auth-link-btn" style={{ fontSize: "13px" }} onClick={resendEmail} disabled={resend === "sending"}>
+                  {resend === "sending" ? "Sending…" : "Send it again"}
+                </button>
+              </>
+            )}
+            {resend === "error" && <div style={{ marginTop: "8px", color: "#D94F2B" }}>Couldn&apos;t send it. Try again in a minute.</div>}
+          </div>
+          <Link to="/sign-in" className="auth-btn" style={{ display: "block", boxSizing: "border-box", textAlign: "center", textDecoration: "none" }}>Go to Sign In</Link>
+        </div>
+      </AuthLayout>
+    );
+  }
 
   return (
-    <div style={{ fontFamily: F.b, background: "#f7f6f3", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
-      <Navbar routes={routes} action={{ type: "internal", route: "/sign-in", label: "Sign In" }} />
+    <AuthLayout navAction={navAction} aside={aside} footer={footer}>
+      <StageHeader step={stage} total={STAGES} onBack={() => goToStage(stage - 1)} disabled={loading} />
 
-      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "120px 2rem 80px" }}>
-        <div style={{ width: "100%", maxWidth: "420px" }}>
-
-          <div style={{ textAlign: "center", marginBottom: "32px" }}>
-            <div style={{ display: "inline-flex", alignItems: "center", gap: "7px", fontSize: "10px", fontWeight: 600, letterSpacing: "2px", textTransform: "uppercase", color: "#4DD9D0", background: "rgba(77,217,208,0.08)", border: "0.5px solid rgba(77,217,208,0.3)", borderRadius: "100px", padding: "5px 14px", marginBottom: "18px" }}>
-              <span style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#4DD9D0", display: "inline-block" }} />
-              Join the movement
+      <form onSubmit={submit} noValidate>
+        {stage === 0 && (
+          <div key="name" className="auth-stage">
+            <h1 className="auth-modal-title">Create account</h1>
+            <p className="auth-modal-text">First, what should we call you?</p>
+            {errorBox}
+            <div className="auth-field">
+              <label htmlFor="reg-name" className="auth-sr">Full name</label>
+              <input id="reg-name" ref={fieldRefs[0]} type="text" name="fullName" className="auth-input" value={form.fullName} onChange={handle} autoComplete="name" placeholder="Your name" />
             </div>
-            <h1 style={{ fontFamily: F.d, fontSize: "clamp(2.2rem, 6vw, 3rem)", fontWeight: 800, textTransform: "uppercase", letterSpacing: "2px", color: "#111", margin: "0 0 10px" }}>Create Account</h1>
-            <p style={{ fontSize: "14px", color: "#888", fontWeight: 300 }}>
-              Already have an account?{" "}
-              <Link to="/sign-in" style={{ color: "#D94F2B", fontWeight: 600, textDecoration: "none" }}>Sign In</Link>
-            </p>
+            <button type="submit" className="auth-btn">Continue</button>
           </div>
+        )}
 
-          <div style={{ background: "white", border: "0.5px solid rgba(0,0,0,0.09)", borderRadius: "20px", padding: "36px 32px", boxShadow: "0 2px 20px rgba(0,0,0,0.06)" }}>
+        {stage === 1 && (
+          <div key="email" className="auth-stage">
+            <h1 className="auth-modal-title">Your email</h1>
+            <p className="auth-modal-text">Hi {form.fullName}. Where should we send updates about your campaigns?</p>
+            {errorBox}
+            <div className="auth-field">
+              <label htmlFor="reg-email" className="auth-sr">Email</label>
+              <input id="reg-email" ref={fieldRefs[1]} type="email" name="email" className="auth-input" value={form.email} onChange={handle} autoComplete="username" inputMode="email" autoCapitalize="none" spellCheck={false} placeholder="you@example.com" />
+            </div>
+            <button type="submit" className="auth-btn">Continue</button>
+          </div>
+        )}
 
-            {error && (
-              <div style={{ background: "rgba(217,79,43,0.08)", border: "0.5px solid rgba(217,79,43,0.3)", borderRadius: "10px", padding: "12px 16px", color: "#D94F2B", fontSize: "13px", fontWeight: 500, marginBottom: "20px" }}>
-                {error}
-              </div>
-            )}
+        {stage === 2 && (
+          <div key="password" className="auth-stage">
+            {/* Kept in the form so password managers save the right username. */}
+            <input type="email" value={form.email} readOnly tabIndex={-1} aria-hidden="true" autoComplete="username" className="auth-sr" />
 
-            {checkEmail ? (
-              <p style={{ fontSize: "14px", color: "#333", lineHeight: 1.7, textAlign: "center" }}>
-                Almost there — we sent a confirmation link to <strong>{form.email}</strong>. Click it to activate your account, then sign in.
-              </p>
-            ) : (
-              <form onSubmit={submit}>
-                {[
-                  { name: "fullName", label: "Full Name", placeholder: "Your name", type: "text" },
-                  { name: "email", label: "Email", placeholder: "you@example.com", type: "email" },
-                  { name: "password", label: "Password", placeholder: "Min. 6 characters", type: "password" },
-                  { name: "confirm", label: "Confirm Password", placeholder: "Repeat password", type: "password" },
-                ].map((f, i) => (
-                  <div key={f.name} style={{ marginBottom: i === 3 ? "28px" : "16px" }}>
-                    <label style={{ display: "block", fontSize: "11px", fontWeight: 600, letterSpacing: "1px", textTransform: "uppercase", color: "#999", marginBottom: "8px" }}>{f.label}</label>
-                    <input type={f.type} name={f.name} value={form[f.name]} onChange={handle} required placeholder={f.placeholder} style={inputStyle} />
-                  </div>
-                ))}
+            <h1 className="auth-modal-title">Create a password</h1>
+            <div className="auth-chip">
+              <span>{form.email}</span>
+              <button type="button" className="auth-link-btn" onClick={() => goToStage(1)} disabled={loading}>Change</button>
+            </div>
+            {errorBox}
 
+            <div className="auth-field">
+              <label htmlFor="reg-password" className="auth-label">Password</label>
+              <div className="auth-input-wrap">
+                <input
+                  id="reg-password" ref={fieldRefs[2]} type={showPassword ? "text" : "password"} name="password" className="auth-input"
+                  value={form.password} onChange={handle} onKeyUp={trackCaps} onKeyDown={trackCaps} onBlur={() => setCapsLock(false)}
+                  autoComplete="new-password" placeholder={`Min. ${MIN_PASSWORD} characters`}
+                />
                 <button
-                  type="submit" disabled={loading}
-                  style={{ width: "100%", padding: "14px", background: "#D94F2B", border: "none", borderRadius: "10px", color: "#ffffff", fontFamily: F.b, fontSize: "14px", fontWeight: 700, cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.7 : 1, boxShadow: "0 4px 16px rgba(217,79,43,0.35)", letterSpacing: "0.2px" }}
+                  type="button" className="auth-toggle" onClick={() => setShowPassword((v) => !v)}
+                  aria-label={showPassword ? "Hide password" : "Show password"} aria-pressed={showPassword}
                 >
-                  {loading ? "Creating account…" : "Create Account"}
+                  {showPassword ? "Hide" : "Show"}
                 </button>
+              </div>
+              {capsLock && <div className="auth-hint auth-hint--warn">Caps Lock is on.</div>}
+              <div className={`auth-hint${longEnough ? " auth-hint--ok" : ""}`}><span aria-hidden="true">{longEnough ? "✓" : "○"}</span> At least {MIN_PASSWORD} characters</div>
+            </div>
 
-                <p style={{ fontSize: "11px", color: "#bbb", textAlign: "center", marginTop: "16px", lineHeight: 1.6 }}>
-                  By registering you agree to our{" "}
-                  <Link to="/terms" style={{ color: "#D94F2B", textDecoration: "none" }}>Terms</Link>
-                  {" & "}
-                  <Link to="/privacy" style={{ color: "#D94F2B", textDecoration: "none" }}>Privacy Policy</Link>
-                </p>
-              </form>
-            )}
+            <div className="auth-field">
+              <label htmlFor="reg-confirm" className="auth-label">Confirm password</label>
+              <input id="reg-confirm" type={showPassword ? "text" : "password"} name="confirm" className="auth-input" value={form.confirm} onChange={handle} autoComplete="new-password" placeholder="Repeat password" />
+              <div className={`auth-hint${matches ? " auth-hint--ok" : ""}`}><span aria-hidden="true">{matches ? "✓" : "○"}</span> Passwords match</div>
+            </div>
+
+            <button type="submit" className="auth-btn" disabled={loading}>
+              {loading ? "Creating account…" : "Create Account"}
+            </button>
           </div>
-        </div>
-      </div>
-      <Footer />
-    </div>
+        )}
+      </form>
+
+      {stage === 0 && (
+        <>
+          <div className="auth-divider"><span>or</span></div>
+          <GoogleButton next="/" onError={setError} />
+        </>
+      )}
+
+      <p className="auth-fine">
+        By continuing you agree to our <Link to="/terms">Terms</Link> &amp; <Link to="/privacy">Privacy Policy</Link>
+      </p>
+    </AuthLayout>
   );
 }
