@@ -7,6 +7,21 @@ import { openOAuthPopup, callAPI } from "./oauth";
 // The Spotify and YouTube verified flags are NOT sent on submit: the database is meant to set
 // them from the server's own records (enforce_submission_verification trigger).
 // Instagram can't be checked by the server, so that flag is self-reported.
+
+// Turns the server's `reason` (follow-on-spotify) into something a person can act on.
+function followFailureMessage(stepId, reason) {
+  if (stepId === "youtube") {
+    return "Subscription not found. Make sure you subscribed on YouTube first, then verify again.";
+  }
+  if (reason === "not_registered") {
+    return "This Spotify account isn't approved to connect yet. We're still in limited access, so please contact us and we'll add you.";
+  }
+  if (reason === "rate_limited") {
+    return "Spotify is busy right now. Please wait a few seconds and try again.";
+  }
+  return "Spotify couldn't complete the follow. Please try again — this is usually temporary.";
+}
+
 export default function usePlaylistSubmission(user) {
   const [currentStep, setCurrentStep]   = useState(0);
   const [followStatus, setFollowStatus] = useState({});
@@ -71,13 +86,14 @@ export default function usePlaylistSubmission(user) {
 
     const apiResult = await callAPI(step.id, result.code);
     if (!apiResult) { setError("Could not connect. Please try again."); setLoading(null); return; }
-    setFollowStatus((p) => ({ ...p, ...apiResult.followed }));
+
+    const followed = apiResult.followed || {};
+    setFollowStatus((p) => ({ ...p, ...followed }));
     setVerified((p) => ({ ...p, [step.id]: true }));
-    const allFollowed = step.items.every((i) => apiResult.followed[i.key]);
+
+    const allFollowed = step.items.every((i) => followed[i.key]);
     if (!allFollowed) {
-      setError(step.id === "youtube"
-        ? "Subscription not found. Make sure you subscribed on YouTube first, then verify again."
-        : "Some follows failed. Please try again — this is usually a temporary Spotify issue.");
+      setError(followFailureMessage(step.id, apiResult.reason));
     }
     setLoading(null);
   };
