@@ -4,8 +4,9 @@ import { STEPS } from "./steps";
 import { openOAuthPopup, callAPI } from "./oauth";
 
 // All the state and actions for the playlist submission flow.
-// verified flags are NOT sent on submit: the database sets them from the server's own
-// verification records (see the enforce_submission_verification trigger).
+// The Spotify and YouTube verified flags are NOT sent on submit: the database is meant to set
+// them from the server's own records (enforce_submission_verification trigger).
+// Instagram can't be checked by the server, so that flag is self-reported.
 export default function usePlaylistSubmission(user) {
   const [currentStep, setCurrentStep]   = useState(0);
   const [followStatus, setFollowStatus] = useState({});
@@ -86,6 +87,7 @@ export default function usePlaylistSubmission(user) {
     try {
       const { error: err } = await supabase.from("playlist_submissions").insert({
         submitted_by: user?.id || null,
+        instagram_verified: !!honorChecked.instagram,
         payload: {
           ...form,
           optionalFollows: Object.keys(optChecked).filter((k) => optChecked[k]),
