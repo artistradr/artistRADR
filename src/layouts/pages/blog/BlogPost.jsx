@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "../../../supabaseClient";
+import { safeHtml } from "../../../utils/sanitizeHtml";
 import Navbar from "layouts/Navbar";
 import Footer from "layouts/Footer";
 import routes from "routes";
@@ -43,7 +44,7 @@ const LinkIcon = () => (
    ──────────────────────────────────────────────────────────── */
 const PostHeader = ({ post, author }) => (
   <>
-    <h1 className="bp-title" dangerouslySetInnerHTML={{ __html: post.title }} />
+    <h1 className="bp-title" dangerouslySetInnerHTML={safeHtml(post.title, { inline: true })} />
     <div className="bp-meta-row">
       <div className="bp-avatar">{author[0]}</div>
       <div>
@@ -161,7 +162,7 @@ const Sidebar = ({ recentPosts, currentSlug }) => (
               {recent.cover_url && <img src={recent.cover_url} alt="" />}
             </div>
             <div className="bp-recent-info">
-              <div className="bp-recent-title" dangerouslySetInnerHTML={{ __html: recent.title }} />
+              <div className="bp-recent-title" dangerouslySetInnerHTML={safeHtml(recent.title, { inline: true })} />
               <div className="bp-recent-date">{formatShortDate(recent.published_at)}</div>
             </div>
           </Link>
@@ -280,7 +281,7 @@ const BlogPost = () => {
 
           <div className="bp-layout">
             <article>
-              <div className="bp-article-body" dangerouslySetInnerHTML={{ __html: post.content }} />
+              <div className="bp-article-body" dangerouslySetInnerHTML={safeHtml(post.content)} />
 
               <div className="bp-article-actions">
                 <Link to="/blog" className="bp-pill">← More Articles</Link>
