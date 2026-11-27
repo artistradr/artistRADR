@@ -12,6 +12,9 @@ function Navbar({ routes = [], action = null }) {
   const [showSearch, setShowSearch] = useState(true);
   const [scrolled, setScrolled] = useState(false);
   const closeTimer = useRef(null);
+  const navRef = useRef(null);
+  const scrollRef = useRef(null);
+  const swipeStartY = useRef(null);
   const location = useLocation();
   const navigate = useNavigate();
   const { user, userRole, logout } = useSupabaseAuth();
@@ -34,6 +37,43 @@ function Navbar({ routes = [], action = null }) {
       window.removeEventListener("scroll", checkScroll);
     };
   }, []);
+
+  // Close the mobile menu the moment the page changes.
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [location.pathname]);
+
+  // While the mobile menu is open: a press anywhere outside the navbar, or
+  // the Escape key, closes it immediately.
+  useEffect(() => {
+    if (!mobileOpen) return undefined;
+    const onPress = (e) => {
+      if (navRef.current && !navRef.current.contains(e.target)) setMobileOpen(false);
+    };
+    const onKey = (e) => {
+      if (e.key === "Escape") setMobileOpen(false);
+    };
+    document.addEventListener("pointerdown", onPress);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onPress);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [mobileOpen]);
+
+  // Swipe up on the open menu to close it. If the menu itself is scrollable,
+  // it only closes once the list has reached the bottom, so scrolling still works.
+  const handleTouchStart = (e) => {
+    swipeStartY.current = mobileOpen ? e.touches[0].clientY : null;
+  };
+  const handleTouchEnd = (e) => {
+    if (!mobileOpen || swipeStartY.current == null) return;
+    const dy = swipeStartY.current - e.changedTouches[0].clientY;
+    swipeStartY.current = null;
+    const el = scrollRef.current;
+    const atBottom = !el || el.scrollTop + el.clientHeight >= el.scrollHeight - 2;
+    if (dy > 60 && atBottom) setMobileOpen(false);
+  };
 
   const handleDropdownEnter = (e, name) => {
     clearTimeout(closeTimer.current);
@@ -234,7 +274,10 @@ function Navbar({ routes = [], action = null }) {
       `}</style>
 
       <nav
+        ref={navRef}
         className="radr-navbar"
+        onTouchStart={isMobile ? handleTouchStart : undefined}
+        onTouchEnd={isMobile ? handleTouchEnd : undefined}
         style={{
           position: "fixed",
           top: isMobile ? (scrolled ? "10px" : "14px") : scrolled ? "16px" : "24px",
@@ -357,7 +400,7 @@ function Navbar({ routes = [], action = null }) {
           <div className={`radr-collapse${mobileOpen ? " open" : ""}`} aria-hidden={!mobileOpen}>
             <div className="radr-collapse-inner">
               <div style={{ height: "1px", background: "rgba(255,255,255,0.08)", margin: "0 0 6px" }} />
-              <div className="radr-mobile-scroll">
+              <div className="radr-mobile-scroll" ref={scrollRef}>
                 <Link to="/blog" className="radr-mobile-item" onClick={closeMobile}>RADR</Link>
                 {navRoutes.map(({ name, route, href, collapse }) => (
                   <MobileNavItem key={name} name={name} route={route} href={href} collapse={collapse} onClose={closeMobile} />
