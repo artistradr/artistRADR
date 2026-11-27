@@ -31,12 +31,13 @@ DOMPurify.addHook("afterSanitizeAttributes", (node) => {
   }
 });
 
+// Inline `style` attributes are kept on purpose: migrated WordPress posts and
+// the Spotify embed rely on them. They can't run script.
 const ARTICLE_CONFIG = {
   USE_PROFILES: { html: true },
   ADD_TAGS: ["iframe"],
   ADD_ATTR: ["allow", "allowfullscreen", "frameborder", "loading", "target"],
   FORBID_TAGS: ["style", "form", "input", "button", "textarea", "select", "object", "embed"],
-  FORBID_ATTR: ["style"],
 };
 
 const TITLE_CONFIG = {
