@@ -3,6 +3,7 @@ import { useNavigate, useParams, Link } from "react-router-dom";
 import { supabase } from "../../supabaseClient";
 import { useSupabaseAuth } from "../../context/SupabaseAuthContext";
 import { ADMIN_BASE } from "./adminBase";
+import { sanitizeArticleHtml } from "../../utils/sanitizeHtml";
 
 const F = { d: "var(--font-display)", b: "var(--font-body)" };
 
@@ -79,11 +80,28 @@ function extractYoutubeEmbedSrc(url) {
   return m ? `https://www.youtube.com/embed/${m[1]}` : null;
 }
 
+// Escapes text for use in HTML text AND double-quoted attribute values.
 function escapeHtml(str) {
-  return str
+  return String(str)
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+// Only plain web / mail links may be inserted. Blocks javascript:, data:, etc.
+function safeLinkUrl(raw) {
+  try {
+    const u = new URL(raw.trim());
+    return ["http:", "https:", "mailto:"].includes(u.protocol) ? u.href : null;
+  } catch {
+    return null;
+  }
+}
+
+function slugify(value) {
+  return String(value).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 }
 
 // Converts any uploaded cover image to JPEG before it's stored.
@@ -180,7 +198,9 @@ function unnestBlocksFromHeadings(container) {
 //    never carry an inherited-uppercase bug onto the live blog page.
 function normalizeToWp(html) {
   const container = document.createElement("div");
-  container.innerHTML = html;
+  // Sanitize first: even a detached element runs <img onerror> handlers
+  // as soon as innerHTML is assigned.
+  container.innerHTML = sanitizeArticleHtml(html);
 
   const BLOCK_TAGS = new Set(["FIGURE", "H1", "H2", "H3", "H4", "H5", "H6", "P", "UL", "OL", "BLOCKQUOTE"]);
   const rebuilt = [];
@@ -310,7 +330,7 @@ export default function PostEditor({ embedded = false }) {
     }
     setForm((p) => ({ ...p, ...draft.form }));
     requestAnimationFrame(() => {
-      if (editorRef.current) editorRef.current.innerHTML = draft.contentHtml || "";
+      if (editorRef.current) editorRef.current.innerHTML = sanitizeArticleHtml(draft.contentHtml || "");
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -369,7 +389,9 @@ export default function PostEditor({ embedded = false }) {
         status: data.status || "draft",
       });
       setExistingCover(data.cover_url || null);
-      if (editorRef.current) editorRef.current.innerHTML = data.content || "";
+      // Sanitize before it touches the DOM so a poisoned post can't run
+      // script inside a staff session just by being opened for editing.
+      if (editorRef.current) editorRef.current.innerHTML = sanitizeArticleHtml(data.content || "");
     }
   };
 
@@ -378,7 +400,7 @@ export default function PostEditor({ embedded = false }) {
     setForm((p) => ({
       ...p,
       [name]: value,
-      ...(name === "title" && !isEdit ? { slug: value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") } : {}),
+      ...(name === "title" && !isEdit ? { slug: slugify(value) } : {}),
     }));
     setHasUnsavedChanges(true);
   };
@@ -483,8 +505,13 @@ export default function PostEditor({ embedded = false }) {
 
   const insertLink = () => {
     if (!linkUrl.trim()) return;
+    const href = safeLinkUrl(linkUrl);
+    if (!href) {
+      window.alert("Links must start with http://, https:// or mailto:");
+      return;
+    }
     const label = linkText.trim() || linkUrl.trim();
-    insertHtmlBlock(`<a href="${escapeHtml(linkUrl.trim())}" target="_blank" rel="noopener noreferrer">${escapeHtml(label)}</a>`);
+    insertHtmlBlock(`<a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer">${escapeHtml(label)}</a>`);
     closeTool();
   };
 
@@ -551,7 +578,8 @@ export default function PostEditor({ embedded = false }) {
   const save = async (statusOverride) => {
     setError("");
     if (!form.title.trim()) { setError("Title is required."); return; }
-    if (!form.slug.trim())  { setError("Slug is required."); return; }
+    const cleanSlug = slugify(form.slug);
+    if (!cleanSlug) { setError("Slug is required (letters, numbers and hyphens only)."); return; }
     setSaving(true);
     try {
       const finalStatus = statusOverride || form.status;
@@ -564,7 +592,7 @@ export default function PostEditor({ embedded = false }) {
           .from("posts")
           .update({
             title: form.title,
-            slug: form.slug,
+            slug: cleanSlug,
             excerpt: form.excerpt,
             content: normalizedContent,
             category: form.category,
@@ -579,7 +607,7 @@ export default function PostEditor({ embedded = false }) {
           .from("posts")
           .insert({
             title: form.title,
-            slug: form.slug,
+            slug: cleanSlug,
             excerpt: form.excerpt,
             content: normalizedContent,
             category: form.category,

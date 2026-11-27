@@ -2,6 +2,18 @@ import { F, STATUS_COLOR } from "../constants";
 import { fmtDate, campaignText } from "../utils";
 import SubActions from "./SubActions";
 
+// Submitter-typed URLs are untrusted. Only turn them into clickable links when
+// they are real https Spotify links; anything else is shown as plain text.
+const SPOTIFY_HOSTS = ["open.spotify.com", "spotify.link", "spotify.com", "www.spotify.com"];
+const safeSpotifyHref = (raw) => {
+  try {
+    const u = new URL(String(raw).trim());
+    return u.protocol === "https:" && SPOTIFY_HOSTS.includes(u.hostname) ? u.href : null;
+  } catch {
+    return null;
+  }
+};
+
 export default function SubmissionRow({ sub, isLast, expanded, setExpanded, isUpdating, deleting, updateSubmissionStatus, deleteSubmission }) {
   // All submission-form fields live inside the jsonb `payload` column, not
   // as top-level table columns — see MIGRATION.md Section 2.
@@ -9,6 +21,7 @@ export default function SubmissionRow({ sub, isLast, expanded, setExpanded, isUp
   const statusColor = STATUS_COLOR[sub.status] || STATUS_COLOR.open;
   const isOpen = expanded === sub.id;
   const toggle = () => setExpanded(isOpen ? null : sub.id);
+  const spotifyHref = p.spotifyLink ? safeSpotifyHref(p.spotifyLink) : null;
 
   return (
     <div>
@@ -74,7 +87,11 @@ export default function SubmissionRow({ sub, isLast, expanded, setExpanded, isUp
           {p.spotifyLink && (
             <div style={{ marginBottom: "12px" }}>
               <div style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "1px", textTransform: "uppercase", color: "rgba(255,255,255,0.3)", marginBottom: "4px" }}>Spotify Link</div>
-              <a href={p.spotifyLink} target="_blank" rel="noreferrer" style={{ fontSize: "13px", color: "#1DB954", textDecoration: "none", fontWeight: 500, wordBreak: "break-all" }}>{p.spotifyLink}</a>
+              {spotifyHref ? (
+                <a href={spotifyHref} target="_blank" rel="noopener noreferrer" style={{ fontSize: "13px", color: "#1DB954", textDecoration: "none", fontWeight: 500, wordBreak: "break-all" }}>{p.spotifyLink}</a>
+              ) : (
+                <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)", wordBreak: "break-all" }} title="Not a Spotify link, so it is not clickable">{String(p.spotifyLink)}</span>
+              )}
             </div>
           )}
           {p.notes && (
