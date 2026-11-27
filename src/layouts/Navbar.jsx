@@ -167,6 +167,14 @@ function Navbar({ routes = [], action = null }) {
         .radr-dropdown-item-desc { font-size: 11.5px; font-weight: 400; color: rgba(255,255,255,0.48); }
         .radr-dropdown-item:hover .radr-dropdown-item-desc { color: rgba(255,255,255,0.62); }
 
+        /* ── "New" tag next to a link ── */
+        .radr-badge {
+          display: inline-flex; align-items: center; margin-left: 8px; padding: 2px 7px;
+          border-radius: 999px; font-size: 9.5px; font-weight: 700; letter-spacing: 0.6px;
+          text-transform: uppercase; color: #fff; vertical-align: middle;
+          background: linear-gradient(135deg, #FF542E 0%, #D94F2B 100%);
+        }
+
 
         /* ── Mobile ── */
         .radr-mobile-item {
@@ -250,12 +258,6 @@ function Navbar({ routes = [], action = null }) {
           {!isMobile && (
             <div style={{ display: "flex", alignItems: "center", gap: "18px", flex: 1, justifyContent: "flex-end" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "2px" }}>
-                <Link
-                  to="/blog"
-                  className={`radr-nav-link${location.pathname === "/blog" ? " active" : ""}`}
-                >
-                  RADR
-                </Link>
                 {navRoutes.map(({ name, href, route, collapse }) => {
                   const isActive = route && location.pathname === route;
                   if (href) return <a key={name} href={href} target="_blank" rel="noreferrer" className="radr-nav-link">{name}</a>;
@@ -400,12 +402,12 @@ function Navbar({ routes = [], action = null }) {
           {activeSection.collapse.map((item) =>
             item.href ? (
               <a key={item.name} href={item.href} target="_blank" rel="noreferrer" className="radr-dropdown-item">
-                <span>{item.name}</span>
+                <span>{item.name}{item.badge && <span className="radr-badge">{item.badge}</span>}</span>
                 {item.description && <span className="radr-dropdown-item-desc">{item.description}</span>}
               </a>
             ) : (
               <Link key={item.name} to={item.route || "/"} className="radr-dropdown-item">
-                <span>{item.name}</span>
+                <span>{item.name}{item.badge && <span className="radr-badge">{item.badge}</span>}</span>
                 {item.description && <span className="radr-dropdown-item-desc">{item.description}</span>}
               </Link>
             )
@@ -432,8 +434,8 @@ function MobileNavItem({ name, route, href, collapse, onClose }) {
         <div className={`radr-mobile-panel${open ? " open" : ""}`}>
           {collapse.map((child) =>
             child.href
-              ? <a key={child.name} href={child.href} target="_blank" rel="noreferrer" className="radr-mobile-child" onClick={onClose}>{child.name}</a>
-              : <Link key={child.name} to={child.route || "/"} className="radr-mobile-child" onClick={onClose}>{child.name}</Link>
+              ? <a key={child.name} href={child.href} target="_blank" rel="noreferrer" className="radr-mobile-child" onClick={onClose}>{child.name}{child.badge && <span className="radr-badge">{child.badge}</span>}</a>
+              : <Link key={child.name} to={child.route || "/"} className="radr-mobile-child" onClick={onClose}>{child.name}{child.badge && <span className="radr-badge">{child.badge}</span>}</Link>
           )}
         </div>
       </div>
