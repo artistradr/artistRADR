@@ -1,11 +1,11 @@
-/* Sign in and register: one continuous page. Form on the left, brand copy on the right (desktop). No card, no split background. */
+/* Sign in and register: one continuous page. Form centred in the left column, brand copy on the right (desktop). No card, no split background. */
 .auth-page { display: flex; flex-direction: column; min-height: 100vh; background: #faf9f6; font-family: var(--font-body); }
 .auth-split { flex: 1; display: grid; grid-template-columns: minmax(0, 1fr); }
 
 /* ---- Form column ---- */
-.auth-main { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; padding: 110px 1.5rem 56px; }
+.auth-main { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 110px 1.5rem 56px; }
 .auth-modal { width: 100%; max-width: 380px; padding: 0; background: transparent; border: 0; box-shadow: none; }
-.auth-modal-foot { width: 100%; max-width: 380px; margin: 28px 0 0; padding-top: 20px; border-top: 1px solid rgba(0,0,0,0.08); text-align: left; font-size: 13px; color: #777; }
+.auth-modal-foot { width: 100%; max-width: 380px; margin: 28px 0 0; padding-top: 20px; border-top: 1px solid rgba(0,0,0,0.08); text-align: center; font-size: 13px; color: #777; }
 .auth-modal-foot a, .auth-modal a.auth-link { color: #D94F2B; font-weight: 600; text-decoration: none; }
 .auth-modal-foot a:hover, .auth-modal a.auth-link:hover { text-decoration: underline; }
 
@@ -24,9 +24,9 @@
 
 .auth-modal-title {
   margin: 0 0 8px; font-family: var(--font-display); font-size: 2rem; font-weight: 800;
-  letter-spacing: 0.5px; text-transform: uppercase; line-height: 1.1; color: #111;
+  letter-spacing: 0.5px; text-transform: uppercase; line-height: 1.1; text-align: center; color: #111;
 }
-.auth-modal-text { margin: 0 0 28px; font-size: 14px; line-height: 1.6; color: #666; }
+.auth-modal-text { margin: 0 0 28px; font-size: 14px; line-height: 1.6; text-align: center; color: #666; }
 
 .auth-field { margin-bottom: 18px; }
 .auth-label { display: block; margin-bottom: 8px; font-size: 12px; font-weight: 600; color: #444; }
@@ -75,7 +75,7 @@
 .auth-hint { margin-top: 6px; font-size: 12px; color: #888; }
 .auth-hint--ok { color: #1a8f4c; }
 .auth-hint--warn { color: #b45309; }
-.auth-fine { margin: 20px 0 0; font-size: 12px; line-height: 1.6; color: #888; text-align: left; }
+.auth-fine { margin: 20px 0 0; font-size: 12px; line-height: 1.6; color: #888; text-align: center; }
 .auth-fine a { color: #D94F2B; text-decoration: none; }
 .auth-fine a:hover { text-decoration: underline; }
 .auth-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
@@ -98,6 +98,6 @@
 
 @media (min-width: 900px) {
   .auth-split { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
-  .auth-main { padding: 120px 48px 64px 72px; }
+  .auth-main { padding: 120px 48px 64px; }
   .auth-aside { display: flex; flex-direction: column; justify-content: center; padding: 120px 72px 64px 48px; }
 }
