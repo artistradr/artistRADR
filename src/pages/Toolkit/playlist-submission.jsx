@@ -366,7 +366,7 @@ export default function PlaylistSubmissionPage() {
         @keyframes spin { to{transform:rotate(360deg)} }
         @keyframes unlockPulse { 0%,100%{box-shadow:0 0 0 0 rgba(217,79,43,0)} 50%{box-shadow:0 0 0 8px rgba(217,79,43,0.12)} }
         .ps-page { animation:fadeUp 400ms ease both; font-family:var(--font-body); background:#f7f6f3; min-height:100vh; display:flex; flex-direction:column; }
-        .ps-body { max-width:1100px; margin:0 auto; padding:0 2rem 100px; display:grid; grid-template-columns:1fr 400px; gap:60px; align-items:start; }
+        .ps-body { max-width:1180px; margin:0 auto; padding:0 1.5rem 100px; display:grid; grid-template-columns:1fr 400px; gap:60px; align-items:start; }
         @media(max-width:900px){ .ps-body{ grid-template-columns:1fr; gap:40px; } }
         .ps-right { position:sticky; top:100px; }
         .ps-step { border-radius:16px; border:0.5px solid rgba(0,0,0,0.08); background:white; margin-bottom:12px; overflow:hidden; transition:border-color 200ms,box-shadow 200ms; }
@@ -403,7 +403,7 @@ export default function PlaylistSubmissionPage() {
         {isLocked && <LockOverlay onUnlock={handleLockCTA} />}
 
         {/* ══ MASTHEAD — blog editorial style ══ */}
-        <div style={{ maxWidth:"1100px", margin:"0 auto", padding:"110px 2rem 0", filter:isLocked?"blur(2px)":"none", pointerEvents:isLocked?"none":"auto", userSelect:isLocked?"none":"auto", transition:"filter 300ms" }}>
+        <div style={{ maxWidth:"1180px", margin:"0 auto", padding:"110px 1.5rem 0", filter:isLocked?"blur(2px)":"none", pointerEvents:isLocked?"none":"auto", userSelect:isLocked?"none":"auto", transition:"filter 300ms" }}>
           <div style={{ borderBottom:"0.5px solid rgba(0,0,0,0.1)", paddingBottom:"28px", marginBottom:"40px" }}>
             <div style={{ display:"flex", alignItems:"flex-end", justifyContent:"space-between", flexWrap:"wrap", gap:"20px" }}>
               <div>
