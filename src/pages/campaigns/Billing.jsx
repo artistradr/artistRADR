@@ -229,7 +229,7 @@ function Billing() {
               <div className="billing-help-text">
                 Payments are processed by Paystack. Contact us if you have a question about a charge.
               </div>
-              <Link to="/contact-us" className="billing-help-link">Contact Us</Link>
+              <Link to="/support" className="billing-help-link">Contact Support</Link>
             </div>
           </div>
 

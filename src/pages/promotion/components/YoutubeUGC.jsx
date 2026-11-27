@@ -58,7 +58,7 @@ function YoutubeUGC() {
       </p>
 
       {/* YouTube Channel CTA */}
-      <div style={{
+      <div className="promo-banner" style={{
         display: "flex",
         alignItems: "center",
         gap: "20px",
@@ -116,12 +116,13 @@ function YoutubeUGC() {
       {/* Campaign Cards */}
       <div style={{
         display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+        gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 300px), 1fr))",
         gap: "24px"
       }}>
         {UGC_CAMPAIGNS.map((campaign) => (
           <div
             key={campaign.id}
+            className="promo-card"
             style={{
               background: "white",
               borderRadius: "20px",

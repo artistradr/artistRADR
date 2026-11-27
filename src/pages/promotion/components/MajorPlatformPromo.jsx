@@ -56,13 +56,14 @@ function MajorPlatformPromo() {
 
       <div style={{
         display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+        gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 300px), 1fr))",
         gap: "24px",
         marginTop: "24px"
       }}>
         {PLATFORMS.map((platform) => (
           <div
             key={platform.id}
+            className="promo-card"
             style={{
               background: "white",
               borderRadius: "20px",
@@ -126,7 +127,7 @@ function MajorPlatformPromo() {
         ))}
       </div>
 
-      <div style={{
+      <div className="promo-banner" style={{
         marginTop: "32px",
         padding: "24px 32px",
         background: "rgba(217,79,43,0.04)",

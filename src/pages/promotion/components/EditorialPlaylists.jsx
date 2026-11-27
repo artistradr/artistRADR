@@ -21,7 +21,7 @@ function EditorialPlaylists() {
 
       <div style={{
         display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+        gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 280px), 1fr))",
         gap: "24px",
         marginTop: "24px"
       }}>
@@ -31,6 +31,7 @@ function EditorialPlaylists() {
             href={playlist.url}
             target="_blank"
             rel="noreferrer"
+            className="promo-card"
             style={{
               background: "white",
               borderRadius: "20px",

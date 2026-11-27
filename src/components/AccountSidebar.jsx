@@ -1,5 +1,8 @@
+import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useSupabaseAuth } from "context/SupabaseAuthContext";
+import { supabase } from "../supabaseClient";
+import "./AccountSidebar.css";
 
 const NAV_ITEMS = [
   {
@@ -35,29 +38,41 @@ const NAV_ITEMS = [
 ];
 
 /**
- * Shared right-side account nav. Drop into any account-area page
- * (Profile, Campaigns, Billing) — self-contained
- * styles, real auth user via useSupabaseAuth, sign-out built in.
+ * Shared account nav for Profile, Campaigns and Billing. Sits right of the
+ * page on desktop and is hidden on phones (the navbar menu covers it).
  *
  * Props:
  *  - activeKey: which NAV_ITEMS key to highlight (defaults to path match)
- *  - onStartCampaign: optional override for the CTA button — if omitted,
- *    the CTA just navigates to /campaigns
+ *  - onStartCampaign: optional override for the CTA; defaults to /campaigns
+ *  - name: saved display name, if the page already has it (skips the fetch)
  */
-function AccountSidebar({ activeKey, onStartCampaign }) {
+function AccountSidebar({ activeKey, onStartCampaign, name }) {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useSupabaseAuth();
+  const [fullName, setFullName] = useState("");
 
-  const displayName = user?.displayName || (user?.email ? user.email.split("@")[0] : "Artist");
-  const initial = (displayName || "A").charAt(0).toUpperCase();
+  // The name lives in profiles.full_name, not on the auth user.
+  useEffect(() => {
+    if (!user?.id || name !== undefined) return;
+    let cancelled = false;
+    supabase
+      .from("profiles")
+      .select("full_name")
+      .eq("id", user.id)
+      .single()
+      .then(({ data }) => {
+        if (!cancelled) setFullName(data?.full_name || "");
+      });
+    return () => { cancelled = true; };
+  }, [user?.id, name]);
+
+  const displayName = name || fullName || user?.email?.split("@")[0] || "Artist";
+  const initial = displayName.charAt(0).toUpperCase();
 
   function handleCta() {
-    if (onStartCampaign) {
-      onStartCampaign();
-    } else {
-      navigate("/campaigns");
-    }
+    if (onStartCampaign) onStartCampaign();
+    else navigate("/campaigns");
   }
 
   async function handleSignOut() {
@@ -66,183 +81,43 @@ function AccountSidebar({ activeKey, onStartCampaign }) {
   }
 
   return (
-    <>
-      <style>{`
-        .radr-acct-sidebar {
-          width: 100%;
-          background: white;
-          border-radius: 20px;
-          border: 0.5px solid rgba(0,0,0,0.06);
-          padding: 24px 18px;
-          display: flex;
-          flex-direction: column;
-          gap: 24px;
-          position: sticky;
-          top: 100px;
-        }
-        .radr-acct-sidebar-brand {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          padding: 0 6px;
-        }
-        .radr-acct-sidebar-brand-mark {
-          width: 28px;
-          height: 28px;
-          border-radius: 8px;
-          background: #D94F2B;
-          color: white;
-          font-family: var(--font-display);
-          font-weight: 800;
-          font-size: 14px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-shrink: 0;
-        }
-        .radr-acct-sidebar-brand-text {
-          font-family: var(--font-display);
-          font-size: 12px;
-          font-weight: 800;
-          letter-spacing: 1px;
-          color: #111;
-        }
-        .radr-acct-sidebar-nav {
-          display: flex;
-          flex-direction: column;
-          gap: 2px;
-        }
-        .radr-acct-sidebar-link {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          padding: 10px 12px;
-          border-radius: 10px;
-          text-decoration: none;
-          font-size: 13.5px;
-          font-weight: 500;
-          color: #666;
-          font-family: var(--font-body);
-        }
-        .radr-acct-sidebar-link:hover {
-          background: rgba(0,0,0,0.03);
-        }
-        .radr-acct-sidebar-link--active {
-          background: rgba(217,79,43,0.08);
-          color: #D94F2B;
-          font-weight: 700;
-        }
-        .radr-acct-sidebar-link-icon {
-          display: flex;
-          flex-shrink: 0;
-        }
-        .radr-acct-sidebar-footer {
-          margin-top: auto;
-          display: flex;
-          flex-direction: column;
-          gap: 14px;
-          border-top: 0.5px solid rgba(0,0,0,0.06);
-          padding-top: 18px;
-        }
-        .radr-acct-sidebar-cta {
-          background: #D94F2B;
-          color: white;
-          border: none;
-          border-radius: 10px;
-          padding: 11px;
-          font-size: 12.5px;
-          font-weight: 600;
-          cursor: pointer;
-          font-family: var(--font-body);
-        }
-        .radr-acct-sidebar-profile-row {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-        }
-        .radr-acct-sidebar-avatar {
-          width: 32px;
-          height: 32px;
-          border-radius: 50%;
-          background: linear-gradient(135deg, #D94F2B 0%, #B83E1F 100%);
-          color: white;
-          font-size: 13px;
-          font-weight: 700;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-shrink: 0;
-        }
-        .radr-acct-sidebar-profile-name {
-          font-size: 12.5px;
-          font-weight: 600;
-          color: #111;
-          text-transform: capitalize;
-        }
-        .radr-acct-sidebar-profile-sub {
-          font-size: 11px;
-          color: #999;
-        }
-        .radr-acct-sidebar-signout {
-          background: none;
-          border: none;
-          padding: 0;
-          font-family: var(--font-body);
-          font-size: 11.5px;
-          font-weight: 600;
-          color: #bbb;
-          cursor: pointer;
-          text-align: left;
-        }
-        .radr-acct-sidebar-signout:hover {
-          color: #D94F2B;
-        }
-        @media (max-width: 860px) {
-          .radr-acct-sidebar {
-            position: static;
-          }
-        }
-      `}</style>
-
-      <aside className="radr-acct-sidebar">
-        <div className="radr-acct-sidebar-brand">
-          <span className="radr-acct-sidebar-brand-mark">R</span>
-          <span className="radr-acct-sidebar-brand-text">ARTIST RADR</span>
+    <aside className="acct" aria-label="Account">
+      <div className="acct-user">
+        <span className="acct-avatar" aria-hidden="true">{initial}</span>
+        <div className="acct-user-text">
+          <div className="acct-user-name">{displayName}</div>
+          <div className="acct-user-email">{user?.email}</div>
         </div>
+      </div>
 
-        <nav className="radr-acct-sidebar-nav">
-          {NAV_ITEMS.map((item) => {
-            const isActive = activeKey ? item.key === activeKey : location.pathname === item.path;
-            return (
-              <Link
-                key={item.key}
-                to={item.path}
-                className={`radr-acct-sidebar-link${isActive ? " radr-acct-sidebar-link--active" : ""}`}
-              >
-                <span className="radr-acct-sidebar-link-icon">{item.icon}</span>
-                {item.label}
-              </Link>
-            );
-          })}
-        </nav>
+      <button type="button" className="acct-cta" onClick={handleCta}>
+        + Start Campaign
+      </button>
 
-        <div className="radr-acct-sidebar-footer">
-          <button type="button" className="radr-acct-sidebar-cta" onClick={handleCta}>
-            + Start Campaign
-          </button>
+      <nav className="acct-nav">
+        {NAV_ITEMS.map((item) => {
+          const isActive = activeKey ? item.key === activeKey : location.pathname === item.path;
+          return (
+            <Link
+              key={item.key}
+              to={item.path}
+              className={`acct-link${isActive ? " acct-link--active" : ""}`}
+              aria-current={isActive ? "page" : undefined}
+            >
+              <span className="acct-link-icon" aria-hidden="true">{item.icon}</span>
+              {item.label}
+            </Link>
+          );
+        })}
+      </nav>
 
-          <div className="radr-acct-sidebar-profile-row">
-            <div className="radr-acct-sidebar-avatar">{initial}</div>
-            <div>
-              <div className="radr-acct-sidebar-profile-name">{displayName}</div>
-              <button type="button" className="radr-acct-sidebar-signout" onClick={handleSignOut}>
-                Sign out
-              </button>
-            </div>
-          </div>
-        </div>
-      </aside>
-    </>
+      <button type="button" className="acct-signout" onClick={handleSignOut}>
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><path d="M16 17l5-5-5-5" /><path d="M21 12H9" />
+        </svg>
+        Sign out
+      </button>
+    </aside>
   );
 }
 
