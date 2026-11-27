@@ -4,6 +4,7 @@ import { supabase } from "../../../supabaseClient";
 import Navbar from "layouts/Navbar";
 import Footer from "layouts/Footer";
 import routes from "routes";
+import { sanitizeTitleHtml } from "../../../utils/sanitizeHtml";
 
 const F = { d: "var(--font-display)", b: "var(--font-body)" };
 
@@ -331,7 +332,7 @@ function BlogPage() {
                             {featured.author_name || "Artist RADR"} · {new Date(featured.published_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
                           </div>
                           <div style={{ fontFamily: F.d, fontSize: "clamp(1.3rem, 2.5vw, 1.8rem)", fontWeight: 800, textTransform: "uppercase", letterSpacing: "1px", lineHeight: 1.15, color: "#111", marginBottom: "16px" }}
-                            dangerouslySetInnerHTML={{ __html: featured.title }} />
+                            dangerouslySetInnerHTML={{ __html: sanitizeTitleHtml(featured.title) }} />
                           <div style={{ fontSize: "14px", color: "#666", lineHeight: 1.7, fontWeight: 300 }}>
                             {(featured.excerpt || "").slice(0, 160)}…
                           </div>
@@ -365,7 +366,7 @@ function BlogPage() {
                             <div style={{ padding: "18px", flex: 1, display: "flex", flexDirection: "column" }}>
                               <div style={{ fontSize: "11px", color: "#bbb", marginBottom: "8px" }}>{post.author_name || "Artist RADR"} · {date}</div>
                               <div style={{ fontFamily: F.d, fontSize: "0.95rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px", lineHeight: 1.3, marginBottom: "auto", color: "#111" }}
-                                dangerouslySetInnerHTML={{ __html: post.title }} />
+                                dangerouslySetInnerHTML={{ __html: sanitizeTitleHtml(post.title) }} />
                               <span className="bp-read-more" style={{ marginTop: "14px" }}>
                                 Read more
                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
@@ -398,7 +399,7 @@ function BlogPage() {
                       </div>
                       <div style={{ minWidth: 0 }}>
                         <div style={{ fontSize: "12.5px", fontWeight: 500, lineHeight: 1.4, color: "#111", marginBottom: "3px", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}
-                          dangerouslySetInnerHTML={{ __html: post.title }} />
+                          dangerouslySetInnerHTML={{ __html: sanitizeTitleHtml(post.title) }} />
                         <div style={{ fontSize: "11px", color: "#bbb" }}>{date}</div>
                       </div>
                     </Link>
