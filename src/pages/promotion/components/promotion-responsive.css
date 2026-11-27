@@ -1,0 +1,26 @@
+/* Layout for the Promotion page that has to change with screen width. */
+.promo-hero { padding: 60px 0 80px; }
+.promo-hero-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 60px; align-items: center; }
+.promo-hero-platforms { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; padding: 20px; }
+.promo-hero-stats { display: flex; gap: 32px; margin-top: 40px; padding-top: 32px; border-top: 0.5px solid rgba(0,0,0,0.06); }
+.promo-actions { display: flex; flex-wrap: wrap; gap: 14px; }
+.promo-actions--center { justify-content: center; }
+
+@media (max-width: 900px) {
+  .promo-hero { padding: 40px 0 56px; }
+  .promo-hero-grid { grid-template-columns: minmax(0, 1fr); gap: 36px; }
+  .promo-hero-platforms { padding: 0; }
+}
+
+@media (max-width: 600px) {
+  .promo-hero { padding: 28px 0 44px; }
+  .promo-hero-platforms { gap: 10px; }
+  .promo-hero-platforms > div { padding: 18px 14px !important; }
+  .promo-hero-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 28px; padding-top: 24px; }
+  .promo-actions { flex-direction: column; gap: 10px; }
+  .promo-actions > a { justify-content: center; }
+  .promo-card { padding: 24px 20px !important; }
+  .promo-banner { flex-direction: column; align-items: stretch !important; padding: 20px !important; gap: 14px !important; }
+  .promo-banner > a { justify-content: center; padding-top: 13px !important; padding-bottom: 13px !important; }
+  .promo-banner > div:first-child:has(svg) { align-self: flex-start; }
+}

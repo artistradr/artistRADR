@@ -44,6 +44,12 @@ const routes = [
         component: <BlogPage />,
       },
       {
+        name: "Promotion",
+        description: "Get your music discovered across platforms",
+        route: "/promotion",
+        component: <Promotion />,
+      },
+      {
         name: "Freebies",
         description: "Free tools for creators",
         route: "/pages/toolkit/freebies",
@@ -64,47 +70,48 @@ const routes = [
     ],
   },
   {
-    name: "Get Started",
-    collapse: [
-      {
-        name: "Playlist Submission",
-        description: "Submit your track for playlists",
-        route: "/submit-track",
-        component: <PlaylistSubmissionPage />,
-      },
-      {
-        name: "My Campaigns",
-        description: "Track and manage your active promotion campaigns",
-        route: "/campaigns",
-        // no `component` — see note above, route is registered in App.jsx
-      },
-      {
-        name: "Promotion",
-        description: "Get your music discovered across platforms",
-        route: "/promotion",
-        component: <Promotion />,
-      },
-      {
-        name: "Contact Us",
-        description: "Get in touch with our team",
-        route: "/contact-us",
-        component: <ContactUs />,
-      },
-      {
-        name: "Sign In",
-        description: "Access your RADR account",
-        route: "/sign-in",
-        component: <SignIn />,
-        guestOnly: true,
-      },
-      {
-        name: "Register",
-        description: "Join Artist RADR today",
-        route: "/register",
-        component: <Register />,
-        guestOnly: true,
-      },
-    ],
+    name: "Playlist Submission",
+    description: "Submit your track for playlists",
+    route: "/submit-track",
+    component: <PlaylistSubmissionPage />,
+  },
+  {
+    name: "My Campaigns",
+    description: "Track and manage your active promotion campaigns",
+    route: "/campaigns",
+    userOnly: true,
+    // no `component` — see note above, route is registered in App.jsx
+  },
+  {
+    name: "Support",
+    description: "Contact our team and track your tickets",
+    route: "/support",
+    userOnly: true,
+    // no `component` — auth-gated route registered in App.jsx
+  },
+  {
+    name: "Contact Us",
+    description: "Get in touch with our team",
+    route: "/contact-us",
+    component: <ContactUs />,
+    guestOnly: true,
+  },
+  // Sign In and Register are navbar buttons, so they're hidden from the links.
+  {
+    name: "Sign In",
+    description: "Access your RADR account",
+    route: "/sign-in",
+    component: <SignIn />,
+    guestOnly: true,
+    navHidden: true,
+  },
+  {
+    name: "Register",
+    description: "Join Artist RADR today",
+    route: "/register",
+    component: <Register />,
+    guestOnly: true,
+    navHidden: true,
   },
 ];
 

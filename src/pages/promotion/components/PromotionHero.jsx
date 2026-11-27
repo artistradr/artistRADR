@@ -1,3 +1,4 @@
+import "./promotion-responsive.css";
 import { SITE_STATS } from "../../../data/siteStats";
 import { SpotifyLogo, AppleMusicLogo, YoutubeLogo, TikTokLogo } from "components/PlatformLogos";
 
@@ -23,18 +24,12 @@ function PromotionHero() {
   ];
 
   return (
-    <section style={{ 
-      padding: "60px 0 80px",
+    <section className="promo-hero" style={{ 
       background: "linear-gradient(170deg, #f7f6f3 0%, #fff 100%)",
       borderBottom: "0.5px solid rgba(0,0,0,0.06)"
     }}>
       <div style={{ maxWidth: "1180px", margin: "0 auto", padding: "0 1.5rem" }}>
-        <div style={{ 
-          display: "grid", 
-          gridTemplateColumns: "1fr 1fr", 
-          gap: "60px", 
-          alignItems: "center" 
-        }}>
+        <div className="promo-hero-grid">
           {/* Left: Content */}
           <div>
             <div style={{
@@ -83,7 +78,7 @@ function PromotionHero() {
               just real opportunities.
             </p>
 
-            <div style={{ display: "flex", gap: "14px", flexWrap: "wrap" }}>
+            <div className="promo-actions">
               <a href="/campaigns" style={{
                 display: "inline-flex",
                 alignItems: "center",
@@ -118,13 +113,7 @@ function PromotionHero() {
             </div>
 
             {/* Trust indicators */}
-            <div style={{ 
-              display: "flex", 
-              gap: "32px", 
-              marginTop: "40px", 
-              paddingTop: "32px",
-              borderTop: "0.5px solid rgba(0,0,0,0.06)"
-            }}>
+            <div className="promo-hero-stats">
               {trustStats.map(({ value, label }) => (
                 <div key={label}>
                   <div style={{ fontFamily: F.d, fontSize: "1.4rem", fontWeight: 800, color: "#D94F2B" }}>{value}</div>
@@ -135,12 +124,7 @@ function PromotionHero() {
           </div>
 
           {/* Right: Visual / Stats Grid */}
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: "16px",
-            padding: "20px"
-          }}>
+          <div className="promo-hero-platforms">
             {HERO_PLATFORMS.map(({ Logo, label, desc }) => (
               <div key={label} style={{
                 background: "white",
@@ -169,17 +153,6 @@ function PromotionHero() {
           </div>
         </div>
       </div>
-
-      <style>{`
-        @media (max-width: 900px) {
-          .promotion-hero-grid {
-            grid-template-columns: 1fr !important;
-          }
-          .promotion-hero-stats {
-            grid-template-columns: 1fr 1fr !important;
-          }
-        }
-      `}</style>
     </section>
   );
 }

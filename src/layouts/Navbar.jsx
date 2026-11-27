@@ -64,43 +64,14 @@ function Navbar({ routes = [], action = null }) {
 
   const initial = user ? (user.displayName || user.email || "U")[0].toUpperCase() : "U";
 
-  // Build desktop nav routes — when logged in, replace Get Started collapse
-  // with only: Playlist Submission, My Campaigns, Contact Us, Sign Out (as button)
-  const desktopRoutes = routes.map((route) => {
-    if (route.name === "Get Started") {
-      return {
-        ...route,
-        collapse: user
-          ? [
-              { name: "Playlist Submission", description: "Submit your track for playlists", route: "/submit-track" },
-              { name: "My Campaigns", description: "Track and manage your active promotion campaigns", route: "/campaigns" },
-              { name: "Contact Us", description: "Get in touch with our team", route: "/contact-us" },
-              { name: "__signout__" }, // special marker
-            ]
-          : route.collapse.filter((item) => !item.guestOnly || !user),
-      };
-    }
-    // Hide guestOnly items in other dropdowns when logged in
-    if (route.collapse) {
-      return {
-        ...route,
-        collapse: route.collapse.filter((item) => !(item.guestOnly && user)),
-      };
-    }
-    return route;
-  });
+  // Links this visitor should see, shared by the desktop and mobile menus.
+  const canSee = (item) => !item.navHidden && !(item.guestOnly && user) && !(item.userOnly && !user);
+  const navRoutes = routes
+    .filter(canSee)
+    .map((route) => (route.collapse ? { ...route, collapse: route.collapse.filter(canSee) } : route));
 
-  const activeSection = desktopRoutes.find((r) => r.name === activeDropdown);
+  const activeSection = navRoutes.find((r) => r.name === activeDropdown);
   const anchorRect = dropdownAnchor?.getBoundingClientRect?.() ?? null;
-
-  // Mobile routes — same filter
-  const mobileRoutes = routes.map((route) => {
-    if (!route.collapse) return route;
-    return {
-      ...route,
-      collapse: route.collapse.filter((item) => !(item.guestOnly && user)),
-    };
-  });
 
   return (
     <>
@@ -196,10 +167,6 @@ function Navbar({ routes = [], action = null }) {
         .radr-dropdown-item-desc { font-size: 11.5px; font-weight: 400; color: rgba(255,255,255,0.48); }
         .radr-dropdown-item:hover .radr-dropdown-item-desc { color: rgba(255,255,255,0.62); }
 
-        .radr-dropdown-item--danger { color: #FF8A6B !important; }
-        .radr-dropdown-item--danger:hover { background: rgba(255,84,46,0.12) !important; }
-
-        .radr-dropdown-divider { height: 1px; background: rgba(255,255,255,0.08); margin: 6px 8px; }
 
         /* ── Mobile ── */
         .radr-mobile-item {
@@ -226,7 +193,7 @@ function Navbar({ routes = [], action = null }) {
           overflow: hidden; max-height: 0;
           transition: max-height 320ms cubic-bezier(0.4,0,0.2,1);
         }
-        .radr-mobile-panel.open { max-height: 900px; }
+        .radr-mobile-panel.open { max-height: calc(100vh - 110px); overflow-y: auto; }
 
         .radr-mobile-divider { height: 1px; background: rgba(255,255,255,0.08); margin: 10px 10px; }
 
@@ -289,7 +256,7 @@ function Navbar({ routes = [], action = null }) {
                 >
                   RADR
                 </Link>
-                {desktopRoutes.map(({ name, href, route, collapse }) => {
+                {navRoutes.map(({ name, href, route, collapse }) => {
                   const isActive = route && location.pathname === route;
                   if (href) return <a key={name} href={href} target="_blank" rel="noreferrer" className="radr-nav-link">{name}</a>;
                   if (collapse) return (
@@ -392,21 +359,16 @@ function Navbar({ routes = [], action = null }) {
         >
           <div style={{ padding: "10px" }}>
             <Link to="/blog" className="radr-mobile-item" onClick={() => setMobileOpen(false)}>RADR</Link>
-            {mobileRoutes.map(({ name, route, href, collapse }) => (
+            {navRoutes.map(({ name, route, href, collapse }) => (
               <MobileNavItem key={name} name={name} route={route} href={href} collapse={collapse} onClose={() => setMobileOpen(false)} />
             ))}
 
             {user ? (
               <>
                 <div className="radr-mobile-divider" />
+                <Link to="/profile" className="radr-mobile-item" onClick={() => setMobileOpen(false)}>Profile</Link>
+                <Link to="/campaigns/billing" className="radr-mobile-item" onClick={() => setMobileOpen(false)}>Billing</Link>
                 <div style={{ margin: "4px 6px", display: "flex", flexDirection: "column", gap: "8px" }}>
-                  <Link to="/profile" onClick={() => setMobileOpen(false)} style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px 14px", background: "rgba(255,84,46,0.08)", border: "1px solid rgba(255,84,46,0.20)", borderRadius: "14px", textDecoration: "none" }}>
-                    <div style={{ width: "34px", height: "34px", borderRadius: "50%", background: "#16181A", border: "1.5px solid rgba(255,84,46,0.55)", boxShadow: "0 0 12px rgba(255,84,46,0.25)", color: "#F5F5F5", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "13px", fontWeight: 700, flexShrink: 0 }}>{initial}</div>
-                    <div>
-                      <div style={{ fontSize: "14px", fontWeight: 600, color: "#F5F5F5" }}>{user.displayName || "My Profile"}</div>
-                      <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.48)" }}>{user.email}</div>
-                    </div>
-                  </Link>
                   <button onClick={handleLogout} style={{ width: "100%", padding: "12px", background: "transparent", border: "1px solid rgba(255,84,46,0.30)", borderRadius: "12px", color: "#FF8A6B", fontFamily: "inherit", fontWeight: 600, fontSize: "14px", cursor: "pointer", textAlign: "center" }}>
                     Sign Out
                   </button>
@@ -435,18 +397,8 @@ function Navbar({ routes = [], action = null }) {
           style={{ top: anchorRect.bottom + 10, left: anchorRect.left }}
           onMouseEnter={handleDropdownMenuEnter}
           onMouseLeave={handleDropdownMenuLeave}>
-          {activeSection.collapse.map((item) => {
-            // Sign out marker
-            if (item.name === "__signout__") return (
-              <div key="signout">
-                <div className="radr-dropdown-divider" />
-                <button className="radr-dropdown-item radr-dropdown-item--danger" onClick={handleLogout}>
-                  Sign Out
-                </button>
-              </div>
-            );
-
-            return item.href ? (
+          {activeSection.collapse.map((item) =>
+            item.href ? (
               <a key={item.name} href={item.href} target="_blank" rel="noreferrer" className="radr-dropdown-item">
                 <span>{item.name}</span>
                 {item.description && <span className="radr-dropdown-item-desc">{item.description}</span>}
@@ -456,8 +408,8 @@ function Navbar({ routes = [], action = null }) {
                 <span>{item.name}</span>
                 {item.description && <span className="radr-dropdown-item-desc">{item.description}</span>}
               </Link>
-            );
-          })}
+            )
+          )}
         </div>
       )}
     </>

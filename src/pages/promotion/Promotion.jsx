@@ -122,7 +122,7 @@ function Promotion() {
             <p style={{ fontSize: "15px", color: "rgba(255,255,255,0.72)", fontWeight: 300, lineHeight: 1.75, marginBottom: "36px" }}>
               Launch a campaign and let us help you get discovered across Spotify, Apple Music, YouTube, and beyond.
             </p>
-            <div style={{ display: "flex", gap: "12px", justifyContent: "center", flexWrap: "wrap" }}>
+            <div className="promo-actions promo-actions--center">
               <a href="/campaigns" style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "white", color: "#D94F2B", padding: "14px 32px", borderRadius: "12px", fontSize: "14px", fontWeight: 700, textDecoration: "none" }}>
                 Start Campaign
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>

@@ -284,7 +284,7 @@ function Billing() {
               <div className="billing-help-text">
                 Online payment isn&apos;t available here yet. Contact us to arrange a payment or ask about a charge.
               </div>
-              <Link to="/contact-us" className="billing-help-link">Contact Us</Link>
+              <Link to="/support" className="billing-help-link">Contact Support</Link>
             </div>
           </div>
 

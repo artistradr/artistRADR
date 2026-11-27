@@ -26,6 +26,7 @@ import TermsAndConditions from "pages/TermsAndConditions";
 import Promotion from "pages/promotion/Promotion";
 import CampaignDashboard from "pages/campaigns/CampaignDashboard";
 import Billing from "pages/campaigns/Billing";
+import Support from "pages/support/Support";
 
 // ── Studio shell ────────────────────────────────────────────────────────
 import StudioLayout from "./studio/StudioLayout";
@@ -175,6 +176,10 @@ function AppRoutes() {
              and campaign spend, same guard as /profile. */}
         <Route path="/campaigns" element={<PrivateRoute><CampaignDashboard /></PrivateRoute>} />
         <Route path="/campaigns/billing" element={<PrivateRoute><Billing /></PrivateRoute>} />
+
+        {/* ── Support tickets (signed-in). Signed-in visitors to Contact Us land here. ── */}
+        <Route path="/support" element={<PrivateRoute><Support /></PrivateRoute>} />
+        {user && <Route path="/contact-us" element={<Navigate to="/support" replace />} />}
 
         {/* ── Legal — bare routes, not in routes.js ──
              Previously a "Legal" navbar dropdown; that group has been
