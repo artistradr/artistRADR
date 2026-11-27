@@ -73,6 +73,8 @@ function Navbar({ routes = [], action = null }) {
   const activeSection = navRoutes.find((r) => r.name === activeDropdown);
   const anchorRect = dropdownAnchor?.getBoundingClientRect?.() ?? null;
 
+  const closeMobile = () => setMobileOpen(false);
+
   return (
     <>
       <style>{`
@@ -178,32 +180,44 @@ function Navbar({ routes = [], action = null }) {
 
         /* ── Mobile ── */
         .radr-mobile-item {
-          display: flex; align-items: center; padding: 13px 16px; border-radius: 12px;
-          text-decoration: none; color: #F5F5F5; font-size: 15px; font-weight: 500;
+          display: flex; align-items: center; padding: 11px 14px; border-radius: 10px;
+          text-decoration: none; color: #F5F5F5; font-size: 14px; font-weight: 500;
           transition: background 180ms ease; cursor: pointer;
         }
         .radr-mobile-item:hover { background: rgba(255,255,255,0.06); }
         .radr-mobile-child {
-          display: flex; align-items: center; padding: 11px 16px 11px 30px; border-radius: 12px;
-          text-decoration: none; color: rgba(255,255,255,0.6); font-size: 13.5px; transition: background 180ms ease;
+          display: flex; align-items: center; padding: 9px 14px 9px 26px; border-radius: 10px;
+          text-decoration: none; color: rgba(255,255,255,0.6); font-size: 13px; transition: background 180ms ease;
         }
         .radr-mobile-child:hover { background: rgba(255,255,255,0.06); color: #F5F5F5; }
 
         .radr-hamburger {
           display: flex; align-items: center; justify-content: center;
-          width: 38px; height: 38px; border-radius: 999px; cursor: pointer; color: #F5F5F5;
+          width: 34px; height: 34px; border-radius: 10px; cursor: pointer; color: #F5F5F5;
           transition: background 180ms ease; border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.04);
         }
         .radr-hamburger:hover { background: rgba(255,255,255,0.09); }
         .radr-hamburger:focus-visible { outline: 2px solid #FF542E; outline-offset: 2px; }
 
-        .radr-mobile-panel {
-          overflow: hidden; max-height: 0;
-          transition: max-height 320ms cubic-bezier(0.4,0,0.2,1);
+        /* One smooth height animation used for the whole mobile menu and for
+           each dropdown inside it, so everything flows down inside the navbar
+           instead of opening as a separate panel. */
+        .radr-collapse {
+          display: grid; grid-template-rows: 0fr; opacity: 0; visibility: hidden;
+          transition: grid-template-rows 300ms cubic-bezier(0.4,0,0.2,1), opacity 220ms ease, visibility 0s linear 300ms;
         }
-        .radr-mobile-panel.open { max-height: calc(100vh - 110px); overflow-y: auto; }
+        .radr-collapse.open {
+          grid-template-rows: 1fr; opacity: 1; visibility: visible;
+          transition: grid-template-rows 300ms cubic-bezier(0.4,0,0.2,1), opacity 260ms ease 60ms, visibility 0s;
+        }
+        .radr-collapse > .radr-collapse-inner { overflow: hidden; min-height: 0; }
 
-        .radr-mobile-divider { height: 1px; background: rgba(255,255,255,0.08); margin: 10px 10px; }
+        .radr-mobile-scroll {
+          max-height: calc(100vh - 100px); max-height: calc(100dvh - 100px);
+          overflow-y: auto; overscroll-behavior: contain; padding: 2px 0 10px;
+        }
+
+        .radr-mobile-divider { height: 1px; background: rgba(255,255,255,0.08); margin: 8px 6px; }
 
         /* ── Avatar ── */
         .radr-avatar-btn {
@@ -223,19 +237,21 @@ function Navbar({ routes = [], action = null }) {
         className="radr-navbar"
         style={{
           position: "fixed",
-          top: scrolled ? "16px" : "24px",
+          top: isMobile ? (scrolled ? "10px" : "14px") : scrolled ? "16px" : "24px",
           left: "50%",
           transform: "translateX(-50%)",
-          width: scrolled ? "calc(100% - 2rem)" : "calc(100% - 3rem)",
+          width: isMobile
+            ? "calc(100% - 1.5rem)"
+            : scrolled ? "calc(100% - 2rem)" : "calc(100% - 3rem)",
           maxWidth: "1180px",
           zIndex: 200,
-          background: scrolled ? "rgba(7,9,10,0.88)" : "rgba(10,12,14,0.72)",
+          background: scrolled || mobileOpen ? "rgba(7,9,10,0.9)" : "rgba(10,12,14,0.72)",
           backdropFilter: scrolled ? "blur(28px) saturate(160%)" : "blur(24px) saturate(150%)",
           WebkitBackdropFilter: scrolled ? "blur(28px) saturate(160%)" : "blur(24px) saturate(150%)",
-          borderRadius: "999px",
+          borderRadius: isMobile ? "16px" : "999px",
           border: "1px solid rgba(255,255,255,0.10)",
-          boxShadow: scrolled ? "0 24px 70px rgba(0,0,0,0.42)" : "0 20px 60px rgba(0,0,0,0.30)",
-          padding: "0 16px 0 22px",
+          boxShadow: scrolled || mobileOpen ? "0 24px 70px rgba(0,0,0,0.42)" : "0 20px 60px rgba(0,0,0,0.30)",
+          padding: isMobile ? "0 10px 0 16px" : "0 16px 0 22px",
           transition: "all 280ms cubic-bezier(0.4,0,0.2,1)",
         }}
       >
@@ -244,14 +260,14 @@ function Navbar({ routes = [], action = null }) {
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            height: scrolled ? "64px" : "72px",
+            height: isMobile ? (scrolled ? "50px" : "56px") : scrolled ? "64px" : "72px",
             transition: "height 280ms cubic-bezier(0.4,0,0.2,1)",
             gap: "18px",
           }}
         >
           {/* Brand */}
           <Link to="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", flexShrink: 0 }}>
-            <img src={radrLogo} alt="Artist RADR" style={{ height: "28px", width: "auto", display: "block" }} />
+            <img src={radrLogo} alt="Artist RADR" style={{ height: isMobile ? "23px" : "28px", width: "auto", display: "block" }} />
           </Link>
 
           {/* Desktop nav */}
@@ -322,76 +338,60 @@ function Navbar({ routes = [], action = null }) {
 
           {/* Mobile right side */}
           {isMobile && (
-            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               {user && (
-                <Link to="/profile" className="radr-avatar-btn" title="Profile">{initial}</Link>
+                <Link to="/profile" className="radr-avatar-btn" title="Profile" style={{ width: "30px", height: "30px", fontSize: "12px" }}>{initial}</Link>
               )}
               <button className="radr-hamburger" onClick={() => setMobileOpen((p) => !p)} aria-label="Menu" aria-expanded={mobileOpen}>
                 {mobileOpen
-                  ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                  : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><line x1="3" y1="7" x2="21" y2="7"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="17" x2="21" y2="17"/></svg>
+                  ? <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  : <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><line x1="3" y1="7" x2="21" y2="7"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="17" x2="21" y2="17"/></svg>
                 }
               </button>
             </div>
           )}
         </div>
-      </nav>
 
-      {/* Mobile menu — separate floating glass panel below the navbar */}
-      {isMobile && (
-        <div
-          className={`radr-mobile-panel${mobileOpen ? " open" : ""}`}
-          style={{
-            position: "fixed",
-            top: scrolled ? "84px" : "100px",
-            left: "50%",
-            transform: "translateX(-50%)",
-            width: "calc(100% - 32px)",
-            maxWidth: "480px",
-            zIndex: 199,
-            background: mobileOpen ? "rgba(10,12,14,0.92)" : "transparent",
-            backdropFilter: mobileOpen ? "blur(24px) saturate(150%)" : "none",
-            WebkitBackdropFilter: mobileOpen ? "blur(24px) saturate(150%)" : "none",
-            border: mobileOpen ? "1px solid rgba(255,255,255,0.10)" : "1px solid transparent",
-            borderRadius: "24px",
-            boxShadow: mobileOpen ? "0 24px 60px rgba(0,0,0,0.45)" : "none",
-            pointerEvents: mobileOpen ? "auto" : "none",
-            transition: "top 280ms cubic-bezier(0.4,0,0.2,1)",
-          }}
-        >
-          <div style={{ padding: "10px" }}>
-            <Link to="/blog" className="radr-mobile-item" onClick={() => setMobileOpen(false)}>RADR</Link>
-            {navRoutes.map(({ name, route, href, collapse }) => (
-              <MobileNavItem key={name} name={name} route={route} href={href} collapse={collapse} onClose={() => setMobileOpen(false)} />
-            ))}
+        {/* Mobile menu — part of the navbar itself, flows down from the bar */}
+        {isMobile && (
+          <div className={`radr-collapse${mobileOpen ? " open" : ""}`} aria-hidden={!mobileOpen}>
+            <div className="radr-collapse-inner">
+              <div style={{ height: "1px", background: "rgba(255,255,255,0.08)", margin: "0 0 6px" }} />
+              <div className="radr-mobile-scroll">
+                <Link to="/blog" className="radr-mobile-item" onClick={closeMobile}>RADR</Link>
+                {navRoutes.map(({ name, route, href, collapse }) => (
+                  <MobileNavItem key={name} name={name} route={route} href={href} collapse={collapse} onClose={closeMobile} />
+                ))}
 
-            {user ? (
-              <>
-                <div className="radr-mobile-divider" />
-                <Link to="/profile" className="radr-mobile-item" onClick={() => setMobileOpen(false)}>Profile</Link>
-                <Link to="/campaigns/billing" className="radr-mobile-item" onClick={() => setMobileOpen(false)}>Billing</Link>
-                <div style={{ margin: "4px 6px", display: "flex", flexDirection: "column", gap: "8px" }}>
-                  <button onClick={handleLogout} style={{ width: "100%", padding: "12px", background: "transparent", border: "1px solid rgba(255,84,46,0.30)", borderRadius: "12px", color: "#FF8A6B", fontFamily: "inherit", fontWeight: 600, fontSize: "14px", cursor: "pointer", textAlign: "center" }}>
-                    Sign Out
-                  </button>
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="radr-mobile-divider" />
-                <div style={{ margin: "4px 6px", display: "flex", flexDirection: "column", gap: "8px" }}>
-                  <Link to="/sign-in" onClick={() => setMobileOpen(false)} style={{ display: "block", padding: "12px", background: "rgba(255,84,46,0.10)", border: "1px solid rgba(255,84,46,0.25)", color: "#FF8A6B", borderRadius: "12px", textDecoration: "none", fontWeight: 600, fontSize: "14px", textAlign: "center" }}>
-                    Sign In
-                  </Link>
-                  <Link to="/register" onClick={() => setMobileOpen(false)} style={{ display: "block", padding: "12px", background: "linear-gradient(135deg, #FF542E 0%, #D94F2B 100%)", color: "white", borderRadius: "12px", textDecoration: "none", fontWeight: 600, fontSize: "14px", textAlign: "center", boxShadow: "0 4px 18px rgba(255,84,46,0.30)" }}>
-                    Join RADR
-                  </Link>
-                </div>
-              </>
-            )}
+                {user ? (
+                  <>
+                    <div className="radr-mobile-divider" />
+                    <Link to="/profile" className="radr-mobile-item" onClick={closeMobile}>Profile</Link>
+                    <Link to="/campaigns/billing" className="radr-mobile-item" onClick={closeMobile}>Billing</Link>
+                    <div style={{ margin: "6px 4px 0", display: "flex", flexDirection: "column", gap: "8px" }}>
+                      <button onClick={handleLogout} style={{ width: "100%", padding: "10px", background: "transparent", border: "1px solid rgba(255,84,46,0.30)", borderRadius: "10px", color: "#FF8A6B", fontFamily: "inherit", fontWeight: 600, fontSize: "13.5px", cursor: "pointer", textAlign: "center" }}>
+                        Sign Out
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="radr-mobile-divider" />
+                    <div style={{ margin: "6px 4px 0", display: "flex", flexDirection: "column", gap: "8px" }}>
+                      <Link to="/sign-in" onClick={closeMobile} style={{ display: "block", padding: "10px", background: "rgba(255,84,46,0.10)", border: "1px solid rgba(255,84,46,0.25)", color: "#FF8A6B", borderRadius: "10px", textDecoration: "none", fontWeight: 600, fontSize: "13.5px", textAlign: "center" }}>
+                        Sign In
+                      </Link>
+                      <Link to="/register" onClick={closeMobile} style={{ display: "block", padding: "10px", background: "linear-gradient(135deg, #FF542E 0%, #D94F2B 100%)", color: "white", borderRadius: "10px", textDecoration: "none", fontWeight: 600, fontSize: "13.5px", textAlign: "center", boxShadow: "0 4px 18px rgba(255,84,46,0.30)" }}>
+                        Join RADR
+                      </Link>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </nav>
 
       {/* Desktop dropdown / mega-menu */}
       {dropdownAnchor && activeSection?.collapse && anchorRect && (
@@ -423,20 +423,22 @@ function MobileNavItem({ name, route, href, collapse, onClose }) {
   if (collapse) {
     return (
       <div>
-        <div className="radr-mobile-item" onClick={() => setOpen((p) => !p)} style={{ justifyContent: "space-between" }} role="button" tabIndex={0}
+        <div className="radr-mobile-item" onClick={() => setOpen((p) => !p)} style={{ justifyContent: "space-between" }} role="button" tabIndex={0} aria-expanded={open}
           onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setOpen((p) => !p); }}>
           <span>{name}</span>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"
-            style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 220ms ease", opacity: 0.55 }}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"
+            style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 300ms cubic-bezier(0.4,0,0.2,1)", opacity: 0.55 }}>
             <polyline points="6 9 12 15 18 9"/>
           </svg>
         </div>
-        <div className={`radr-mobile-panel${open ? " open" : ""}`}>
-          {collapse.map((child) =>
-            child.href
-              ? <a key={child.name} href={child.href} target="_blank" rel="noreferrer" className="radr-mobile-child" onClick={onClose}>{child.name}{child.badge && <span className="radr-badge">{child.badge}</span>}</a>
-              : <Link key={child.name} to={child.route || "/"} className="radr-mobile-child" onClick={onClose}>{child.name}{child.badge && <span className="radr-badge">{child.badge}</span>}</Link>
-          )}
+        <div className={`radr-collapse${open ? " open" : ""}`}>
+          <div className="radr-collapse-inner">
+            {collapse.map((child) =>
+              child.href
+                ? <a key={child.name} href={child.href} target="_blank" rel="noreferrer" className="radr-mobile-child" onClick={onClose}>{child.name}{child.badge && <span className="radr-badge">{child.badge}</span>}</a>
+                : <Link key={child.name} to={child.route || "/"} className="radr-mobile-child" onClick={onClose}>{child.name}{child.badge && <span className="radr-badge">{child.badge}</span>}</Link>
+            )}
+          </div>
         </div>
       </div>
     );
