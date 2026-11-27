@@ -2,14 +2,18 @@ import PropTypes from "prop-types";
 import { PLATFORM_META } from "../components/CampaignList";
 import { artistNames, safeArtwork } from "../spotifyTrack";
 import { packageName } from "../packages";
-import { hasBudget, money } from "./flowConfig";
+import { useCurrency } from "../useCurrency";
+import { hasBudget } from "./flowConfig";
 
-// Live summary under the form. Amounts appear only once a budget is chosen.
+// Live summary under the form. Amounts appear only once a budget is chosen,
+// in the currency the artist picked (Naira amounts are estimates).
 function OrderSummary({ draft }) {
+  const { currency, rate, format } = useCurrency();
   const platform = PLATFORM_META[draft.platform];
   const Logo = platform?.Logo;
   const art = safeArtwork(draft.track);
   const subtitle = [artistNames(draft.track), platform?.label].filter(Boolean).join(" · ");
+  const estimate = currency === "NGN" && rate ? "About " : "";
 
   return (
     <aside className="flow-summary" aria-label="Campaign summary">
@@ -35,15 +39,17 @@ function OrderSummary({ draft }) {
         <>
           <div className="flow-summary-line flow-summary-line--total">
             <span>{packageName(draft.package)} package</span>
-            <strong>{money(draft.budget)}</strong>
+            <strong>{estimate}{format(draft.budget)}</strong>
           </div>
           <div className="flow-summary-line">
             <span>Due today</span>
-            <strong>{money(draft.budget)}</strong>
+            <strong>{estimate}{format(draft.budget)}</strong>
           </div>
         </>
       )}
-      <p className="flow-summary-muted">You pay on Paystack&apos;s checkout page after the review step.</p>
+      <p className="flow-summary-muted">
+        You choose your currency and payment method on the last step. Paystack charges in Naira.
+      </p>
     </aside>
   );
 }

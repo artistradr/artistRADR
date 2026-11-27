@@ -1,14 +1,16 @@
 import PropTypes from "prop-types";
-import { money } from "./flowConfig";
+import { useCurrency } from "../useCurrency";
 
 // Shown once the campaign is saved, while Paystack checkout opens.
 function FlowSuccess({ campaign, payment, onView, onDone }) {
+  const { currency, rate, format } = useCurrency();
+  const estimate = currency === "NGN" && rate ? "about " : "";
   return (
     <div className="flow-card flow-success" role="status">
       <div className="flow-success-mark">✓</div>
       <h2 className="flow-title">{payment.error ? "Saved, but not paid" : "Opening checkout…"}</h2>
       <p className="flow-sub">
-        <strong>{campaign.name}</strong> ({money(campaign.budget)}) is saved.
+        <strong>{campaign.name}</strong> ({estimate}{format(campaign.budget)}) is saved.
         Pay on Paystack to complete it. RADR staff then review it before it starts.
       </p>
       {payment.error && <div className="flow-error" role="alert">{payment.error}</div>}

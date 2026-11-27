@@ -1,8 +1,9 @@
 // Options and rules for the new campaign flow.
 import { looksLikeLink } from "../spotifyTrack";
 import { DAILY, PRESAVE, SUPERCHARGE, dailyTotal, isDailyPlan, isFutureDate, isSuperchargeAmount } from "../packages";
+import { canPay } from "../currency";
 
-export const STEPS = ["Track", "Goal", "Package", "Review"];
+export const STEPS = ["Track", "Goal", "Package", "Review", "Payment"];
 
 export const GOALS = [
   { value: "Curated + algorithmic playlist placement", hint: "Get your track into playlists" },
@@ -15,6 +16,7 @@ export const INITIAL_DRAFT = {
   name: "", track: null, platform: "spotify", goal: GOALS[0].value,
   package: "", budget: "", releaseDate: "", reserve: true,
   dailyRate: "", days: "", extraTrack: null,
+  method: "", // payment method: "paystack" (Flutterwave is coming soon)
 };
 
 // Starting point for renewing a finished campaign: same song, goal and platform.
@@ -46,7 +48,8 @@ export function money(amount) {
 }
 
 // Returns a message for the first problem on a step, or "" when it is fine.
-export function stepError(step, draft) {
+// `currency` is the artist's chosen currency, needed to check the payment step.
+export function stepError(step, draft, currency = "USD") {
   if (step === 0) {
     if (!draft.name.trim()) return "Search for your song, or type its name.";
     if (!draft.track && looksLikeLink(draft.name)) return "Pick your song from the results, or type its name.";
@@ -62,6 +65,11 @@ export function stepError(step, draft) {
         : `Enter a budget of at least ${money(PRESAVE.min)}.`;
     }
     if (draft.package === "presave" && !isFutureDate(draft.releaseDate)) return "Choose a release date after today.";
+  }
+  if (step === 4 && !canPay(draft, currency)) {
+    return currency === "USD"
+      ? "Paying in USD isn't available yet. Choose Paystack to pay in Naira."
+      : "Choose a payment method.";
   }
   return "";
 }

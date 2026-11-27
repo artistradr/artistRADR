@@ -1,0 +1,30 @@
+/* New campaign flow: currency and payment method step */
+.flow-pay-group { border: 0; padding: 0; margin: 0 0 22px; min-width: 0; }
+.flow-pay-group legend { padding: 0; margin-bottom: 10px; font-size: 13px; font-weight: 700; color: #333; }
+.flow-pay-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.flow-pay-option {
+  position: relative; display: flex; flex-direction: column; gap: 4px; padding: 16px 40px 14px 16px; cursor: pointer;
+  border: 1px solid rgba(0,0,0,0.12); border-radius: 14px; background: white;
+}
+.flow-pay-option input { position: absolute; top: 16px; right: 14px; accent-color: #D94F2B; }
+.flow-pay-option--on { border-color: #D94F2B; background: rgba(217,79,43,0.04); box-shadow: 0 0 0 2px #D94F2B; }
+.flow-pay-option--off { cursor: not-allowed; background: #f7f6f3; }
+.flow-pay-option--off .flow-pay-name, .flow-pay-option--off .flow-pay-note { opacity: 0.55; }
+.flow-pay-option:focus-within { outline: 2px solid #111; outline-offset: 2px; }
+.flow-pay-name { font-size: 15px; font-weight: 700; color: #111; }
+.flow-pay-note { font-size: 12.5px; line-height: 1.4; color: #666; }
+.flow-pay-soon {
+  align-self: flex-start; margin-top: 4px; padding: 3px 9px; border-radius: 100px;
+  background: #111; color: white; font-size: 10px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;
+}
+.flow-pay-total { padding: 16px 18px; border-radius: 12px; background: #f7f6f3; }
+.flow-pay-total-line { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; color: #555; }
+.flow-pay-total-line + .flow-pay-total-line { margin-top: 8px; }
+.flow-pay-total-line strong { color: #111; }
+.flow-pay-total-line--big { font-size: 15px; }
+.flow-pay-total-line--big strong { font-size: 18px; }
+.flow-pay-hint { margin-top: 10px; font-size: 12px; line-height: 1.5; color: #777; }
+
+@media (max-width: 700px) {
+  .flow-pay-row { grid-template-columns: minmax(0, 1fr); }
+}
