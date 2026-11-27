@@ -9,6 +9,7 @@ import Freebies from "pages/Toolkit/freebies";
 import PremiumTools from "pages/Toolkit/premium-Tools";
 import KnowledgeCenter from "pages/Toolkit/knowledge-center";
 import PlaylistSubmissionPage from "pages/Toolkit/playlist-submission";
+import SpotlightSubmissionPage from "pages/Toolkit/spotlight-submission";
 
 // Promotion Pages
 import Promotion from "pages/promotion/Promotion";
@@ -20,7 +21,7 @@ import Register from "pages/Auth/Register";
 // NOTE: SpotifyCallback and YoutubeCallback are registered directly in App.jsx
 // as bare routes so they are never wrapped in any auth guard or navbar layout.
 
-// NOTE: "My Campaigns" below intentionally has no `component` field. The
+// NOTE: "Campaign Dashboard" below intentionally has no `component` field. The
 // actual <Route path="/campaigns"> is registered as a bare, auth-gated
 // route directly in App.jsx (same pattern as /profile), so it's excluded
 // from getRoutes()'s flatMap (which requires both `route` AND `component`).
@@ -32,6 +33,8 @@ import Register from "pages/Auth/Register";
 // "Legal" nav group. That group has been removed entirely from the navbar.
 // Their routes are now registered as bare routes directly in App.jsx
 // (same pattern as /campaigns) and linked from the Footer instead.
+
+// NOTE: `badge` shows a small tag (for example "New") next to a nav link.
 
 const routes = [
   {
@@ -70,17 +73,29 @@ const routes = [
     ],
   },
   {
-    name: "Playlist Submission",
-    description: "Submit your track for playlists",
-    route: "/submit-track",
-    component: <PlaylistSubmissionPage />,
-  },
-  {
-    name: "My Campaigns",
-    description: "Track and manage your active promotion campaigns",
-    route: "/campaigns",
-    userOnly: true,
-    // no `component` — see note above, route is registered in App.jsx
+    name: "Campaigns",
+    collapse: [
+      {
+        name: "Campaign Dashboard",
+        description: "Track and manage your active promotion campaigns",
+        route: "/campaigns",
+        userOnly: true,
+        // no `component` — see note above, route is registered in App.jsx
+      },
+      {
+        name: "Submit Playlist Consideration",
+        description: "Submit your track for RADR playlists",
+        route: "/submit-track",
+        component: <PlaylistSubmissionPage />,
+      },
+      {
+        name: "Submit Spotlight Consideration",
+        description: "Be considered for a RADR Spotlight feature",
+        route: "/submit-spotlight",
+        badge: "New",
+        component: <SpotlightSubmissionPage />,
+      },
+    ],
   },
   {
     name: "Support",
