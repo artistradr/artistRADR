@@ -1,6 +1,8 @@
 # Artist RADR — Plan & TODO
 
 **Last updated:** 2026-11-28 (public Spotify follow step: 403 "not registered" traced to Development Mode, not to code; follow-targets work and an honor-mode alternative sit on branches; campaign work is now in `main`; playlist submission verification rollout still pending)
+
+> **Update (later 2026-11-28):** decision 9 is settled as option (c): the Spotify follow is a normal self-confirmed follow, the follow API and `fix/spotify-follow-targets` are dropped. See "Spotify follow: auto follow dropped" in `ARTIST_RADR_STATUS.md`. Decision 23 and the Phase 11 items about merging the follow branch no longer apply.
 **Companion file:** `ARTIST_RADR_STATUS.md` (current state, commands, env, handoff)
 **Product brief:** the original "Artist RADR — Product Vision & Development Brief" still applies, with the changes recorded in section 1.
 

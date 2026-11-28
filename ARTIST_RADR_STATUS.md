@@ -1,6 +1,8 @@
 # Artist RADR — Project Status & Handoff
 
 **As of:** 2026-11-28
+
+> **Update (later 2026-11-28):** the automatic Spotify follow is dropped. The last section of this file, "Spotify follow: auto follow dropped", supersedes the earlier Spotify follow sections, the branches table and the Next list items 4 and 5.
 Compact summary of everything built and decided so far. Paste this into a new chat or Claude Code to restore context. The roadmap and full TODO are in `ARTIST_RADR_PLAN.md`.
 
 ---
@@ -469,3 +471,27 @@ cd ~/artist-radr && git fetch origin && git switch main && git pull --ff-only or
 - 2026-11-28: the editor clicked Follow on Spotify and saw the step fail. Function logs showed Spotify's `403 The user is not registered for this application`. The cause is Development Mode (account not allowlisted), not the site code. The fix was to add the account under User Management; the editor then ran the local test and reported it done.
 - A second branch, `fix/spotify-follow-step` (`486f563`), was written against `main` without the follow work and changes only wording; it is not needed.
 - To do: choose the long-term approach (plan decision 9), confirm the live `follow-on-spotify` and `spotify_follow_targets` match the branch, then merge.
+
+## Spotify follow: auto follow dropped (2026-11-28, supersedes earlier Spotify follow sections)
+
+**Decision (plan decision 9, option c):** the public playlist submission page no longer uses Spotify's follow API. The Spotify step is a normal follow: the artist opens each Spotify link, follows, and ticks the box to confirm. It is self-reported, like Instagram. Reason: Development Mode allows only 5 allowlisted accounts, so every other artist got `403 not registered`.
+
+**What is in `main`**
+- `fix/spotify-follow-honor-mode` (`84dbf63`) merged: `steps.js` sets the Spotify step to `mode: "honor"`. To switch back later, set `mode` to `"oauth-follow"` and restore the old description.
+- `security/edge-function-fixes` (`e5a5cd9`) merged **without** `follow-on-spotify`: adds `check-follows-youtube`, `notify-playlist-submission`, `notify-submission-status` (hardened versions). Merging only saves source; nothing is deployed. Before deploying any of them, check the first line and compare with the live copy (`supabase functions download <name> --use-api`).
+- Docs branches merged.
+
+**Not merged (auto follow, dropped):** `fix/spotify-follow-targets` (`f66d01e`: rewritten `follow-on-spotify`, `spotify_follow_targets` migrations, Studio "Spotify follows" page) and `fix/spotify-follow-step` (`486f563`, wording only). Kept on GitHub for reference; delete when sure. The Studio "Spotify follows" page and its `modules.js` entry are not in `main`.
+**Not merged, superseded:** `security/frontend-xss-fix` (older version of the sanitising fix that PR #1 already shipped; merging could undo it). Already in `main`: `feature/signin-stages`, `refactor/playlist-submission-components`, `spotify-promo-setup`.
+
+**Leftovers to clean up by hand (not done, external accounts)**
+- Deployed `follow-on-spotify` (v25) is still live and unused: `supabase functions delete follow-on-spotify`.
+- Secrets `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET`, `SPOTIFY_REDIRECT_URI` (public follow app): remove once the function is deleted.
+- Table `spotify_follow_targets` and function `set_primary`, if they exist on the remote: drop them with a saved migration file, or leave them harmless.
+- Old public Spotify follow app in the Spotify dashboard: can be retired.
+- Dead code in `main` still referring to the Spotify OAuth follow (`oauth-follow` branch in `StepCard.jsx` and `usePlaylistSubmission.js`, Spotify handling in `oauth.js`, `config.js`): harmless, remove in a later cleanup. Keep it until then if the switch back is wanted.
+- Local-only commit `f006b84` on `fix/spotify-follow-targets` is not needed.
+
+**Verification part 2 (database enforcement):** the server can no longer prove a Spotify follow. When it is applied, `enforce_submission_verification` must require only the YouTube verification and must not require `spotify_verified`. Check the trigger before switching it on.
+
+**Next, in order:** push `main`; rebuild the public site from `main` and check the Spotify step shows three Follow buttons with tick boxes; back up the live folder and upload (keep `.htaccess`); finish verification rollout with the YouTube-only rule; Paystack test (check `PAYSTACK_SECRET_KEY`, regenerate the pasted test key).
