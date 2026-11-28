@@ -1,6 +1,6 @@
 # Artist RADR — Plan & TODO
 
-**Last updated:** 2026-11-27 (campaign plans changed to Daily and Supercharge; Studio shows plan, paid or unpaid and the second song; payment migration files saved; campaign work run locally and reported working except payments, the daily plan and the preview changes; Paystack checkout converts USD prices to NGN)
+**Last updated:** 2026-11-28 (public Spotify follow step: 403 "not registered" traced to Development Mode, not to code; follow-targets work and an honor-mode alternative sit on branches; campaign work is now in `main`; playlist submission verification rollout still pending)
 **Companion file:** `ARTIST_RADR_STATUS.md` (current state, commands, env, handoff)
 **Product brief:** the original "Artist RADR — Product Vision & Development Brief" still applies, with the changes recorded in section 1.
 
@@ -19,8 +19,9 @@
 | 6 | RADR AI | Not started |
 | 7 | Friday automation | Not started |
 | 8 | Magazine & RADR Originals | Posts admin moved into Studio at `/studio/magazine` (2026-11-25, untested). Editor upgrades and Originals not started |
-| 9 | Artist campaigns and billing | **Built; run locally and reported working (2026-11-26), except the payment work, the daily plan and Supercharge second song, and the preview changes of the same day, which are not yet re-checked. Not merged into `main` or deployed.** Account area, Billing page, campaign flow, **Daily and Supercharge plans**, Studio Campaigns tab (plan, paid or unpaid, second song), campaign playlists, Campaign playlists page, preview redesign with Renew. Paystack checkout with USD→NGN conversion, Unpaid label and delete for unpaid campaigns (function v4 live; **no test payment made yet**) |
+| 9 | Artist campaigns and billing | **Built and in `main` (checked 2026-11-28). Run locally and reported working (2026-11-26), except the payment work, the daily plan and Supercharge second song, and the preview changes of the same day, which are not yet re-checked. Deploy state not checked.** Account area, Billing page, campaign flow, **Daily and Supercharge plans**, Studio Campaigns tab (plan, paid or unpaid, second song), campaign playlists, Campaign playlists page, preview redesign with Renew. Paystack checkout with USD→NGN conversion, Unpaid label and delete for unpaid campaigns (function v4 live; **no test payment made yet**) |
 | 10 | Partner curators | **Planned, not started.** Placeholder tab on the Campaign playlists page (2026-11-26) |
+| 11 | Public submission and Spotify follow step | **In progress.** Submission page split and verification part 1 merged (2026-11-27), not uploaded; verification part 2 not applied. Follow-targets rewrite and Studio "Spotify follows" page on `fix/spotify-follow-targets`, not merged. Development Mode blocks accounts that are not allowlisted (2026-11-28); long-term approach undecided |
 
 ---
 
@@ -48,6 +49,8 @@
 20. **Artist campaign page (2026-11-26):** the tracker has two steps, Running then Completed. Artists cannot pause a campaign from their screen. When a campaign is Completed, a Renew campaign button opens the new campaign flow with the same song, goal and platform filled in. Attached playlists show as compact rows with small covers.
 21. **Payment labels (2026-11-26):** **Unpaid** = pending with no paid payment; **Pending Review** = paid and waiting for staff. Billing's Awaiting approval total counts paid campaigns only; unfinished checkouts read "Not completed".
 22. **Campaign plans (2026-11-26, set by the editor):** artists choose **Daily** (a daily spend of $2.99 to $14.99 for 7 to 30 days; total = spend × days; targets start at 2 to 3 playlists and 2K to 3K listeners and step up with the total), **Supercharge** ($100 to $999 as one payment for 30 days; the artist may add one second song and RADR picks its playlists) or **Pre-save** (unchanged). **Starter ($25) and Basic ($50) are no longer offered**; campaigns already sent keep them. Monthly recurring billing for Supercharge was considered and rejected: it is one 30-day payment. Staff approval defaults the run length to the days the artist paid for. Prices and limits live in `src/pages/campaigns/packages.js` and are checked again by database triggers, so change both together.
+23. **Public Spotify follow step (2026-11-27, on `fix/spotify-follow-targets`, not merged):** the artist sees one Spotify follow (Artist RADR). Other follow targets are managed by staff in Studio ("Spotify follows" page, table `spotify_follow_targets`) and followed in the background on a best-effort basis; they are never reported to the artist and never gate the step.
+24. **350-line limit (2026-11-27):** files stay at 350 lines or fewer (ESLint `max-lines`, `npm run lint:lines`, `CLAUDE.md`). Twelve older files are over and are split over time.
 
 ---
 
@@ -60,6 +63,7 @@
 - New-releases listing, artist popularity and some bulk lookups were removed. Search returns at most 10 results.
 - **Confirmed working in Development Mode (2026-11-23):** token refresh, reading RADR playlist tracks via `/playlists/{id}/items`, creating a private playlist, adding a track (via `/items`), reading it back, removing the track, and removing the playlist from the profile.
 - **Consequence:** Spotify is for searching, matching and managing RADR's own playlists. It cannot be the discovery engine.
+- **Public follow app (confirmed 2026-11-28 from function logs):** an account that is not listed under that app's User Management gets `403 The user is not registered for this application` at the follow call, even though login and token exchange succeed. This is the public-site failure the editor saw. The function reports it to the site as `reason: not_registered`. Real artists cannot use the step until the app has Extended Quota or the step no longer depends on Spotify's follow API.
 
 ### Apple Music
 - The web API can create playlists and add tracks. It cannot reorder or remove tracks.
@@ -86,7 +90,7 @@
 - [x] Supabase schema, RLS and security-advisor review
 - [x] Read existing Edge Function `follow-on-spotify`
 - [ ] Read remaining admin files if needed (`AdminLogin.jsx`, `Sidebar.jsx`)
-- [ ] Check whether the public Spotify follow flow works for non-allowlisted users
+- [x] Check whether the public Spotify follow flow works for non-allowlisted users: **it does not** (403 `not_registered`, confirmed 2026-11-28)
 
 ### Phase 1 — Studio shell
 - [x] `VITE_APP_MODE` build flag, `dev:studio` and `build:studio` scripts
@@ -184,7 +188,7 @@ Buffer and the Publishing module are out of scope. Staff post manually. If posti
 - [ ] Podcast RSS and hosting decision
 
 ### Phase 9 — Artist campaigns and billing (2026-11-26)
-Built (run locally and reported working by the editor on 2026-11-26 except where noted; none deployed; `feature/campaign-flow` not yet confirmed merged into `main`):
+Built (run locally and reported working by the editor on 2026-11-26 except where noted; now in `main`, checked 2026-11-28; deploy state not checked):
 - [x] Account area: sidebar Profile, My Campaigns, Billing; Dashboard and Settings removed; one "Open RADR Studio" button for staff on Profile (`feature/billing`, inside `main`)
 - [x] Billing page `/campaigns/billing`: totals, campaign billing, payment history; `payments` migration applied
 - [x] Checkout-style campaign flow (Track, Goal, Plan, Review) with Spotify song search or pasted link (`spotify-track-search` v1 deployed, `campaigns_spotify_track` applied)
@@ -205,19 +209,19 @@ Built (run locally and reported working by the editor on 2026-11-26 except where
 Still to do, in order:
 - [x] Test the artist journey locally and the Campaign playlists page (reported working by the editor, 2026-11-26)
 - [x] Save the missing migration SQL files into `supabase/migrations/` and fix the `campaigns_no_user_remove` file name (done 2026-11-26; all 26 files from 20261123 on match the remote)
-- [x] Work out which branch contains which (done 2026-11-26: `main` contains the older branches; `feature/campaign-flow` fast-forwards into it)
+- [x] Work out which branch contains which (done 2026-11-26; refreshed 2026-11-28: the campaign work is in `main` and `feature/campaign-flow` is gone from GitHub)
 - [x] Save `supabase/migrations/20261126142533_payments_fx_fields.sql` (done 2026-11-26)
 - [x] Studio: show paid or unpaid on each campaign, and block staff approval of unpaid campaigns in the screen (done 2026-11-26; the database does not enforce it)
 - [ ] **Confirm `PAYSTACK_SECRET_KEY` is set** in Supabase Edge Function secrets (test key), and regenerate the test key that was pasted into chat
 - [ ] **Run the rolled-back database test again for the daily plan:** a daily campaign with a wrong total, a rate outside $2.99 to $14.99 or days outside 7 to 30 must be refused; an artist must not change `daily_rate`, `plan_days` or `extra_track`; `extra_track` must be dropped on non-Supercharge plans
-- [ ] **Test both plans and a payment end to end:** pull, `npm run build`, `npm run dev`, create a Daily campaign ($2.99 for 7 days = $20.93) and a Supercharge one with a second song; the Review step, Pay now step and Paystack must show the same total (converted to naira); pay with a Paystack test card, check Billing shows Paid, the `payments` row has `price_usd`, `fx_rate` and NGN `amount`, and Studio shows Paid, the plan and the second song and suggests the paid days; then create and delete a throwaway unpaid campaign (a paid one must refuse deletion)
+- [ ] **Test both plans and a payment end to end:** pull `main`, `npm run build`, `npm run dev`, create a Daily campaign ($2.99 for 7 days = $20.93) and a Supercharge one with a second song; the Review step, Pay now step and Paystack must show the same total (converted to naira); pay with a Paystack test card, check Billing shows Paid, the `payments` row has `price_usd`, `fx_rate` and NGN `amount`, and Studio shows Paid, the plan and the second song and suggests the paid days; then create and delete a throwaway unpaid campaign (a paid one must refuse deletion)
 - [ ] Decide an FX margin (2 to 3 percent suggested) and set `FX_MARGIN_PERCENT` and a `USD_NGN_RATE` fallback
 - [ ] Confirm the Paystack webhook URL in the Paystack dashboard
 - [ ] Studio: tag attached playlists to a song, so a Supercharge campaign with a second song can check each playlist against the right song (today the "song is in this playlist" check only looks at the first song, and Studio shows a note)
 - [ ] Studio screen for staff to record payments (needed for offline payments; an unpaid campaign cannot be approved from the screen until a payment row exists)
-- [ ] Pull, re-run `npx eslint src`, `npm run build` and `npm run build:studio`, and try the new plans, tracker, Renew button, compact playlists, Unpaid labels and Delete in `npm run dev` (open one pending, one active and one completed campaign)
+- [ ] Re-run `npx eslint src`, `npm run build` and `npm run build:studio` on `main`, and try the new plans, tracker, Renew button, compact playlists, Unpaid labels and Delete in `npm run dev` (open one pending, one active and one completed campaign)
 - [ ] Fix `eslint.config.js` so `npm run lint` is meaningful: ignore `dist-studio` and the Node files (`server.js`, `*.cjs`, `scripts/`), or give them Node globals. Today `eslint .` reports 541 problems, mostly from the minified `dist-studio` bundle
-- [ ] Confirm the pull request from `feature/campaign-flow` into `main` was submitted and merged, then rebuild both sites and upload
+- [ ] Rebuild both sites from `main` and upload (check first whether the live bundles already include the campaign work)
 - [ ] **Confirm the Supercharge targets above $100** (proposed by Claude in `SUPERCHARGE_TIERS`; RADR must be able to deliver them) and the Daily plan targets
 - [ ] Review plan wording against Spotify's rules on paid services that advertise streams or guarantee placement
 - [ ] Top-up of a running campaign (needs payments first)
@@ -241,6 +245,26 @@ Artist RADR is open to curators with active playlists who want to earn from arti
 - [ ] Show only figures a source provides; no invented follower or stream numbers
 - [ ] Decide what artists see for partner playlists (same cover and link as today)
 
+### Phase 11 — Public submission and Spotify follow step (2026-11-27 and 28)
+Done:
+- [x] Submission page split into components, session sent to the verification functions, browser no longer sends the Spotify and YouTube verified flags, 350-line rule added (PR #2, merged into `main`, not uploaded)
+- [x] Verification part 1 applied: table `submission_verifications`, written by the two verification functions
+- [x] Follow-targets rewrite on `fix/spotify-follow-targets` (`2013ced`, `f66d01e`): one visible follow, targets in `spotify_follow_targets`, Studio "Spotify follows" page, reason codes from the function
+- [x] Cause of the Follow on Spotify failure found 2026-11-28: Development Mode `403 not_registered` (account not allowlisted), not site code. The editor added the account and ran the local test (reported done; exact result not recorded)
+
+To do:
+- [ ] **Decide the approach (decision 9):** add testers by hand (max 5 users in Development Mode), apply for Extended Quota, or accept the honor-mode branch `fix/spotify-follow-honor-mode`
+- [ ] Confirm the live `follow-on-spotify` function matches `supabase/functions/follow-on-spotify/index.ts` on the follow branch, and that `spotify_follow_targets` exists on the remote with the seeded rows
+- [ ] Save the follow-targets migrations as applied versions (check names against the remote) and merge the follow branch into `main`
+- [ ] Drop the local-only commit `f006b84` (wording-only copy of work already in `2013ced`), delete `fix/spotify-follow-step`
+- [ ] Check the localhost mentions in the new public bundle
+- [ ] Back up the live folder, upload the new build through cPanel (keep `.htaccess`), confirm `spotify_verified` count is 0 on the live bundle
+- [ ] Test a Spotify or YouTube step on the live page
+- [ ] Apply verification part 2 (database enforcement), only after the new build is live **and** the follow approach is settled: with enforcement on, an artist whose Spotify follow is rejected cannot complete the submission
+- [ ] Save the part 1 migration as a file in `supabase/migrations/`
+- [ ] Run the five browser checks on the new submission page
+- [ ] Split the 12 files over 350 lines, a few at a time; paystack last
+
 ---
 
 ## 4. Open risks and security items
@@ -249,13 +273,15 @@ Artist RADR is open to curators with active playlists who want to earn from arti
 |---|---|---|
 | **Service-role key in git history** | A real **legacy JWT** `service_role` key (expires 2036) is in `scripts/env.migration.example` (first commit `f33388e`) and in a local `scripts/.env.migration.save`. The repo is private. | **In progress 2026-11-24.** Steps 1 to 5 done. Legacy keys are now rejected (401 seen 2026-11-24). Still to verify: the public site rebuilt with the new key AND in public mode is uploaded and working (see section 7 notes). Then cleanup steps 6, 8, 9. Only `studio-spotify` uses it; the older functions and the database triggers do not. |
 | **Paystack test keys pasted in chat** | Test secret and public keys were shared in chat on 2026-11-26 and again on 2026-11-27. Test keys, so low risk, but the secret key must not stay exposed. | Regenerate the test secret key now; regenerate again before going live; keep it only in Supabase function secrets, never in the repo or in chat. |
+| **Public Spotify follow blocked for non-allowlisted accounts** | Confirmed 2026-11-28: Spotify's Development Mode rejects accounts not added under the follow app's User Management (`403 not registered`). Max 5 users. The site shows a "contact us" message. Real artists cannot complete the Spotify step. | Decide the approach (Phase 11, decision 9). Do not apply verification part 2 before this is settled. |
 | **Payments untested** | The Paystack function (v4) is live but no payment has been made. `PAYSTACK_SECRET_KEY` is not confirmed set. Frontend not built or run since the payment commits. | Run the end-to-end test in Phase 9 before relying on it. |
 | **Daily plan untested** | The daily plan and Supercharge second song are live in the database and written in the frontend, but nothing has been built, run or tested, and the database price checks have not been re-tested. | Run the rolled-back database test and both plan flows (Phase 9). |
 | **Exchange-rate risk** | The NGN charge uses a free daily rate (`open.er-api.com`). The naira can move between the rate used and when RADR converts the money, and the rate source can be down. | Set `FX_MARGIN_PERCENT` (2 to 3 percent suggested) and a `USD_NGN_RATE` fallback. |
 | **Unpaid campaigns can still be approved outside the screen** | Studio now shows Unpaid and disables Approve until a paid payment exists, but the database does not enforce it: a direct update by staff can still approve an unpaid campaign. If payments can't be read, nothing is blocked. | Optional: enforce in a database trigger. Add a staff screen to record offline payments (Phase 9). |
 | **Second-song playlists not tagged** | Playlists attached in Studio are not linked to a song, and the "song is in this playlist" check uses the first song only. | Tag playlists to a song (Phase 9). |
 | ~~Migration files missing from the repo~~ | **Resolved 2026-11-26.** All 26 campaign-era migration files are saved and match the remote. | Remaining gap: the 22 August/September migrations and the early `campaigns` guard triggers (see the remote-only row below). |
-| **Campaign work not merged or deployed** | The campaign flow, plans, campaign playlists, the Campaign playlists page, the preview changes and the payment work are on `feature/campaign-flow` (a fast-forward of `main`). Run locally and reported working (2026-11-26) before the last preview, payment and plan changes; the database changes are already live, and so is `paystack` v4. Studio and the public site have not been rebuilt and uploaded. | Re-check, merge and deploy (Phase 9). |
+| **Follow-targets migrations not in `main`** | `20261127120000_spotify_follow_targets.sql` and the follow-up in `f66d01e` are on `fix/spotify-follow-targets` only. Whether the remote database already has the table was not checked. | Check the remote, then merge and save the applied versions (Phase 11). |
+| **Campaign work live state unknown** | The campaign flow, plans, campaign playlists, the preview changes and the payment work are in `main`; the database changes and `paystack` v4 are live. Whether the website and Studio builds with this code are uploaded was not checked. | Check the live bundles, then rebuild and upload (Phase 9). |
 | **Lint output is misleading** | `eslint .` reports 541 problems because it lints `dist-studio/` and Node scripts; the config only ignores `dist`. Real app code was checked with `npx eslint src`. | Fix the ignore list (Phase 9). |
 | **Paid-stream wording** | Plan copy mentions playlist, listener and stream targets. Spotify has rules on paid services that advertise streams or guarantee placement. | Review the wording before launch. |
 | **Sync edge cases partly tested** | One real sync succeeded and conflict detection is confirmed. Remove plus reorder and blocked cases (local files, unmatched tracks) are not yet exercised. | Test on a throwaway playlist before relying on it for live RADR playlists. |
@@ -270,7 +296,6 @@ Artist RADR is open to curators with active playlists who want to earn from arti
 | `pg_net` in `public` schema | Advisor warning, not from this work. | Optional: move to the `extensions` schema. |
 | Leaked-password protection off | Supabase Auth setting. | Turn on if the plan allows. |
 | Import path case | The `pages/Campaigns` casing was fixed to `pages/campaigns` on `feature/billing`. `App.jsx` still imports `pages/home/Home` while the file is `home.jsx`. Works on macOS only. | Fix before building on Linux. |
-| Public follow flow | Old Spotify app may be limited to 5 allowlisted users. | Test with a non-staff account. |
 | npm audit | `npm install` reports 66 vulnerabilities (2 low, 42 moderate, 20 high, 2 critical), 2026-11-26. | Review separately; do not run `npm audit fix --force`. |
 
 ---
@@ -285,6 +310,7 @@ Artist RADR is open to curators with active playlists who want to earn from arti
 6. ~~Payment provider for artist campaigns.~~ Paystack, charging NGN converted from USD prices (2026-11-26). Still to decide: FX margin and fallback rate.
 7. ~~Campaign plans.~~ Daily, Supercharge and Pre-save (decision 22). Still to decide: the final Supercharge targets above $100 and the Daily plan targets, and the plan wording (see Phase 9).
 8. Partner curator terms: how curators apply, how and when they are paid, what they must deliver (see Phase 10).
+9. **Public Spotify follow step beyond allowlisted accounts (2026-11-28):** (a) keep Spotify's follow API and add testers by hand (max 5 in Development Mode), (b) apply for Extended Quota (a business application with its own requirements; check Spotify's current criteria), or (c) make the step self-confirmed (`fix/spotify-follow-honor-mode`), which means the server can no longer prove the follow. This also decides whether verification part 2 can be switched on.
 
 **Resolved:** which test playlist to use for the first write check (a private throwaway on `admin@artistradr.com`, done 2026-11-23).
 
